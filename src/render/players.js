@@ -23,6 +23,13 @@ function stickLine(p, x0, y0, x1, y1, part) {
   }
 }
 const bladeTape = p => (STICKS[settings.sticks[p.team]] || STICKS.wood).blade || p.look.tape;
+/** A stick in a team's style at plain pixel coordinates, for the jersey preview: hands at (hx, hy), blade at (bx, by). */
+export function pixelStick(team, hx, hy, bx, by, tape, blade = { x: bx - 1, y: by, w: 4 }) {
+  const p = { team, look: { tape } };
+  stickLine(p, hx, hy, bx, by, 'shaft');
+  stickLine(p, hx + 1, hy, bx + 1, by, 'edge');
+  R(blade.x, blade.y, blade.w, 2, bladeTape(p));
+}
 function drawStick(p, sx, sy) {
   const side = p.fx < -0.25 ? -1 : 1,
     b = blade(p),
