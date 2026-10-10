@@ -23,13 +23,20 @@ const GLYPHS = {
 };
 
 let g = null;
+/** Blend hex colour a toward b by k (0..1). */
+function mix(a, b, k) {
+  const p = parseInt(a.slice(1), 16),
+    q = parseInt(b.slice(1), 16),
+    ch = s => Math.round(((p >> s) & 255) * (1 - k) + ((q >> s) & 255) * k);
+  return '#' + ((ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).padStart(6, '0');
+}
 function px(x, y, w, h, c) {
   g.fillStyle = c;
   g.fillRect(x, y, w, h);
 }
-/** A word in the pixel font, lettered like a jersey: fill in three bands, a white inner outline, a coloured
- *  outer outline and a soft shadow. */
-function word(text, x0, y0, s, fill, outer) {
+/** A word in the pixel font, lettered like a jersey: fill in three bands, an inner and an outer outline and a
+ *  soft shadow. */
+function word(text, x0, y0, s, fill, inner, outer) {
   const cells = [];
   let x = x0;
   for (const ch of text) {
@@ -42,7 +49,7 @@ function word(text, x0, y0, s, fill, outer) {
   for (const [cx, cy] of cells) px(cx, cy + 4, s + 2, s, '#000000');
   g.globalAlpha = 1;
   for (const [cx, cy] of cells) px(cx - 2, cy - 2, s + 4, s + 4, outer);
-  for (const [cx, cy] of cells) px(cx - 1, cy - 1, s + 2, s + 2, '#ffffff');
+  for (const [cx, cy] of cells) px(cx - 1, cy - 1, s + 2, s + 2, inner);
   for (const [cx, cy, r] of cells) px(cx, cy, s, s, r < 2 ? fill[0] : r < 5 ? fill[1] : fill[2]);
 }
 
@@ -58,17 +65,18 @@ for (let y = 3; y < 28; y += 6)
       x,
       y,
       empty: h > 0.88,
-      body: ['#d8343f', '#3d7bff', '#e9edf3', '#2a2f3d', '#f2b632'][Math.floor(h * 5)],
+      shirt: Math.floor(h * 5),
       ph: h * 6.28,
     });
   }
 function arena(t, cheer) {
-  const S = STADIUMS[settings.stadiumKey] || STADIUMS.frost;
+  const S = STADIUMS[settings.stadiumKey] || STADIUMS.frost,
+    shirts = [S.lc[0], S.lc[2], S.kick, '#e9edf3', '#2a2f3d']; // home fans wear the arena's colours
   px(0, 0, W, BOARDS_Y, '#141a2c');
   for (const f of FANS) {
     if (f.empty) continue;
     const jump = cheer > 0 ? Math.round(Math.max(0, Math.sin(t * 14 + f.ph)) * 2 * cheer) : 0;
-    px(f.x, f.y + 2 - jump, 3, 3, f.body);
+    px(f.x, f.y + 2 - jump, 3, 3, shirts[f.shirt]);
     px(f.x + 1, f.y - jump, 2, 2, '#e8b48a');
   }
   // glass: a bright top edge and a faint sheen over the crowd
@@ -82,8 +90,7 @@ function arena(t, cheer) {
   px(0, KICK_Y, W, ICE_Y - KICK_Y, S.kick);
   px(0, ICE_Y, W, H - ICE_Y, '#e9f1f8');
   px(0, ICE_Y, W, 1, '#c5d6e6');
-  // a red line running along the ice, and a few skate scratches
-  px(0, 68, W, 2, '#d8343f');
+  // a few skate scratches
   for (let i = 0; i < 14; i++) px((i * 37) % W, 59 + ((i * 5) % 14), 6 + (i % 4) * 3, 1, '#d3e1ec');
 }
 
@@ -286,7 +293,9 @@ export function drawLogo() {
     c = t % CYCLE;
   arena(t, c > T_LAND && c < T_LAND + 1.2 ? 1 - (c - T_LAND) / 1.2 : 0);
   drawSkater(poseAt(c));
-  word('TOP', 12, 9, 4, ['#ff6b6b', '#d8343f', '#a3212b'], '#13213f');
-  word('SHELF', 12, 42, 3, ['#3f6fd0', '#1f3f87', '#16306b'], '#d8343f');
+  // lettering takes the selected arena's accent colour, so it changes with the arena
+  const kick = (STADIUMS[settings.stadiumKey] || STADIUMS.frost).kick;
+  word('TOP', 12, 9, 4, ['#ffffff', '#e6f0f9', '#bcd3e9'], kick, OUT);
+  word('SHELF', 12, 42, 3, [mix(kick, '#ffffff', 0.3), kick, mix(kick, '#000000', 0.3)], '#ffffff', OUT);
   puck(c);
 }
