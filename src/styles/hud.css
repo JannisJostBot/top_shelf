@@ -92,7 +92,19 @@
 }
 .ibtn[aria-pressed='true'] {
   color: var(--muted);
-  text-decoration: line-through;
+}
+/* the sound button shows a speaker, crossed out when muted */
+.spk {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+.spk-off,
+#muteBtn[aria-pressed='true'] .spk-on {
+  display: none;
+}
+#muteBtn[aria-pressed='true'] .spk-off {
+  display: block;
 }
 .ibtn:disabled {
   opacity: 0.35;

@@ -69,36 +69,58 @@ function drawLogo(g, S, cx, cy, sc) {
     circ(10.2, 10, 0.8, c);
     circ(14.4, 10, 0.8, c);
   }
-  if (S.logo === 'peaks') {
-    // a single snow-capped summit with an orange pennant planted on top, over a ridge stripe
-    ln(4.2, 19.4, 19.8, 19.4, 1.6, c);
+  if (S.logo === 'penguin') {
+    // a penguin standing on the ice: black body and head, white belly and eyes, orange beak and feet
     poly(
       [
-        [2.8, 18.6],
-        [8.2, 11.2],
-        [10.4, 13.6],
-        [12, 6],
-        [21.2, 18.6],
+        [6.4, 11],
+        [4.6, 17.4],
+        [7.6, 15.4],
       ],
       a,
     );
     poly(
       [
-        [12, 6],
-        [9.6, 11.2],
-        [11.1, 10.2],
-        [12.2, 11.6],
-        [13.4, 10.2],
-        [14.7, 11],
+        [17.6, 11],
+        [19.4, 17.4],
+        [16.4, 15.4],
       ],
-      '#ffffff',
+      a,
     );
-    ln(12, 6.4, 12, 2.9, 1.3, a);
+    x.fillStyle = a;
+    x.beginPath();
+    x.ellipse(12, 13.6, 6, 7.2, 0, 0, Math.PI * 2);
+    x.fill();
+    circ(12, 8.2, 4.6, a);
+    x.fillStyle = '#ffffff';
+    x.beginPath();
+    x.ellipse(12, 15, 3.9, 5.2, 0, 0, Math.PI * 2);
+    x.fill();
+    circ(10.1, 7.6, 1.3, '#ffffff');
+    circ(13.9, 7.6, 1.3, '#ffffff');
+    circ(10.4, 7.9, 0.65, a);
+    circ(13.6, 7.9, 0.65, a);
     poly(
       [
-        [12.4, 2.6],
-        [17, 3.9],
-        [12.4, 5.3],
+        [10.4, 9.3],
+        [13.6, 9.3],
+        [12, 11.4],
+      ],
+      c,
+    );
+    poly(
+      [
+        [8, 21],
+        [11.4, 21],
+        [9.8, 19.4],
+      ],
+      c,
+    );
+    poly(
+      [
+        [12.6, 21],
+        [16, 21],
+        [14.2, 19.4],
       ],
       c,
     );

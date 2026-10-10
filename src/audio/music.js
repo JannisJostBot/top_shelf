@@ -21,13 +21,13 @@ export const SONGS = {
     bass: 'D3:4 D3:4 C3:4 D3:4 F3:4 C3:4 D3:4',
     drums: 'k.k.s...k.k.s.s.',
   },
-  fanfare: {
-    name: 'Summit Fanfare',
-    bpm: 140,
-    wave: 'sawtooth',
-    lead: 'C5:1 C5:1 C5:1 G5:3 E5:1 G5:1 C6:4 R:2 A5:1 B5:1 C6:1 D6:1 E6:2 C6:2 G5:2 C6:4',
-    bass: 'C3:4 C3:4 E3:4 G3:4 F3:4 G3:4 C3:4',
-    drums: 'k...s...k.k.s.h.',
+  waddle: {
+    name: 'Penguin Waddle',
+    bpm: 150,
+    wave: 'square',
+    lead: 'C5:1 F5:1 A5:1 F5:1 G5:1 E5:1 C5:2 D5:1 F5:1 A5:1 C6:1 A5:2 G5:2 F5:1 A5:1 G5:1 E5:1 F5:4',
+    bass: 'F2:2 C3:2 F2:2 C3:2 D3:2 A2:2 C3:2 G2:2 F2:2 C3:2 F2:4',
+    drums: 'k.hsk.hs',
   },
   comet: {
     name: 'Comet Run',
