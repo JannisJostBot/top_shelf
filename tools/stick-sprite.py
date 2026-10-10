@@ -1,4 +1,4 @@
-# Generates the pixel-art hockey stick blade shown on button hover (src/styles/rink.css).
+# Generates the pixel-art wooden hockey stick blade shown on button hover (src/styles/rink.css).
 # Run: python3 tools/stick-sprite.py  -> prints the data URI for the CSS background.
 import urllib.parse
 
@@ -6,15 +6,17 @@ GW, GH = 34, 17
 grid = [[None] * GW for _ in range(GH)]
 COL = {
     'O': '#0b0f1a',  # outline
-    'c': '#4a5160',  # carbon, lit edge
-    'C': '#22262f',  # carbon
-    'K': '#14171d',  # carbon, shadow edge
-    'h': '#8a93a3',  # sheen stripe
-    'r': '#d8343f',  # shaft graphic
-    'W': '#ffffff',  # tape
-    'w': '#dfe6ee',  # tape, lower half
-    's': '#b9c5d3',  # tape, underside
-    'g': '#a3b1c2',  # tape wrap seams
+    'c': '#f0c98a',  # varnished wood, lit edge
+    'C': '#c98d4a',  # wood
+    'K': '#8a5a2b',  # wood, shadow edge
+    'h': '#a8703a',  # grain streak
+    'r': '#3a2412',  # stamped maker's band
+    'W': '#5a606c',  # black friction tape, catching the light
+    'w': '#25282f',  # tape
+    's': '#16181d',  # tape, underside
+    'g': '#0e1014',  # tape wrap seams
+    'B': '#d9a35e',  # bare wood blade at the heel
+    'b': '#a8703a',  # its grain
 }
 
 # shaft: four pixels wide, coming down from the top right to the heel
@@ -22,10 +24,10 @@ for y in range(0, 12):
     cx = round(30 - 0.8 * y)
     for i, k in enumerate('cCCK'):
         grid[y][cx - 2 + i] = k
-    if 1 <= y <= 9:
-        grid[y][cx - 1] = 'h' if y % 4 != 0 else 'C'
+    if y % 3 == 1:
+        grid[y][cx - 1] = 'h'  # wood grain running along the shaft
     if y in (4, 5):
-        grid[y][cx] = 'r'
+        grid[y][cx - 1] = grid[y][cx] = 'r'
 
 # blade: heel on the right, toe on the left curling up
 def top(x):
@@ -42,6 +44,8 @@ for x in range(2, 25):
             k = 'w'
         if y > t and (x + y) % 3 == 0:
             k = 'g'  # slanted tape wraps
+        if x >= 20:
+            k = 'b' if y == t + 2 and x % 4 != 3 else 'B'  # untaped wooden heel, grain running lengthwise
         grid[y][x] = k
 
 # outline every empty pixel that touches the stick
