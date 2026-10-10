@@ -1,6 +1,11 @@
-# Blue Line Blitz
+# Top Shelf
 
 3-on-3 pixel-art arcade hockey for the browser: Canvas 2D rendering, synthesized Web Audio, keyboard/mouse/touch controls.
+
+> **This project is vibe coded.** It was built almost entirely by an AI coding assistant, prompted by a person, as an
+> experiment. Treat it as a playground, not as production software: the code has not been carefully reviewed,
+> design decisions were made quickly, and things may break or change at any time. Don't rely on it, and read the
+> code critically before reusing any of it.
 
 ## Commands
 

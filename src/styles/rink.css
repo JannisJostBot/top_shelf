@@ -271,3 +271,40 @@ h2 {
     transform: scale(1);
   }
 }
+
+/* hovering a button swings a little hockey stick in at its left edge */
+.btn {
+  position: relative;
+}
+.btn::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin-top: -11px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect x='11' y='0' width='4' height='4' fill='%230b0f1a'/%3E%3Crect x='9' y='2' width='4' height='4' fill='%230b0f1a'/%3E%3Crect x='7' y='4' width='4' height='4' fill='%230b0f1a'/%3E%3Crect x='5' y='6' width='4' height='4' fill='%230b0f1a'/%3E%3Crect x='3' y='8' width='4' height='4' fill='%230b0f1a'/%3E%3Crect x='0' y='11' width='9' height='4' fill='%230b0f1a'/%3E%3Crect x='12' y='1' width='2' height='2' fill='%2315171d'/%3E%3Crect x='10' y='3' width='2' height='2' fill='%23c8914f'/%3E%3Crect x='8' y='5' width='2' height='2' fill='%23c8914f'/%3E%3Crect x='6' y='7' width='2' height='2' fill='%23c8914f'/%3E%3Crect x='4' y='9' width='2' height='2' fill='%23c8914f'/%3E%3Crect x='11' y='4' width='1' height='1' fill='%237a4f24'/%3E%3Crect x='9' y='6' width='1' height='1' fill='%237a4f24'/%3E%3Crect x='7' y='8' width='1' height='1' fill='%237a4f24'/%3E%3Crect x='5' y='10' width='1' height='1' fill='%237a4f24'/%3E%3Crect x='1' y='12' width='7' height='2' fill='%23f2f4f7'/%3E%3Crect x='3' y='12' width='1' height='2' fill='%2315171d'/%3E%3Crect x='5' y='12' width='1' height='2' fill='%2315171d'/%3E%3C/svg%3E")
+    no-repeat center / contain;
+  image-rendering: pixelated;
+  opacity: 0;
+  transform: rotate(-35deg);
+  transform-origin: 85% 10%;
+  transition:
+    opacity 0.1s,
+    transform 0.18s steps(3);
+  pointer-events: none;
+}
+.btn:hover::before,
+.btn:focus-visible::before {
+  opacity: 1;
+  transform: rotate(0deg);
+}
+.row .btn {
+  padding-inline: 30px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn::before {
+    transition: none;
+  }
+}

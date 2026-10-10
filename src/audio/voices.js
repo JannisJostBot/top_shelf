@@ -1,4 +1,5 @@
-import { AC, crowdG, master, mixer, noiseBuf, nz, osc } from './engine';
+import { AC, crowdBus, crowdG, master, mixer, noiseBuf, nz, osc } from './engine';
+import { shoutBuffer } from './crowd';
 import { pick, rnd } from '../core/math';
 
 // voices: a buzzy source shaped by three vowel formants
@@ -46,48 +47,35 @@ export function grunt(f0, delay, soft) {
   s.start(t, Math.random());
   s.stop(t + len + 0.05);
 }
+/** A crowd reaction: `n` groups of people shouting vowel `v` for `dur` seconds, optionally dropping in pitch. */
 export function crowdVoices(n, v, dur, vol, drop) {
-  const t = AC.currentTime,
-    env = AC.createGain();
-  env.connect(master);
-  env.gain.setValueAtTime(0.0001, t);
-  env.gain.linearRampToValueAtTime(vol, t + Math.min(0.25, dur * 0.25));
-  env.gain.setValueAtTime(vol, t + dur * 0.5);
-  env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  const bank = formants(VOW[v], env),
-    bus = AC.createGain();
-  bus.gain.value = 1 / Math.sqrt(n);
-  bank.forEach(b => bus.connect(b));
-  for (let i = 0; i < n; i++) {
-    const st = t + rnd(0, 0.14),
-      f = rnd(115, 320),
-      o = AC.createOscillator();
-    o.type = 'sawtooth';
-    o.frequency.setValueAtTime(f, st);
-    if (drop) o.frequency.exponentialRampToValueAtTime(f * drop, t + dur);
-    const l = AC.createOscillator();
-    l.frequency.value = rnd(4.5, 7.5);
-    const lg = AC.createGain();
-    lg.gain.value = f * 0.025;
-    l.connect(lg);
-    lg.connect(o.frequency);
-    const g = AC.createGain();
-    g.gain.value = rnd(0.4, 1);
-    o.connect(g);
-    g.connect(bus);
-    o.start(st);
-    l.start(st);
-    o.stop(t + dur + 0.05);
-    l.stop(t + dur + 0.05);
-  }
-  const s = AC.createBufferSource();
-  s.buffer = noiseBuf;
-  const ng = AC.createGain();
-  ng.gain.value = 0.6;
-  s.connect(ng);
-  ng.connect(bus);
-  s.start(t, Math.random());
-  s.stop(t + dur + 0.05);
+  const s = AC.createBufferSource(),
+    g = AC.createGain();
+  s.buffer = shoutBuffer(AC, v, dur, n, drop);
+  g.gain.value = vol * 1.7;
+  s.connect(g);
+  g.connect(crowdBus);
+  s.start();
+}
+// The reactions the game uses (see SFX), pre-rendered one at a time in the background after audio starts.
+const REACTIONS = [
+  [14, 'a', 2.6],
+  [8, 'e', 2.2],
+  [12, 'u', 1.5, 0.72],
+  [10, 'o', 1.2],
+  [9, 'o', 1.1],
+  [12, 'o', 1.3],
+  [14, 'a', 1.8],
+  [7, 'o', 0.8],
+  [6, 'o', 0.7],
+  [9, 'a', 0.9],
+  [5, 'a', 0.5],
+];
+export function warmShouts(i = 0) {
+  if (!AC || i >= REACTIONS.length) return;
+  const [n, v, dur, drop] = REACTIONS[i];
+  shoutBuffer(AC, v, dur, n, drop);
+  setTimeout(() => warmShouts(i + 1), 120);
 }
 export function clatter(t, n, vol) {
   for (let i = 0; i < n; i++)

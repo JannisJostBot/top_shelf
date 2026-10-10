@@ -1,4 +1,5 @@
-import { setCrowd } from './voices';
+import { setCrowd, warmShouts } from './voices';
+import { arenaImpulse, crowdBedBuffer } from './crowd';
 import { glideBuffer, stopBuffer, strideBuffer } from './skates';
 import { settings } from '../settings';
 
@@ -8,7 +9,8 @@ export let AC = null,
   master = null,
   crowdG = null,
   noiseBuf = null,
-  glideG = null;
+  glideG = null,
+  crowdBus = null;
 export let strideBufs = [],
   stopBufs = [];
 export function playBuf(b, vol, rate, pan) {
@@ -41,29 +43,36 @@ export function audio() {
       noiseBuf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
       const d = noiseBuf.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-      // crowd bed sits in the 500 Hz–2 kHz range so phone speakers can actually reproduce it
-      const s = AC.createBufferSource();
-      s.buffer = noiseBuf;
-      s.loop = true;
-      const b1 = AC.createBiquadFilter();
-      b1.type = 'bandpass';
-      b1.frequency.value = 650;
-      b1.Q.value = 0.8;
-      const b2 = AC.createBiquadFilter();
-      b2.type = 'bandpass';
-      b2.frequency.value = 1500;
-      b2.Q.value = 1.1;
-      const g2 = AC.createGain();
-      g2.gain.value = 0.55;
+      // crowd: everything crowd-related goes through crowdBus, which feeds the arena reverb
+      crowdBus = AC.createGain();
+      crowdBus.connect(master);
+      const verb = AC.createConvolver();
+      verb.buffer = arenaImpulse(AC);
+      const wet = AC.createGain();
+      wet.gain.value = 0.55;
+      crowdBus.connect(verb);
+      verb.connect(wet);
+      wet.connect(master);
+      // background chatter: one loop played twice, offset and slightly detuned, so it never repeats audibly
       crowdG = AC.createGain();
       crowdG.gain.value = 0;
-      s.connect(b1);
-      s.connect(b2);
-      b2.connect(g2);
-      b1.connect(crowdG);
-      g2.connect(crowdG);
-      crowdG.connect(master);
-      s.start(0);
+      crowdG.connect(crowdBus);
+      // rendered just after the first click (and the reactions after that) so starting audio stays instant
+      setTimeout(() => {
+        const bed = crowdBedBuffer(AC);
+        for (const [rate, offset] of [
+          [1, 0],
+          [0.97, 3.7],
+        ]) {
+          const s = AC.createBufferSource();
+          s.buffer = bed;
+          s.loop = true;
+          s.playbackRate.value = rate;
+          s.connect(crowdG);
+          s.start(0, offset);
+        }
+        warmShouts();
+      }, 50);
       for (let i = 0; i < 6; i++) strideBufs.push(strideBuffer(AC));
       for (let i = 0; i < 3; i++) stopBufs.push(stopBuffer(AC));
       // blade glide: a looping hiss whose level follows skating speed (see glideTick)

@@ -6,6 +6,7 @@ import { update } from '../game/update';
 import { render } from '../render/renderer';
 import { updPad } from '../ui/pad';
 import { updCard } from '../ui/playerCard';
+import { drawLogo } from '../ui/logo';
 import { drawPreview } from '../ui/preview';
 
 let last = performance.now(),
@@ -27,6 +28,9 @@ export function frame(now) {
   updPad();
   updCard();
   audioTick();
-  if (!$('menu').hidden) drawPreview();
+  if (!$('menu').hidden) {
+    drawPreview();
+    drawLogo();
+  }
   requestAnimationFrame(frame);
 }

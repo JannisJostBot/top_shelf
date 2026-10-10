@@ -334,8 +334,9 @@ export function audioTick() {
   if (!AC || !crowdG || settings.muted || mixer.crowdBase <= 0) return;
   const t = AC.currentTime;
   if (t > mixer.swellEnd && clock.now > mixer.wobT) {
-    mixer.wobT = clock.now + rnd(0.4, 1.1);
-    crowdG.gain.setTargetAtTime(mixer.crowdBase * rnd(0.7, 1.35), t, 0.35);
+    // the chatter already varies by itself; just let the overall level breathe slowly
+    mixer.wobT = clock.now + rnd(1.5, 3);
+    crowdG.gain.setTargetAtTime(mixer.crowdBase * rnd(0.88, 1.12), t, 0.9);
   }
 }
 export function strideSounds(dt) {

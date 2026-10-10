@@ -108,7 +108,7 @@ export function withNumber(map, num) {
     for (let r = 8; r <= 10; r++) for (let c = 2; c <= 9; c++) if (rows[r][c] === 'N') rows[r][c] = 'J';
     digits.forEach((d, i) => {
       for (let r = 0; r < 3; r++)
-        for (let c = 0; c < 3; c++) if (DIGITS[d][r][c] === 'N') rows[8 + r][starts[i] + c] = 'N';
+        for (let c = 0; c < 3; c++) if (DIGITS[d][r][c] === 'N') rows[8 + r][starts[i] + c] = 'n';
     });
     out = rows.map(r => r.join(''));
     byNum.set(num, out);
@@ -157,6 +157,13 @@ const stripe = m =>
   m.map(row => [...row].map((ch, c) => ('JjN'.includes(ch) ? (c % 2 ? 'J' : 'j') : ch)).join(''));
 export const REFSET = {};
 for (const k of ['frontA', 'frontB', 'backA', 'backB', 'sideA', 'sideB']) REFSET[k] = stripe(FACES.eyes[k]);
+// Jersey numbers need to contrast with the base colour (trim colours can be close to it, and animated jerseys
+// flicker), so they are white on dark jerseys and dark navy on light ones.
+function numberColour(main) {
+  const v = parseInt(main.slice(1), 16),
+    lum = 0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255);
+  return lum > 150 ? '#13213f' : '#ffffff';
+}
 export function mkPal(c) {
   const J = c.J || c.main,
     j = c.j || c.dark;
@@ -170,6 +177,7 @@ export function mkPal(c) {
     j,
     T: c.trim,
     N: c.trim,
+    n: numberColour(c.main),
     G: c.dark,
     P: '#1b2030',
     p: '#3a4258',

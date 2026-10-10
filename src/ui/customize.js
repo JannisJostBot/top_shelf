@@ -64,6 +64,7 @@ export function setArena(k, preview) {
   settings.stadiumKey = k;
   buildIce();
   const S = STADIUMS[k];
+  document.documentElement.style.setProperty('--kick', S.kick);
   document
     .querySelectorAll('#arenaSeg button')
     .forEach(x => x.setAttribute('aria-checked', String(x.dataset.a === k)));
