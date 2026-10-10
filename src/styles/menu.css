@@ -317,12 +317,17 @@ kbd {
 .mcard .go {
   color: #9fc0e2;
 }
-.aifoot {
-  margin: 0;
-  padding: 8px 12px 10px;
-  font-size: 9px;
-  letter-spacing: 0.08em;
+.ainote {
+  margin: 2px 0 0;
+  padding: 7px 10px 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
   text-align: center;
-  color: var(--muted);
-  border-top: 1px solid var(--line);
+  color: #ffffff;
+  background: #1b2744;
+  border: 2px solid #dbe9f6;
+}
+.ainote b {
+  color: #ffde59;
 }
