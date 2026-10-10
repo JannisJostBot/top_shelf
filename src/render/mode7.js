@@ -58,6 +58,63 @@ export function insideRinkW(x, y) {
     cy = y < RY0 + RR ? RY0 + RR : y > RY1 - RR ? RY1 - RR : null;
   return cx === null || cy === null || Math.hypot(x - cx, y - cy) <= RR;
 }
+// Broadcast-style shots of the CPU game playing behind the main menu, cutting to a new one every few seconds.
+const DEMO_SHOTS = ['chase', 'orbit', 'net', 'boards'],
+  SHOT_LEN = 6.5;
+let demoShot = -1;
+export function updDemoCam() {
+  const idx = Math.floor(clock.now / SHOT_LEN) % DEMO_SHOTS.length,
+    snap = idx !== demoShot,
+    kind = DEMO_SHOTS[idx];
+  demoShot = idx;
+  const C = G.cam3 || (G.cam3 = { x: 80, y: 128, yaw: 0, h: 8.5 }),
+    px = puck.x,
+    py = puck.y,
+    // the goal the play is heading for: the carrier's target, otherwise the nearer one
+    attackTop = puck.owner ? puck.owner.team === 0 : py < 128,
+    n = NETS[attackTop ? 0 : 1],
+    gy = attackTop ? GT : GB;
+  let tx, ty, yaw, h;
+  if (kind === 'chase') {
+    // behind the puck, looking at the goal it is heading for
+    const dx = 80 - px,
+      dy = gy - py;
+    yaw = Math.hypot(dx, dy) < 18 && C.pyaw !== undefined && !snap ? C.pyaw : Math.atan2(dy, dx);
+    C.pyaw = yaw;
+    tx = px - Math.cos(yaw) * 28;
+    ty = py - Math.sin(yaw) * 28;
+    h = 8.5;
+  } else if (kind === 'orbit') {
+    // a slow high orbit around the play
+    const a = clock.now * 0.35;
+    tx = px + Math.cos(a) * 34;
+    ty = py + Math.sin(a) * 34;
+    yaw = Math.atan2(py - ty, px - tx);
+    h = 12;
+  } else if (kind === 'net') {
+    // beside the goal, at crossbar height, watching the play come in
+    tx = px < 80 ? n.x0 - 7 : n.x1 + 7;
+    ty = n.top ? GT - 3 : GB + 3;
+    yaw = Math.atan2(py - ty, px - tx);
+    h = 6.5;
+  } else {
+    // low at the far boards, looking across the ice
+    tx = px < 80 ? 150 : 10;
+    ty = py;
+    yaw = Math.atan2(py - ty, px - tx);
+    h = 5;
+  }
+  for (let i = 0; i < 30 && !insideRinkW(tx, ty); i++) {
+    tx = lerp(tx, 80, 0.1);
+    ty = lerp(ty, 128, 0.1);
+  }
+  const k = snap ? 1 : 0.08;
+  C.x += (tx - C.x) * k;
+  C.y += (ty - C.y) * k;
+  C.h = h;
+  const dyaw = ((yaw - C.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+  C.yaw += dyaw * (snap ? 1 : 0.08);
+}
 export function upd3D(snap) {
   const A = G.rp && G.rp.angle;
   if (!A || !A.mode7 || !G.lastNet) return;
@@ -102,7 +159,8 @@ function glassTint(c) {
     0
   );
 }
-export function render3D() {
+/** Draws the 3D view from G.cam3. `overlay` adds the REPLAY label and letterbox bars. */
+export function render3D(overlay = true) {
   const C3 = G.cam3 || { x: 80, y: 128, yaw: 0, h: 8.5 },
     f = view.CW * 0.65,
     cxs = view.CW / 2,
@@ -306,7 +364,7 @@ export function render3D() {
   }
   view.ctx.globalAlpha = 1;
   cinema();
-  replayOverlay();
+  if (overlay) replayOverlay();
 }
 // ---------- goals in 3D ----------
 const NEAR = 0.6; // camera-space depth below which geometry is clipped away

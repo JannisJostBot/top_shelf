@@ -15,7 +15,7 @@ import { drawBubbles, drawFx } from './effects';
 import { drawFightHud, drawLitter } from './fight';
 import { skateGrooves } from './grooves';
 import { ice } from './ice';
-import { render3D } from './mode7';
+import { render3D, updDemoCam } from './mode7';
 import { drawNet } from './net';
 import { drawCtlBase, drawCtlTop, drawMini, drawOutlined, offscreenPuck, replayOverlay } from './overlays';
 import { R } from './pixels';
@@ -26,6 +26,12 @@ import { drawZamHud, drawZamboni } from './zamboni';
 
 export function render() {
   kit.PS = puckStyle();
+  // behind the main menu the CPU game is filmed with the 3D broadcast cameras
+  if (G.demo) {
+    updDemoCam();
+    render3D(false);
+    return;
+  }
   if (G.state === 'replay' && G.rp && G.rp.angle.mode7) {
     render3D();
     return;
