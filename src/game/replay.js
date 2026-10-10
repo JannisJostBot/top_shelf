@@ -54,6 +54,7 @@ export const ANGLES = [
   { name: 'PUCK CAM', z: 3, spd: 0.42, puck: true },
   { name: 'CHASE CAM 3D', z: 1, spd: 0.5, mode7: 'chase' },
   { name: 'NET CAM 3D', z: 1, spd: 0.5, mode7: 'net' },
+  { name: 'FAN CAM 3D', z: 1, spd: 0.5, mode7: 'guest' },
 ];
 let angleIdx = -1;
 export function applyFrame(fi) {

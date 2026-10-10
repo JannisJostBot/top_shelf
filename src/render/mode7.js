@@ -1,7 +1,8 @@
 import { GB, GT, IH, IW, K, ND, NETS, RR, RX0, RX1, RY0, RY1 } from '../config';
-import { lerp } from '../core/math';
+import { clamp, lerp } from '../core/math';
 import { clock } from '../core/time';
 import { STADIUMS } from '../data/stadiums';
+import { kit } from '../game/kit';
 import { players } from '../game/players';
 import { G, parts, puck, ref } from '../game/world';
 import { cinema } from './atmosphere';
@@ -58,38 +59,37 @@ export function insideRinkW(x, y) {
     cy = y < RY0 + RR ? RY0 + RR : y > RY1 - RR ? RY1 - RR : null;
   return cx === null || cy === null || Math.hypot(x - cx, y - cy) <= RR;
 }
-// Broadcast-style shots of the CPU game playing behind the main menu, cutting to a new one every few seconds.
-// Each shot picks its goal and side at the cut and keeps them, and the camera follows a smoothed focus point
-// with capped turning speed, so the only sudden changes are the cuts themselves.
-const DEMO_SHOTS = ['chase', 'orbit', 'net', 'boards'],
-  SHOT_LEN = 6.5,
-  FOCUS_K = 0.035, // how quickly the focus point glides after the puck (per frame)
+// Broadcast-style 3D shots. The menu background and the cinematic Watch mode both use them: each shot picks
+// its goal and side at the cut and keeps them, and the camera follows a smoothed focus point with capped
+// turning and travel speed, so the only sudden changes are the cuts themselves.
+const FOCUS_K = 0.035, // how quickly the focus point glides after the puck (per frame)
   MOVE_K = 0.035, // how quickly the camera moves to its spot
   TURN_MAX = 0.012, // radians per frame (about 0.7 rad/s)
   MOVE_MAX = 0.6; // world units per frame (about 36 per second)
-const demo = { shot: -1, fx: 80, fy: 128, net: null, side: 1, orbit0: 0 };
-export function updDemoCam() {
-  const idx = Math.floor(clock.now / SHOT_LEN) % DEMO_SHOTS.length,
-    // a new shot, or the puck jumped (a face-off after a goal): cut rather than sweep across the rink
-    snap = idx !== demo.shot || Math.hypot(puck.x - demo.fx, puck.y - demo.fy) > 70,
-    kind = DEMO_SHOTS[idx],
-    C = G.cam3 || (G.cam3 = { x: 80, y: 128, yaw: 0, h: 8.5 });
+const cine = { fx: 80, fy: 128, net: null, side: 1, t0: 0 };
+/** Spot for the fan cam: up in the side stands behind the glass, level with the play. */
+function fanSpot(side, fy) {
+  return { tx: side < 0 ? -18 : 178, ty: clamp(fy * 0.6 + 128 * 0.4, 50, 206), h: 17 };
+}
+/** Moves G.cam3 for a shot of the given kind; `snap` starts a new shot (a cut). */
+export function broadcastCam(kind, snap) {
+  const C = G.cam3 || (G.cam3 = { x: 80, y: 128, yaw: 0, h: 8.5 });
+  // a jump of the puck (a face-off after a goal) is also a cut rather than a sweep across the rink
+  snap = snap || Math.hypot(puck.x - cine.fx, puck.y - cine.fy) > 70;
   if (snap) {
-    // a cut: choose this shot's goal and side from where the play is now, and keep them until the next cut
-    demo.shot = idx;
-    demo.fx = puck.x;
-    demo.fy = puck.y;
+    cine.fx = puck.x;
+    cine.fy = puck.y;
     const attackTop = puck.owner ? puck.owner.team === 0 : puck.y < 128;
-    demo.net = NETS[attackTop ? 0 : 1];
-    demo.side = puck.x < 80 ? -1 : 1;
-    demo.orbit0 = clock.now;
+    cine.net = NETS[attackTop ? 0 : 1];
+    cine.side = puck.x < 80 ? -1 : 1;
+    cine.t0 = clock.now;
   } else {
-    demo.fx += (puck.x - demo.fx) * FOCUS_K;
-    demo.fy += (puck.y - demo.fy) * FOCUS_K;
+    cine.fx += (puck.x - cine.fx) * FOCUS_K;
+    cine.fy += (puck.y - cine.fy) * FOCUS_K;
   }
-  const fx = demo.fx,
-    fy = demo.fy,
-    n = demo.net,
+  const fx = cine.fx,
+    fy = cine.fy,
+    n = cine.net,
     gy = n.top ? GT : GB;
   let tx, ty, h;
   if (kind === 'chase') {
@@ -99,25 +99,30 @@ export function updDemoCam() {
     h = 8.5;
   } else if (kind === 'orbit') {
     // a slow high orbit around the play
-    const a = (clock.now - demo.orbit0) * 0.25 + (demo.side > 0 ? 0 : Math.PI);
+    const a = (clock.now - cine.t0) * 0.25 + (cine.side > 0 ? 0 : Math.PI);
     tx = fx + Math.cos(a) * 34;
     ty = fy + Math.sin(a) * 34;
     h = 12;
   } else if (kind === 'net') {
     // beside this shot's goal at crossbar height, watching the play come in
-    tx = demo.side < 0 ? n.x0 - 7 : n.x1 + 7;
+    tx = cine.side < 0 ? n.x0 - 7 : n.x1 + 7;
     ty = n.top ? GT - 3 : GB + 3;
     h = 6.5;
+  } else if (kind === 'guest') {
+    // a fan in the stands on the far side from the play, looking over the glass
+    ({ tx, ty, h } = fanSpot(-cine.side, fy));
   } else {
     // low at the boards opposite the play, looking across the ice
-    tx = demo.side < 0 ? 150 : 10;
+    tx = cine.side < 0 ? 150 : 10;
     ty = fy;
     h = 5;
   }
-  for (let i = 0; i < 30 && !insideRinkW(tx, ty); i++) {
-    tx = lerp(tx, 80, 0.1);
-    ty = lerp(ty, 128, 0.1);
-  }
+  if (kind !== 'guest')
+    for (let i = 0; i < 30 && !insideRinkW(tx, ty); i++) {
+      tx = lerp(tx, 80, 0.1);
+      ty = lerp(ty, 128, 0.1);
+    }
+  C.guest = kind === 'guest';
   if (snap) {
     C.x = tx;
     C.y = ty;
@@ -139,6 +144,44 @@ export function updDemoCam() {
   const dyaw = ((yaw - C.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
   C.yaw += snap ? dyaw : Math.max(-TURN_MAX, Math.min(TURN_MAX, dyaw * 0.06));
 }
+
+// behind the main menu: a new 3D shot every few seconds
+const DEMO_SHOTS = ['chase', 'orbit', 'net', 'guest', 'boards'],
+  SHOT_LEN = 6.5;
+let demoShot = -1;
+export function updDemoCam() {
+  const idx = Math.floor(clock.now / SHOT_LEN) % DEMO_SHOTS.length,
+    snap = idx !== demoShot;
+  demoShot = idx;
+  broadcastCam(DEMO_SHOTS[idx], snap);
+}
+
+/** Spectators' heads in the foreground of the fan cam; they jump and wave foam fingers when the crowd is loud. */
+function fanHeads() {
+  const g = view.ctx,
+    n = 6,
+    w = view.CW / n;
+  for (let i = 0; i < n; i++) {
+    const cx = Math.round(w * (i + 0.5) + Math.sin(i * 2.3) * w * 0.2),
+      cheer = G.hype > 0.1 || (Math.sin(clock.now * 0.7 + i * 1.9) > 0.92 ? 1 : 0),
+      jump = cheer ? Math.round(Math.abs(Math.sin(clock.now * 9 + i)) * w * 0.12) : 0,
+      r = Math.round(w * 0.4),
+      base = view.CH - Math.round(w * 0.15) - jump;
+    g.fillStyle = '#05070d';
+    g.fillRect(cx - r * 1.6, base, r * 3.2, view.CH - base); // shoulders
+    g.beginPath();
+    g.arc(cx, base - r * 0.6, r, 0, Math.PI * 2); // head
+    g.fill();
+    g.fillStyle = kit.TEAMS[i % 2].main;
+    g.fillRect(cx - r, base - r * 1.6, r * 2, Math.round(r * 0.6)); // beanie in the teams' colours
+    if (cheer && i % 2 === 0) {
+      // a foam finger
+      g.fillStyle = kit.TEAMS[0].main;
+      g.fillRect(cx + r * 1.2, base - r * 3.4, r * 0.8, r * 2.6);
+      g.fillRect(cx + r * 1.35, base - r * 4.4, r * 0.4, r);
+    }
+  }
+}
 export function upd3D(snap) {
   const A = G.rp && G.rp.angle;
   if (!A || !A.mode7 || !G.lastNet) return;
@@ -154,13 +197,18 @@ export function upd3D(snap) {
     tx = puck.x - Math.cos(yaw) * 26;
     ty = puck.y - Math.sin(yaw) * 26;
     h = 8.5;
+  } else if (A.mode7 === 'guest') {
+    // a fan in the stands beside the goal end, watching over the glass
+    ({ tx, ty, h } = fanSpot(puck.x < 80 ? 1 : -1, (n.top ? GT : GB) + (n.top ? 40 : -40)));
+    yaw = Math.atan2(puck.y - ty, puck.x - tx);
   } else {
     tx = n.x1 + 7;
     ty = n.top ? GT - 3 : GB + 3;
     yaw = Math.atan2(puck.y - ty, puck.x - tx);
     h = 6.5;
   }
-  for (let i = 0; i < 30 && !insideRinkW(tx, ty); i++) {
+  C.guest = A.mode7 === 'guest';
+  for (let i = 0; i < 30 && !C.guest && !insideRinkW(tx, ty); i++) {
     tx = lerp(tx, 80, 0.1);
     ty = lerp(ty, 128, 0.1);
   }
@@ -205,18 +253,38 @@ export function render3D(overlay = true) {
       BOARD = U32('#f3f5f8'),
       STAND = U32('#141a2c'),
       SEAT = U32('#0b0f1c'),
+      NEARSEAT = U32('#2a3454'), // the fan cam's own seat rows below the near boards
+      NEARSEAT2 = U32('#222a45'),
       ARENA = U32(S.arena),
       ROOF = U32('#070a14'),
       LIGHT = U32('#fff4d6'),
       roofY = hor - Math.round(view.CH * 0.3),
       hype = G.hype;
-    const crowd = crowdTone();
+    const crowd = crowdTone(),
+      // the fan cam sits in the stands: rays first cross the near boards and glass, then the ice
+      outside = !insideRinkW(C3.x, C3.y);
     let prevSeat = NaN;
     for (let x = 0; x < view.CW; x++) {
       const k = (x - cxs) / f,
         dx = Fx + Rx * k,
         dy = Fy + Ry * k;
-      let t = 0.5;
+      let t = 0.5,
+        tIn = 0;
+      if (outside) {
+        while (t < 420 && !insideRinkW(C3.x + dx * t, C3.y + dy * t)) t += 1.2;
+        let lo = Math.max(0.1, t - 1.2),
+          hi = t;
+        for (let i = 0; i < 5 && t < 420; i++) {
+          const m = (lo + hi) / 2;
+          if (insideRinkW(C3.x + dx * m, C3.y + dy * m)) hi = m;
+          else lo = m;
+        }
+        tIn = hi;
+      }
+      const nearTop = hor + ((h - 4.5) * f) / tIn,
+        nearBase = hor + (h * f) / tIn,
+        nearGlass = hor + ((h - 10) * f) / tIn,
+        nearKick = nearBase - (nearBase - nearTop) * 0.22;
       while (t < 420 && insideRinkW(C3.x + dx * t, C3.y + dy * t)) t += 1.2;
       if (t < 420) {
         let lo = Math.max(0.1, t - 1.2),
@@ -284,6 +352,12 @@ export function render3D(overlay = true) {
             }
           }
           if (y >= gt) col = glassTint(col);
+        }
+        if (outside) {
+          // the near boards in front of the fan, and the glass above them over everything behind
+          if (y >= nearTop)
+            col = y >= nearBase ? ((y >> 2) & 1 ? NEARSEAT : NEARSEAT2) : y >= nearKick ? KICK : BOARD;
+          else if (y >= nearGlass) col = glassTint(col);
         }
         buf3[y * view.CW + x] = col;
       }
@@ -387,6 +461,7 @@ export function render3D(overlay = true) {
     view.ctx.fillRect(Math.round(q.x), Math.round(q.y - z * 2), z, z);
   }
   view.ctx.globalAlpha = 1;
+  if (C3.guest) fanHeads();
   cinema();
   if (overlay) replayOverlay();
 }

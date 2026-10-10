@@ -1,4 +1,5 @@
 import { IH, IW, K, NETS } from '../config';
+import { directorShot, liveLabel } from './director';
 import { drawGoalFx } from './goalFx';
 import { rnd, toS } from '../core/math';
 import { clock } from '../core/time';
@@ -16,7 +17,7 @@ import { drawBubbles, drawFx } from './effects';
 import { drawFightHud, drawLitter } from './fight';
 import { skateGrooves } from './grooves';
 import { ice } from './ice';
-import { render3D, updDemoCam } from './mode7';
+import { broadcastCam, render3D, updDemoCam } from './mode7';
 import { drawNet } from './net';
 import { drawCtlBase, drawCtlTop, drawMini, drawOutlined, offscreenPuck, replayOverlay } from './overlays';
 import { R } from './pixels';
@@ -32,6 +33,19 @@ export function render() {
     updDemoCam();
     render3D(false);
     return;
+  }
+  // Watch mode is directed: cuts between top-down and 3D shots (goal replays keep their own angles)
+  let liveName = null;
+  if (G.watch && G.state !== 'replay') {
+    const shot = directorShot();
+    liveName = shot.name;
+    if (shot.kind !== '2d') {
+      broadcastCam(shot.kind, shot.fresh);
+      render3D(false);
+      liveLabel(liveName);
+      return;
+    }
+    view.camZ = shot.zoom;
   }
   if (G.state === 'replay' && G.rp && G.rp.angle.mode7) {
     render3D();
@@ -164,4 +178,5 @@ export function render() {
   else if (G.state === 'brawl') drawFightHud();
   else if (G.state === 'zamboni') drawZamHud();
   else drawMini();
+  if (liveName) liveLabel(liveName);
 }

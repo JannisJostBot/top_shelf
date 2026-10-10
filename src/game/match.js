@@ -1,4 +1,5 @@
 import { audio } from '../audio/engine';
+import { resetDirector } from '../render/director';
 import { startGoalFx } from '../render/goalFx';
 import { goalMusic, stopSong } from '../audio/music';
 import { S } from '../audio/sfx';
@@ -191,6 +192,7 @@ export function startGame(watch) {
   audio();
   G.demo = false;
   G.watch = !!watch;
+  resetDirector();
   G.ai0 = G.watch;
   G.controlled = null;
   G.score = [0, 0];

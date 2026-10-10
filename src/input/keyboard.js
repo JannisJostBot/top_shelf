@@ -1,4 +1,5 @@
 import { audio } from '../audio/engine';
+import { nextShot } from '../render/director';
 import { togglePause } from '../game/match';
 import { endReplay, nextAngle } from '../game/replay';
 import { endCelebration } from '../game/states/celebrate';
@@ -19,6 +20,10 @@ export function initKeyboard() {
     }
     if (e.code === 'KeyV' && G.state === 'replay') {
       nextAngle();
+      return;
+    }
+    if (e.code === 'KeyV' && G.watch) {
+      nextShot();
       return;
     }
     if (e.code === 'Enter' && G.state === 'replay') {
