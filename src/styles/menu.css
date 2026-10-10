@@ -17,7 +17,7 @@
   top: 0;
   z-index: 2;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   background: var(--panel);
   border-block: 2px solid var(--line);
 }
@@ -361,4 +361,30 @@ kbd.pb-y {
 body.padnav button:focus {
   outline: 3px solid #ffffff;
   outline-offset: 2px;
+}
+
+/* the Guide tab: a short manual of the game mechanics */
+.guide h3 {
+  margin: 4px 0 -4px;
+  font-family: var(--display);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+  padding-left: 7px;
+  border-left: 3px solid #d8343f;
+}
+.guide p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.guide .how li {
+  line-height: 1.5;
+}
+
+#t-guide {
+  font-family: var(--display);
+  font-size: 12px;
 }

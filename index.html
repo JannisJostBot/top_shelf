@@ -73,6 +73,16 @@
               <button role="tab" id="t-arena" data-tab="arena" aria-selected="false">Arena</button>
               <button role="tab" id="t-options" data-tab="options" aria-selected="false">Setup</button>
               <button role="tab" id="t-help" data-tab="help" aria-selected="false">Keys</button>
+              <button
+                role="tab"
+                id="t-guide"
+                data-tab="guide"
+                aria-selected="false"
+                aria-label="Guide"
+                title="Guide"
+              >
+                ?
+              </button>
             </nav>
 
             <section class="tabp" id="p-play" role="tabpanel" aria-labelledby="t-play">
@@ -184,6 +194,13 @@
 
             <section class="tabp" id="p-options" role="tabpanel" aria-labelledby="t-options" hidden>
               <div class="orow">
+                <div><b>Sound</b><span>Effects, crowd and music</span></div>
+                <div class="seg two" role="radiogroup" aria-label="Sound" id="sndSeg">
+                  <button role="radio" data-v="on" aria-checked="true">On</button
+                  ><button role="radio" data-v="off" aria-checked="false">Off</button>
+                </div>
+              </div>
+              <div class="orow">
                 <div><b>Camera</b><span>How close the view follows the play</span></div>
                 <div class="seg two" role="radiogroup" aria-label="Camera zoom" id="camSeg">
                   <button role="radio" id="v-close" data-v="close" aria-checked="true">Close</button
@@ -242,6 +259,89 @@
               <p class="small">
                 The buttons change with the situation: Poke and Check on defense, Punch and Block in a fight,
                 Horn and Finish on the resurfacer.
+              </p>
+            </section>
+            <section class="tabp guide" id="p-guide" role="tabpanel" aria-labelledby="t-guide" hidden>
+              <h3>The basics</h3>
+              <p>
+                Three skaters and a goalie a side. Most goals after three periods wins; a tie goes to
+                overtime, where the next goal wins. You control the skater with the marker: you automatically
+                take over whoever has the puck or is receiving your pass, otherwise the skater nearest the
+                puck. Switch jumps to the nearest one yourself.
+              </p>
+              <h3>Skating</h3>
+              <p>
+                Carrying the puck slows you down by a tenth. Pokes and dashes give a short burst of speed.
+                Stopping hard throws up a spray of ice.
+              </p>
+              <h3>Shooting</h3>
+              <p>
+                Hold Shoot to wind up (up to about 0.7 s), release to fire. A full wind-up shoots almost twice
+                as hard but less accurately. In the attacking zone, facing the net, the shot goes for a
+                corner: steer left or right to pick one, or let it pick the side the goalie leaves open. With
+                the mouse, the cursor picks the spot. Anywhere else you shoot straight ahead, which is handy
+                for dumping the puck in.
+              </p>
+              <h3>Passing</h3>
+              <p>
+                The pass goes to the teammate in the direction you are steering. With no direction it finds
+                the most open teammate up the ice.
+              </p>
+              <h3>Defence</h3>
+              <ul class="how">
+                <li>
+                  <b>Poke</b>lunges at the carrier. It only works from the front or side and at close range;
+                  from behind you get NO REACH. Good hands (HND) against their hands raise the odds. A miss
+                  leaves you stunned for a moment. Staying close also strips the puck now and then.
+                </li>
+                <li>
+                  <b>Check</b>charges into a nearby carrier. Your checking (CHK) against theirs, plus how fast
+                  you arrive, decides it: they go down and lose the puck, they stumble, or you bounce off.
+                </li>
+                <li><b>Dash</b>is what Check does when nobody has the puck: a burst toward it.</li>
+              </ul>
+              <h3>Face-offs</h3>
+              <p>
+                Wait for DROP!, then press Shoot. You have to beat the CPU's reaction: 0.42 s on Rookie, 0.31
+                s on Pro, 0.24 s on All-Star. Pressing too early hands them the draw.
+              </p>
+              <h3>Goalies</h3>
+              <p>
+                Goalies react to the shot and can catch and hold it. Hard shots and the far corner beat them
+                most often; shots off the post ring away.
+              </p>
+              <h3>Player ratings</h3>
+              <p>
+                SPD skating speed, SHT shot power, HND puck handling (stealing and keeping the puck), CHK
+                checking. Wingers shoot harder and skate faster, centers have the best hands, defensemen check
+                hardest but are slower. Every roster is rolled fresh.
+              </p>
+              <h3>Momentum</h3>
+              <p>
+                Winning a fight (25 s) or polishing at least 80% of the ice between periods (20 s) makes your
+                team skate 6% faster.
+              </p>
+              <h3>Ice wear and the resurfacer</h3>
+              <p>
+                Skates chew up the ice as the period goes on, and worn ice drags on the puck so passes and
+                shots slow down sooner. Between periods you drive the resurfacer for 25 seconds: cover as much
+                ice as you can. Clean ice plays fast again.
+              </p>
+              <h3>Fights</h3>
+              <p>
+                After you score, a sore loser may drop the gloves (more likely the longer it has been since
+                the last fight; turn it off in Setup). Punch to hit; Block when they wind up and the red !
+                shows. Punching drains stamina, so tired punches are weak; it recovers when you wait. Higher
+                CPU levels block and counter more.
+              </p>
+              <h3>CPU level</h3>
+              <p>
+                Raises the CPU's skating speed, stealing, goalie skill, shooting accuracy, reactions, face-off
+                speed and checking.
+              </p>
+              <h3>Replays</h3>
+              <p>
+                Every goal gets a replay from changing camera angles. Next angle or skip from the Keys tab.
               </p>
             </section>
           </div>

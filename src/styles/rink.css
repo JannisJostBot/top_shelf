@@ -17,6 +17,7 @@
 .ov {
   position: absolute;
   inset: 0;
+  z-index: 4; /* above the floating scoreboard */
   display: flex;
   align-items: center;
   justify-content: center;

@@ -11,11 +11,18 @@ import { settings } from '../settings';
 import { clockText, hudClock, showRec } from './hud';
 
 // menu tabs
+// the Setup tab's Sound row mirrors the scoreboard's SFX button (which is hidden while the menu is open)
+function showSound() {
+  document
+    .querySelectorAll('#sndSeg button')
+    .forEach(x => x.setAttribute('aria-checked', String((x.dataset.v === 'off') === settings.muted)));
+}
 export function showTab(name) {
   document
     .querySelectorAll('.tabs button')
     .forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
-  for (const t of ['play', 'train', 'teams', 'arena', 'options', 'help']) $('p-' + t).hidden = t !== name;
+  for (const t of ['play', 'train', 'teams', 'arena', 'options', 'help', 'guide'])
+    $('p-' + t).hidden = t !== name;
   if (name === 'train') {
     let b = 0;
     try {
@@ -151,9 +158,15 @@ export function initMenu() {
   $('resumeBtn').addEventListener('click', togglePause);
   $('quitBtn').addEventListener('click', toMenu);
   $('pauseBtn').addEventListener('click', togglePause);
+  document.querySelectorAll('#sndSeg button').forEach(b =>
+    b.addEventListener('click', () => {
+      if ((b.dataset.v === 'off') !== settings.muted) $('muteBtn').click();
+    }),
+  );
   $('muteBtn').addEventListener('click', () => {
     settings.muted = !settings.muted;
     $('muteBtn').setAttribute('aria-pressed', String(settings.muted));
+    showSound();
     audio();
     if (master) master.gain.setTargetAtTime(settings.muted ? 0 : 0.9, AC.currentTime, 0.02);
   });

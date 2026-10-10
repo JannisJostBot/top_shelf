@@ -98,3 +98,8 @@
   opacity: 0.35;
   cursor: default;
 }
+
+/* the main menu has its own title; the scoreboard would only show the demo clock behind it */
+#stage:has(> #menu:not([hidden])) #hud {
+  visibility: hidden;
+}

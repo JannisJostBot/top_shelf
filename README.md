@@ -1,6 +1,6 @@
 # Top Shelf
 
-3-on-3 pixel-art arcade hockey for the browser: Canvas 2D rendering, synthesized Web Audio, keyboard/mouse/touch controls.
+3-on-3 pixel-art arcade hockey for the browser: Canvas 2D rendering, synthesized Web Audio, keyboard/mouse/touch and Xbox-controller support. The in-game **?** tab explains the mechanics.
 
 > **This project is vibe coded.** It was built almost entirely by an AI coding assistant, prompted by a person, as an
 > experiment. Treat it as a playground, not as production software: the code has not been carefully reviewed,
@@ -41,7 +41,7 @@ src/
     update.js         per-tick state dispatch
   render/             canvas drawing: sprites, ice, stands, players, puck, effects, mode-7 replay cam
   audio/              Web Audio engine, procedural skate sounds, synth voices, SFX table, goal songs
-  input/              shared input state + keyboard, mouse, touch, haptics
+  input/              shared input state + keyboard, mouse, touch, game controller, haptics
   ui/                 DOM UI: HUD, menu, customization, player card, touch pad
   styles/             CSS split by area
 tests/                Vitest specs
