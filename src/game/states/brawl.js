@@ -242,11 +242,11 @@ function endBrawl(w) {
   }
   S('whistle');
   if (w === 0) {
-    banner('YOU WIN THE FIGHT', 'home', 'Momentum: your team skates faster for 25s');
+    banner('YOU WIN THE FIGHT', 'home', 'Momentum: your team skates faster for 25s', true);
     S('cheer');
     vib([60, 40, 120]);
   } else if (w === 1) {
-    banner('YOU LOST THE FIGHT', 'away', 'The CPU skates faster for 25s');
+    banner('YOU LOST THE FIGHT', 'away', 'The CPU skates faster for 25s', true);
     S('groan');
     vib([150]);
   } else banner('BROKEN UP', 'small', 'The refs pull them apart');

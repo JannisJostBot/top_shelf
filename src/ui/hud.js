@@ -26,19 +26,55 @@ export function hudClock() {
     $('clock').textContent = t;
   }
 }
-export function banner(t, cls, sub) {
+// `big` is for the key moments (goals, fight results, the final result): bars in the team colour slide in
+// above and below, the letters fly in one by one, a shine sweeps across and the subtitle rises in.
+let hideTimer = 0;
+export function banner(t, cls, sub, big) {
   const b = $('banner'),
     bt = $('bt');
-  bt.textContent = t;
-  bt.className = cls || '';
+  clearTimeout(hideTimer);
+  bt.className = (cls || '') + (big ? ' big' : '');
+  if (big) {
+    bt.innerHTML = '';
+    [...t].forEach((ch, i) => {
+      const s = document.createElement('span');
+      s.className = 'ch';
+      s.style.setProperty('--i', String(i));
+      s.textContent = ch === ' ' ? '\u00a0' : ch;
+      bt.appendChild(s);
+    });
+  } else bt.textContent = t;
+  const team = (cls || '').includes('home')
+    ? 'var(--home-ui)'
+    : (cls || '').includes('away')
+      ? 'var(--away-ui)'
+      : 'var(--led)';
+  b.style.setProperty('--bc', team);
+  b.classList.toggle('big', !!big);
+  b.classList.remove('out');
   $('bs').textContent = sub || '';
   b.hidden = false;
-  bt.style.animation = 'none';
-  void bt.offsetWidth;
-  bt.style.animation = '';
+  // restart the entrance animations
+  for (const el of [b, bt, $('bs'), ...b.querySelectorAll('.bbar')]) {
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = '';
+  }
 }
 export function hideBanner() {
-  $('banner').hidden = true;
+  const b = $('banner');
+  if (b.hidden) return;
+  if (!b.classList.contains('big')) {
+    b.hidden = true;
+    return;
+  }
+  // big banners slide back out
+  b.classList.add('out');
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => {
+    b.hidden = true;
+    b.classList.remove('out');
+  }, 300);
 }
 export function showRec() {
   const r = loadRec()[settings.diffKey];

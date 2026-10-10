@@ -311,3 +311,118 @@ h2 {
     transition: none;
   }
 }
+
+/* ---------- big moments: goals, fight results, the final result ---------- */
+#banner .bbar {
+  display: none;
+}
+#banner.big {
+  top: 24%;
+  gap: 0;
+  padding-inline: 0;
+}
+#banner.big .bbar {
+  display: block;
+  width: 100%;
+  height: 7px;
+  background: linear-gradient(90deg, var(--bc) 0 68%, #ffffff 68% 72%, var(--bc) 72%);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+}
+#banner.big .bbar.top {
+  animation: barFromLeft 0.38s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+#banner.big .bbar.bot {
+  animation: barFromRight 0.38s cubic-bezier(0.2, 1.4, 0.4, 1) 0.06s both;
+}
+#banner.big #bt {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  font-size: clamp(22px, 10vw, 42px);
+  padding: 12px 8px 10px;
+  background: rgba(10, 15, 30, 0.84);
+  animation: bandOpen 0.24s steps(5) 0.12s both;
+}
+#bt.big .ch {
+  display: inline-block;
+  animation: letterIn 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  animation-delay: calc(var(--i) * 45ms + 220ms);
+}
+#bt.big::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -50%;
+  width: 40%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: shine 0.6s ease-in 1s both;
+}
+#banner.big #bs {
+  margin-top: 8px;
+  animation: subIn 0.35s ease-out 0.75s both;
+}
+#banner.big.out .bbar.top {
+  animation: barToRight 0.25s ease-in both;
+}
+#banner.big.out .bbar.bot {
+  animation: barToLeft 0.25s ease-in both;
+}
+#banner.big.out #bt,
+#banner.big.out #bs {
+  animation: fadeOut 0.2s ease-in both;
+}
+@keyframes barFromLeft {
+  from {
+    transform: translateX(-110%);
+  }
+}
+@keyframes barFromRight {
+  from {
+    transform: translateX(110%);
+  }
+}
+@keyframes barToRight {
+  to {
+    transform: translateX(110%);
+  }
+}
+@keyframes barToLeft {
+  to {
+    transform: translateX(-110%);
+  }
+}
+@keyframes bandOpen {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes letterIn {
+  0% {
+    transform: translateY(-70px) scale(2.4) rotate(-14deg);
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes shine {
+  to {
+    left: 120%;
+  }
+}
+@keyframes subIn {
+  from {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+}
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}

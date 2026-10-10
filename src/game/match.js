@@ -97,6 +97,7 @@ export function goalScored(team, n) {
     G.watch ? teamLabel(team) + ' SCORES' : team === 0 ? 'GOAL!' : 'CPU SCORES',
     team === 0 ? 'home' : 'away',
     scorer && scorer.team === team ? '#' + scorer.num + ' ' + scorer.name : '',
+    true,
   );
   G.bannerT = 0;
   for (let i = 0; i < 46; i++)
@@ -146,7 +147,6 @@ export function showPad(on) {
 export function endGame() {
   stopEngine();
   G.state = 'over';
-  hideBanner();
   $('rpBar').hidden = true;
   $('pcard').hidden = true;
   view.camZ = 1;
@@ -182,7 +182,13 @@ export function endGame() {
       ' L';
   }
   $('againBtn').textContent = G.watch ? 'WATCH AGAIN' : 'REMATCH';
-  $('overOv').hidden = false;
+  // the result gets its moment before the results card comes up
+  banner($('overT').textContent, w === 0 ? 'home' : 'away', G.score[0] + ' – ' + G.score[1], true);
+  setTimeout(() => {
+    if (G.state !== 'over') return;
+    hideBanner();
+    $('overOv').hidden = false;
+  }, 1900);
   showPad(false);
   $('pauseBtn').disabled = true;
 }

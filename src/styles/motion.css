@@ -6,3 +6,13 @@
     animation: none;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  #banner.big .bbar,
+  #banner.big #bt,
+  #bt.big .ch,
+  #bt.big::after,
+  #banner.big #bs {
+    animation: none !important;
+  }
+}
