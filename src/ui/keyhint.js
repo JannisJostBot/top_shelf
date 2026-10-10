@@ -1,5 +1,6 @@
 import { $ } from '../core/dom';
 import { G } from '../game/world';
+import { pad } from '../input/gamepad';
 import { mouse } from '../input/state';
 import { touchState } from '../input/touch';
 
@@ -54,11 +55,39 @@ const HINTS = {
   ],
   idle: [],
 };
+// keyboard hint keys as Xbox controller buttons
+const PAD_GLYPH = { Space: 'A', Shift: 'B', L: 'X', Enter: 'View', V: 'Y', Arrows: 'LS' };
+const PADMAP = [
+  [['LS', '✚'], 'Skate (stick gives analog speed)'],
+  [['A', 'RT'], 'Shoot (hold to wind up) · Poke · Draw · Punch · Horn'],
+  [['B', 'RB'], 'Pass · Check · Dash · Block · Finish'],
+  [['X', 'LB'], 'Switch skater'],
+  [['View'], 'Skip replay or celebration'],
+  [['Y'], 'Next replay angle'],
+  [['☰'], 'Pause'],
+  [['✚', 'A'], 'In menus: move and press · LB / RB change tab · B resume'],
+];
+export const padmapHTML = () =>
+  PADMAP.map(
+    ([ks, t]) =>
+      '<span>' +
+      ks.map(k => '<kbd class="pb pb-' + k.toLowerCase() + '">' + k + '</kbd>').join('') +
+      '</span><span>' +
+      t +
+      '</span>',
+  ).join('');
 export function setHint(m) {
   const el = $('keyhint');
   const show = !touchState.touchUI && !G.demo && !G.watch && G.state !== 'over';
   el.hidden = !show;
   if (!show) return;
+  if (pad.active) {
+    const list = (HINTS[m] || []).map(([k, t]) => [PAD_GLYPH[k] || k, t]).concat([['☰', 'Pause']]);
+    el.innerHTML = list
+      .map(([k, t]) => '<span><kbd class="pb pb-' + k.toLowerCase() + '">' + k + '</kbd>' + t + '</span>')
+      .join('');
+    return;
+  }
   let list = (HINTS[m] || []).map(h =>
     mouse.on ? [h[0] === 'Space' ? 'L-click' : h[0] === 'Shift' ? 'R-click' : h[0], h[1]] : h,
   );

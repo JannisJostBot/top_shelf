@@ -27,6 +27,7 @@ import { faceoff } from './game/states/faceoff';
 import { startZamboni } from './game/states/zamboni';
 import { update } from './game/update';
 import { G, puck, ref } from './game/world';
+import { initGamepad } from './input/gamepad';
 import { initKeyboard } from './input/keyboard';
 import { initMouse } from './input/mouse';
 import { input, mouse } from './input/state';
@@ -39,7 +40,7 @@ import { render } from './render/renderer';
 import { settings } from './settings';
 import { applyColors, initCustomize, setArena, setPuck } from './ui/customize';
 import { hud } from './ui/hud';
-import { keymapHTML } from './ui/keyhint';
+import { keymapHTML, padmapHTML } from './ui/keyhint';
 import {
   PERIOD_LENGTHS,
   initMenu,
@@ -59,6 +60,7 @@ initTouch();
 initMouse();
 initReplayBar();
 initKeyboard();
+initGamepad();
 initMatch();
 initCamera();
 initCustomize();
@@ -81,6 +83,7 @@ setDiff(settings.diffKey);
 setPeriodLen(PERIOD_LENGTHS.includes(pr.len) ? pr.len : 60);
 setView(settings.viewMode);
 $('keymapMenu').innerHTML = keymapHTML();
+$('padmapMenu').innerHTML = padmapHTML();
 $('pauseKeys').innerHTML = keymapHTML();
 applyInputMode();
 setTimeout(() => {

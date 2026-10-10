@@ -80,7 +80,7 @@ export function drawMini() {
     mw = Math.round(W * m),
     mh = Math.round(H * m),
     x0 = view.CW - mw - 5,
-    y0 = 5;
+    y0 = 5 + view.topInset;
   view.ctx.globalAlpha = 0.8;
   R(x0 - 2, y0 - 2, mw + 4, mh + 4, '#0a0f1e');
   view.ctx.globalAlpha = 0.9;
@@ -115,9 +115,10 @@ export function offscreenPuck(ox, oy) {
     py = toS(puck.y) + oy,
     M = 8,
     bottom = view.CH - Math.round(G.padWorld * K) - M;
-  if (px >= M && px <= view.CW - M && py >= M && py <= bottom) return;
+  const top = M + view.topInset;
+  if (px >= M && px <= view.CW - M && py >= top && py <= bottom) return;
   const x = clamp(px, M, view.CW - M),
-    y = clamp(py, M, Math.max(M, bottom));
+    y = clamp(py, top, Math.max(top, bottom));
   R(x - 3, y - 4, 7, 9, kit.PS.dk);
   R(x - 4, y - 3, 9, 7, kit.PS.dk);
   R(x - 2, y - 3, 5, 7, kit.PS.r);

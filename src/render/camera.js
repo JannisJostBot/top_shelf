@@ -70,6 +70,8 @@ export function fit() {
   cv.style.width = r.width + 'px';
   cv.style.height = r.height + 'px';
   G.padWorld = pad.hidden ? 0 : (pad.offsetHeight * (view.CW / r.width)) / K;
+  const hud = $('hud');
+  view.topInset = hud ? Math.round((hud.offsetTop + hud.offsetHeight) * (view.CW / r.width)) : 0;
   updCam(0, true);
 }
 export function initCamera() {

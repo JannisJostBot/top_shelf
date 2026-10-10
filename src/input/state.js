@@ -1,5 +1,6 @@
 import { K } from '../config';
 import { G } from '../game/world';
+import { pad } from './gamepad';
 import { cam, view } from '../render/canvas';
 
 /* ---------- input ---------- */
@@ -45,6 +46,12 @@ export function readStick() {
   if (input.touch) {
     input.jx = input.tx;
     input.jy = input.ty;
+    return;
+  }
+  // a controller stick gives analog speed and direction; it takes over from the mouse aim while in use
+  if (pad.x || pad.y) {
+    input.jx = pad.x;
+    input.jy = pad.y;
     return;
   }
   const k = input.keys;

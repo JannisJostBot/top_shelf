@@ -1,5 +1,6 @@
 import { $ } from '../core/dom';
 import { G, puck } from '../game/world';
+import { pad } from '../input/gamepad';
 import { mouse } from '../input/state';
 import { touchState } from '../input/touch';
 import { setHint } from './keyhint';
@@ -7,7 +8,8 @@ import { setHint } from './keyhint';
 const sb = $('shootBtn'),
   pb = $('passBtn'),
   swb = $('swBtn');
-let lastMouseOn = false;
+let lastMouseOn = false,
+  lastPadOn = false;
 export function updPad() {
   let m = 'off';
   if (!G.ai0) {
@@ -23,9 +25,10 @@ export function updPad() {
   }
   if (G.state === 'replay' || G.state === 'celebrate') m = 'replay';
   else if (!G.ai0 && (G.state === 'goal' || G.state === 'inter')) m = 'idle';
-  if (m === touchState.padMode && mouse.on === lastMouseOn) return;
+  if (m === touchState.padMode && mouse.on === lastMouseOn && pad.active === lastPadOn) return;
   touchState.padMode = m;
   lastMouseOn = mouse.on;
+  lastPadOn = pad.active;
   setHint(m);
   if (m === 'replay' || m === 'idle') return;
   const L = {

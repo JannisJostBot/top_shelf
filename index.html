@@ -13,20 +13,19 @@
   </head>
   <body>
     <div id="app">
-      <header id="hud">
-        <button class="ibtn" id="muteBtn" aria-pressed="false" aria-label="Sound on or off">SFX</button>
-        <div class="team home">
-          <span class="tname" id="nm0">YOU</span><span class="score" id="s0">0</span>
-        </div>
-        <div class="mid"><span id="per">DEMO</span><span id="clock">1:00</span></div>
-        <div class="team away">
-          <span class="score" id="s1">0</span><span class="tname" id="nm1">CPU</span>
-        </div>
-        <button class="ibtn" id="pauseBtn" aria-label="Pause" disabled>II</button>
-      </header>
-
       <main id="stage">
         <canvas id="c" width="224" height="320" aria-label="Hockey rink"></canvas>
+        <header id="hud">
+          <button class="ibtn" id="muteBtn" aria-pressed="false" aria-label="Sound on or off">SFX</button>
+          <div class="team home">
+            <span class="tname" id="nm0">YOU</span><span class="score" id="s0">0</span>
+          </div>
+          <div class="mid"><span id="per">DEMO</span><span id="clock">1:00</span></div>
+          <div class="team away">
+            <span class="score" id="s1">0</span><span class="tname" id="nm1">CPU</span>
+          </div>
+          <button class="ibtn" id="pauseBtn" aria-label="Pause" disabled>II</button>
+        </header>
         <div id="banner" hidden>
           <div id="bt"></div>
           <div id="bs"></div>
@@ -235,6 +234,10 @@
               <div class="opt">
                 <span class="olbl" id="keysLbl">KEYBOARD</span>
                 <div class="keymap" id="keymapMenu"></div>
+              </div>
+              <div class="opt">
+                <span class="olbl">XBOX CONTROLLER</span>
+                <div class="keymap" id="padmapMenu"></div>
               </div>
               <p class="small">
                 The buttons change with the situation: Poke and Check on defense, Punch and Block in a fight,

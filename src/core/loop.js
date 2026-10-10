@@ -3,6 +3,7 @@ import { STEP } from '../config';
 import { $ } from './dom';
 import { clock } from './time';
 import { update } from '../game/update';
+import { pollGamepad } from '../input/gamepad';
 import { render } from '../render/renderer';
 import { updPad } from '../ui/pad';
 import { updCard } from '../ui/playerCard';
@@ -13,6 +14,7 @@ let last = performance.now(),
   acc = 0;
 export function frame(now) {
   clock.now = now / 1000;
+  pollGamepad();
   let d = (now - last) / 1000;
   last = now;
   if (d > 0.1) d = 0.1;

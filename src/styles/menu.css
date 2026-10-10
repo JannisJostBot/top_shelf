@@ -331,3 +331,34 @@ kbd {
 .ainote b {
   color: #ffde59;
 }
+
+/* Xbox controller button glyphs in hints and the key map */
+kbd.pb {
+  min-width: 17px;
+  border-radius: 9px;
+  border-width: 2px;
+  color: #ffffff;
+  background: #2a3140;
+  border-color: #5a6378;
+}
+kbd.pb-a {
+  background: #2f8f3a;
+  border-color: #6fd27a;
+}
+kbd.pb-b {
+  background: #b3262d;
+  border-color: #ff7a7f;
+}
+kbd.pb-x {
+  background: #2357b8;
+  border-color: #7aa6ff;
+}
+kbd.pb-y {
+  background: #b88a12;
+  border-color: #ffd560;
+}
+/* controller menu navigation: an unmistakable focus ring on the selected button */
+body.padnav button:focus {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}

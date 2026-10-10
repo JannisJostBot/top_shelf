@@ -5,6 +5,8 @@ export const view = {
   ctx: cv.getContext('2d'),
   CW: 224,
   CH: 320,
+  /** canvas pixels covered by the scoreboard bar floating over the top of the rink */
+  topInset: 0,
   camZ: 1,
   sil: null,
   lastCtl: null,
