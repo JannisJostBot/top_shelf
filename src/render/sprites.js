@@ -82,6 +82,39 @@ function faceSet(f) {
   }
   return set;
 }
+// 3x3 pixel digits for jersey numbers on the back of the skater sprites (rows 8-10 of the back view).
+const DIGITS = [
+  ['NNN', 'N.N', 'NNN'],
+  ['.N.', '.N.', '.N.'],
+  ['NN.', '.N.', '.NN'],
+  ['NNN', '.NN', 'NNN'],
+  ['N.N', 'NNN', '..N'],
+  ['.NN', '.N.', 'NN.'],
+  ['N..', 'NNN', 'NNN'],
+  ['NNN', '..N', '..N'],
+  ['NN.', 'NNN', '.NN'],
+  ['NNN', 'NNN', '..N'],
+];
+const numbered = new Map();
+/** The back-view sprite `map` with the jersey number `num` (0-99) in place of the template's number. */
+export function withNumber(map, num) {
+  let byNum = numbered.get(map);
+  if (!byNum) numbered.set(map, (byNum = new Map()));
+  let out = byNum.get(num);
+  if (!out) {
+    const rows = map.map(r => [...r]),
+      digits = String(num).split('').map(Number),
+      starts = digits.length > 1 ? [2, 6] : [4];
+    for (let r = 8; r <= 10; r++) for (let c = 2; c <= 9; c++) if (rows[r][c] === 'N') rows[r][c] = 'J';
+    digits.forEach((d, i) => {
+      for (let r = 0; r < 3; r++)
+        for (let c = 0; c < 3; c++) if (DIGITS[d][r][c] === 'N') rows[8 + r][starts[i] + c] = 'N';
+    });
+    out = rows.map(r => r.join(''));
+    byNum.set(num, out);
+  }
+  return out;
+}
 export const FACES = { eyes: faceSet('eyes'), visor: faceSet('visor'), cage: faceSet('cage') };
 export const FACEV = { eyes: '#2a3140', visor: '#6ec2f2', cage: '#d5dce6' };
 const G_BODY = [

@@ -8,7 +8,7 @@ import { view } from './canvas';
 import { AMB, SH, WOOD, WOOD_D } from './colors';
 import { drawFighter } from './fight';
 import { R, blit, line } from './pixels';
-import { FACES, REFPAL, REFSET, SPR } from './sprites';
+import { FACES, REFPAL, REFSET, SPR, withNumber } from './sprites';
 
 function drawStick(p, sx, sy) {
   const side = p.fx < -0.25 ? -1 : 1,
@@ -57,9 +57,7 @@ export function drawSkater(p) {
       ? set.sideB
       : set.sideA
     : back
-      ? st
-        ? set.backB
-        : set.backA
+      ? withNumber(st ? set.backB : set.backA, p.num)
       : st
         ? set.frontB
         : set.frontA;

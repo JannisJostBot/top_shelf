@@ -13,6 +13,7 @@ import { cam, cv, view } from './canvas';
 import { AMB } from './colors';
 import { drawBubbles, drawFx } from './effects';
 import { drawFightHud, drawLitter } from './fight';
+import { skateGrooves } from './grooves';
 import { ice } from './ice';
 import { render3D } from './mode7';
 import { drawNet } from './net';
@@ -57,6 +58,7 @@ export function render() {
   }
   const cine = G.state === 'replay';
   if (cine) {
+    skateGrooves();
     iceSheen();
     reflections();
   }

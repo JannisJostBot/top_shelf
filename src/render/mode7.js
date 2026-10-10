@@ -12,10 +12,40 @@ import { replayOverlay } from './overlays';
 import { R } from './pixels';
 import { drawGoalie, drawRef, drawSkater } from './players';
 import { puckPixels } from './puck';
-import { FAN_ROWS, U32, fanTab } from './stands';
+import { FAN_ROWS, FAN_SEATS, U32, fanTab } from './stands';
 import { settings } from '../settings';
 
 /* ---------- 2.5D replay renderer (Mode 7 floor + raycast boards + billboard sprites) ---------- */
+// Seating bowl for the 3D replay cameras, in world units: the first row starts just behind the glass and each
+// row steps further back and higher. SEAT_W is the width of one fan along the boards.
+const ROWS = 18,
+  ROW_D0 = 2,
+  ROW_DD = 2.2,
+  ROW_Z0 = 3,
+  ROW_DZ = 1.7,
+  SEAT_W = 2.6,
+  rowY = new Float32Array(ROWS + 1);
+// Average crowd colour (and a darker shade), used where fans are too small to draw individually.
+let toneFor = null,
+  tone = null;
+function crowdTone() {
+  if (toneFor !== fanTab) {
+    let r = 0,
+      g = 0,
+      b = 0;
+    for (const f of fanTab) {
+      const c = f.empty ? U32('#141a2c') : f.body;
+      r += c & 255;
+      g += (c >> 8) & 255;
+      b += (c >> 16) & 255;
+    }
+    const n = fanTab.length,
+      mk = k => ((255 << 24) | (((b / n) * k) << 16) | (((g / n) * k) << 8) | ((r / n) * k)) >>> 0;
+    tone = { mid: mk(0.8), dark: mk(0.62) };
+    toneFor = fanTab;
+  }
+  return tone;
+}
 let img3 = null,
   buf3 = null;
 const SPC = document.createElement('canvas');
@@ -98,6 +128,8 @@ export function render3D() {
       LIGHT = U32('#fff4d6'),
       roofY = hor - Math.round(view.CH * 0.3),
       hype = G.hype;
+    const crowd = crowdTone();
+    let prevSeat = NaN;
     for (let x = 0; x < view.CW; x++) {
       const k = (x - cxs) / f,
         dx = Fx + Rx * k,
@@ -125,9 +157,22 @@ export function render3D() {
       const ang = C3.yaw + Math.atan(k);
       let u = Math.floor((ang / (2 * Math.PI)) * 512) % 512;
       if (u < 0) u += 512;
-      const seat = u >> 2,
-        xin = u & 3;
-      for (let y = 0; y < view.CH; y++) {
+      // Stands: tiered rows behind the glass, each a step further back and higher, projected with the same
+      // perspective as the boards so the crowd stays put as the camera moves. Fans are anchored to where this
+      // ray meets the boards, measured around the rink, so they do not slide when the camera pans.
+      const hx = C3.x + dx * t,
+        hy = C3.y + dy * t,
+        around = (Math.atan2((hy - 128) / 124, (hx - 80) / 76) + Math.PI) * 128,
+        seatF = around / SEAT_W,
+        // seats per screen pixel here; when fans are under ~2.5 px wide they would alias into streaks
+        tiny = Math.abs(seatF - prevSeat) > 0.4,
+        seat = ((Math.floor(seatF) % FAN_SEATS) + FAN_SEATS) % FAN_SEATS,
+        xin = seatF - Math.floor(seatF);
+      prevSeat = seatF;
+      for (let r = 0; r <= ROWS; r++)
+        rowY[r] = hor + ((h - (ROW_Z0 + r * ROW_DZ)) * f) / (t + ROW_D0 + r * ROW_DD);
+      let r = 0;
+      for (let y = view.CH - 1; y >= 0; y--) {
         let col;
         if (y > wb) {
           const tt = (h * f) / (y - hor),
@@ -136,16 +181,25 @@ export function render3D() {
           col = iceBuf && ix >= 0 && iy >= 0 && ix < IW && iy < IH ? iceBuf[iy * IW + ix] : ARENA;
         } else if (y >= kick) col = KICK;
         else if (y >= bt) col = bcol;
-        else if (y < roofY) col = u % 64 < 3 && y % 26 < 2 ? LIGHT : ROOF;
         else {
-          const row = (y / 7) | 0,
-            fan = fanTab[seat * FAN_ROWS + (row % FAN_ROWS)],
-            bob = hype > 0.05 ? Math.round(Math.sin(clock.now * 11 + fan.ph) * hype * 2) : 0,
-            w = y - row * 7 - bob;
-          col = y - row * 7 === 6 ? SEAT : STAND;
-          if (!fan.empty) {
-            if (w >= 0 && w < 2 && xin >= 1 && xin <= 2) col = fan.head;
-            else if (w >= 2 && w < 6) col = xin === 3 ? fan.bodyD : fan.body;
+          while (r < ROWS && y < rowY[r + 1]) r++;
+          if (y < rowY[ROWS]) col = u % 64 < 3 && y % 26 < 2 ? LIGHT : ROOF;
+          else {
+            const top = rowY[r + 1],
+              bh = rowY[r] - top,
+              fan = fanTab[seat * FAN_ROWS + (r % FAN_ROWS)];
+            if (bh < 2 || tiny)
+              col = r & 1 ? crowd.dark : crowd.mid; // too far for detail: an even crowd tone
+            else {
+              const bob = hype > 0.05 ? Math.sin(clock.now * 11 + fan.ph) * hype * 0.18 : 0,
+                w = (y - top) / bh + bob;
+              col = w >= 0.84 ? SEAT : STAND;
+              if (!fan.empty) {
+                if (w >= 0.02 && w < 0.3 && xin >= 0.32 && xin <= 0.68) col = fan.head;
+                else if (w >= 0.3 && w < 0.84 && xin >= 0.14 && xin <= 0.86)
+                  col = xin > 0.68 ? fan.bodyD : fan.body;
+              }
+            }
           }
           if (y >= gt) col = glassTint(col);
         }
