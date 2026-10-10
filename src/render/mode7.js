@@ -1,4 +1,4 @@
-import { GB, GT, IH, IW, K, NETS, RR, RX0, RX1, RY0, RY1 } from '../config';
+import { GB, GT, IH, IW, K, ND, NETS, RR, RX0, RX1, RY0, RY1 } from '../config';
 import { lerp } from '../core/math';
 import { clock } from '../core/time';
 import { STADIUMS } from '../data/stadiums';
@@ -270,12 +270,15 @@ export function render3D() {
   for (const p of players) items.push({ e: p, k: p.role, d: (p.x - C3.x) * Fx + (p.y - C3.y) * Fy });
   items.push({ e: ref, k: 'R', d: (ref.x - C3.x) * Fx + (ref.y - C3.y) * Fy });
   items.push({ e: puck, k: 'P', d: (puck.x - C3.x) * Fx + (puck.y - C3.y) * Fy - 0.3 });
-  for (const n of NETS) items.push({ e: n, k: 'N', d: (80 - C3.x) * Fx + ((n.y0 + n.y1) / 2 - C3.y) * Fy });
+  // each goal is split into panels and frame pieces, sorted with the players so overlaps come out right
+  const cam = makeCam(C3, Fx, Fy, Rx, Ry, cxs, hor, f, h);
+  for (const n of NETS)
+    for (const part of goalParts(n, cam)) items.push({ k: 'N', d: part.d, draw: part.draw });
   items.sort((a, b) => b.d - a.d);
   for (const it of items) {
     const e = it.e;
     if (it.k === 'N') {
-      drawNet3D(e, proj);
+      it.draw();
       continue;
     }
     if (it.k === 'P') {
@@ -305,74 +308,146 @@ export function render3D() {
   cinema();
   replayOverlay();
 }
-function drawNet3D(n, proj) {
-  const front = n.top ? n.y1 : n.y0,
-    back = n.top ? n.y0 : n.y1,
-    Hn = 4.2;
-  const P = [
-    [n.x0, front, 0],
-    [n.x1, front, 0],
-    [n.x0, back, 0],
-    [n.x1, back, 0],
-    [n.x0, front, Hn],
-    [n.x1, front, Hn],
-    [n.x0, back, Hn * 0.55],
-    [n.x1, back, Hn * 0.55],
-  ].map(a => proj(a[0], a[1], a[2]));
-  if (P.some(q => !q)) return;
-  const [FL, FR, BL, BR, TL, TR, BLt, BRt] = P;
-  view.ctx.save();
-  view.ctx.setTransform(1, 0, 0, 1, 0, 0);
-  const poly = (pts, fill) => {
-    view.ctx.beginPath();
-    pts.forEach((q, i) => (i ? view.ctx.lineTo(q.x, q.y) : view.ctx.moveTo(q.x, q.y)));
-    view.ctx.closePath();
-    view.ctx.fillStyle = fill;
-    view.ctx.fill();
+// ---------- goals in 3D ----------
+const NEAR = 0.6; // camera-space depth below which geometry is clipped away
+/** World-to-camera helpers for the 3D replay: camera space is (l: right, d: forward, z: up). */
+function makeCam(C3, Fx, Fy, Rx, Ry, cxs, hor, f, h) {
+  const toCam = ([x, y, z]) => {
+    const dx = x - C3.x,
+      dy = y - C3.y;
+    return { l: dx * Rx + dy * Ry, d: dx * Fx + dy * Fy, z };
   };
-  view.ctx.globalAlpha = 0.55;
-  poly([BLt, BRt, BR, BL], '#e9eef4');
-  poly([TL, BLt, BL, FL], '#dfe6ee');
-  poly([TR, BRt, BR, FR], '#dfe6ee');
-  poly([TL, TR, BRt, BLt], '#f4f7fa');
-  view.ctx.globalAlpha = 1;
-  view.ctx.strokeStyle = '#a9b9cb';
-  view.ctx.lineWidth = Math.max(1, FL.s * 0.08);
-  view.ctx.beginPath();
-  for (let i = 1; i < 6; i++) {
-    const a = i / 6;
-    view.ctx.moveTo(lerp(TL.x, TR.x, a), lerp(TL.y, TR.y, a));
-    view.ctx.lineTo(lerp(BLt.x, BRt.x, a), lerp(BLt.y, BRt.y, a));
-    view.ctx.lineTo(lerp(BL.x, BR.x, a), lerp(BL.y, BR.y, a));
+  const screen = c => ({ x: cxs + (c.l / c.d) * f, y: hor + ((h - c.z) * f) / c.d, s: f / c.d });
+  const cut = (a, b) => {
+    const t = (NEAR - a.d) / (b.d - a.d);
+    return { l: a.l + (b.l - a.l) * t, d: NEAR, z: a.z + (b.z - a.z) * t };
+  };
+  return {
+    depth: w => toCam(w).d,
+    /** a world polygon clipped to the near plane, as screen points (empty when fully behind the camera) */
+    poly(pts) {
+      const c = pts.map(toCam),
+        out = [];
+      for (let i = 0; i < c.length; i++) {
+        const a = c[i],
+          b = c[(i + 1) % c.length];
+        if (a.d >= NEAR) out.push(a);
+        if (a.d >= NEAR !== b.d >= NEAR) out.push(cut(a, b));
+      }
+      return out.map(screen);
+    },
+    /** a world line segment clipped to the near plane, as two screen points or null */
+    seg(p, q) {
+      let a = toCam(p),
+        b = toCam(q);
+      if (a.d < NEAR && b.d < NEAR) return null;
+      if (a.d < NEAR) a = cut(a, b);
+      else if (b.d < NEAR) b = cut(b, a);
+      return [screen(a), screen(b)];
+    },
+  };
+}
+const GOAL_H = 6.5, // crossbar height: about two thirds of a skater
+  ROOF = 0.4; // share of the depth covered by the flat roof before the back net slopes down
+const mixPt = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+/** The goal as separately sorted pieces: four mesh panels, the base frame, the posts and the crossbar. */
+function goalParts(n, cam) {
+  const F = n.top ? n.y1 : n.y0,
+    dir = n.top ? -1 : 1,
+    B = F + dir * ND,
+    M = F + dir * ND * ROOF,
+    Ht = GOAL_H * 0.86,
+    pFL = [n.x0, F, 0],
+    pFR = [n.x1, F, 0],
+    tFL = [n.x0, F, GOAL_H],
+    tFR = [n.x1, F, GOAL_H],
+    mL = [n.x0, M, Ht],
+    mR = [n.x1, M, Ht],
+    bL = [n.x0, B, 0],
+    bR = [n.x1, B, 0];
+  const g = () => view.ctx;
+  const fillPoly = (pts, col, a) => {
+    const q = cam.poly(pts);
+    if (q.length < 3) return;
+    g().globalAlpha = a;
+    g().fillStyle = col;
+    g().beginPath();
+    q.forEach((p, i) => (i ? g().lineTo(p.x, p.y) : g().moveTo(p.x, p.y)));
+    g().closePath();
+    g().fill();
+    g().globalAlpha = 1;
+  };
+  const line = (p, q, col, w, a = 1) => {
+    const s = cam.seg(p, q);
+    if (!s) return;
+    g().globalAlpha = a;
+    g().strokeStyle = col;
+    g().lineWidth = Math.max(1, ((s[0].s + s[1].s) / 2) * w);
+    g().lineCap = 'round';
+    g().beginPath();
+    g().moveTo(s[0].x, s[0].y);
+    g().lineTo(s[1].x, s[1].y);
+    g().stroke();
+    g().globalAlpha = 1;
+  };
+  // a mesh panel between edges a0-a1 and b0-b1: translucent fabric plus a grid of strings both ways
+  const mesh = (a0, a1, b1, b0, cols, rows) => {
+    fillPoly([a0, a1, b1, b0], '#eef3f8', 0.45);
+    for (let i = 1; i < cols; i++)
+      line(mixPt(a0, a1, i / cols), mixPt(b0, b1, i / cols), '#8fa1b5', 0.09, 0.9);
+    for (let j = 1; j < rows; j++)
+      line(mixPt(a0, b0, j / rows), mixPt(a1, b1, j / rows), '#8fa1b5', 0.09, 0.9);
+  };
+  const part = (pts, draw) => ({ d: pts.reduce((s, p) => s + cam.depth(p), 0) / pts.length, draw });
+  const parts = [
+    part([mL, mR, bR, bL], () => mesh(mL, mR, bR, bL, 12, 4)), // back net
+    part([tFL, tFR, mR, mL], () => mesh(tFL, tFR, mR, mL, 12, 2)), // roof
+    part([pFL, tFL, mL, bL], () => {
+      mesh(tFL, mL, bL, pFL, 3, 4); // left side net
+    }),
+    part([pFR, tFR, mR, bR], () => {
+      mesh(tFR, mR, bR, pFR, 3, 4); // right side net
+    }),
+    part([pFL, bL, bR, pFR], () => {
+      // base frame on the ice and the bar holding the back of the roof
+      line(pFL, bL, '#e9eef4', 0.35);
+      line(bL, bR, '#e9eef4', 0.35);
+      line(bR, pFR, '#e9eef4', 0.35);
+      line(mL, mR, '#e9eef4', 0.25);
+    }),
+    part([pFL, tFL], () => {
+      line(pFL, tFL, '#8f1f28', 0.75);
+      line(pFL, tFL, '#d8343f', 0.5);
+    }),
+    part([pFR, tFR], () => {
+      line(pFR, tFR, '#8f1f28', 0.75);
+      line(pFR, tFR, '#d8343f', 0.5);
+    }),
+    part([tFL, tFR], () => {
+      line(tFL, tFR, '#8f1f28', 0.75);
+      line(tFL, tFR, '#d8343f', 0.5);
+      lamp3D(n, cam, B, dir);
+    }),
+  ];
+  return parts;
+}
+function lamp3D(n, cam, B, dir) {
+  const s = cam.seg([80, B + dir * 2, GOAL_H + 2.5], [80, B + dir * 2, GOAL_H + 2.5]);
+  if (!s) return;
+  const L = s[0],
+    on = view.lamp && view.lamp.n === n && clock.now < view.lamp.until,
+    lit = on && Math.floor(clock.now * 6) & 1,
+    z = Math.max(2, L.s * 1.2);
+  view.ctx.fillStyle = '#1b2030';
+  view.ctx.fillRect(L.x - z, L.y - z * 0.6, z * 2, z * 1.2);
+  view.ctx.fillStyle = lit ? '#ff3b3b' : on ? '#b52020' : '#4a1818';
+  view.ctx.fillRect(L.x - z * 0.8, L.y - z * 0.4, z * 1.6, z * 0.8);
+  if (lit) {
+    view.ctx.globalAlpha = 0.3;
+    view.ctx.fillStyle = '#ff3b3b';
+    view.ctx.beginPath();
+    view.ctx.arc(L.x, L.y, z * 3, 0, Math.PI * 2);
+    view.ctx.fill();
+    view.ctx.globalAlpha = 1;
   }
-  view.ctx.stroke();
-  view.ctx.strokeStyle = '#d8343f';
-  view.ctx.lineWidth = Math.max(1.5, FL.s * 0.45);
-  view.ctx.beginPath();
-  view.ctx.moveTo(FL.x, FL.y);
-  view.ctx.lineTo(TL.x, TL.y);
-  view.ctx.lineTo(TR.x, TR.y);
-  view.ctx.lineTo(FR.x, FR.y);
-  view.ctx.moveTo(BL.x, BL.y);
-  view.ctx.lineTo(BR.x, BR.y);
-  view.ctx.stroke();
-  const L = proj(80, back + (n.top ? -2 : 2), Hn + 2.5);
-  if (L) {
-    const on = view.lamp && view.lamp.n === n && clock.now < view.lamp.until,
-      lit = on && Math.floor(clock.now * 6) & 1,
-      z = Math.max(2, L.s * 1.2);
-    view.ctx.fillStyle = '#1b2030';
-    view.ctx.fillRect(L.x - z, L.y - z * 0.6, z * 2, z * 1.2);
-    view.ctx.fillStyle = lit ? '#ff3b3b' : on ? '#b52020' : '#4a1818';
-    view.ctx.fillRect(L.x - z * 0.8, L.y - z * 0.4, z * 1.6, z * 0.8);
-    if (lit) {
-      view.ctx.globalAlpha = 0.3;
-      view.ctx.fillStyle = '#ff3b3b';
-      view.ctx.beginPath();
-      view.ctx.arc(L.x, L.y, z * 3, 0, Math.PI * 2);
-      view.ctx.fill();
-      view.ctx.globalAlpha = 1;
-    }
-  }
-  view.ctx.restore();
 }
