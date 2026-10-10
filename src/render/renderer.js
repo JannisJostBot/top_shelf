@@ -1,4 +1,5 @@
 import { IH, IW, K, NETS } from '../config';
+import { drawPyro } from './pyro';
 import { directorShot, liveLabel } from './director';
 import { drawGoalFx } from './goalFx';
 import { rnd, toS } from '../core/math';
@@ -62,6 +63,7 @@ export function render() {
   }
   view.ctx.setTransform(view.camZ, 0, 0, view.camZ, ox, oy);
   drawStands();
+  drawPyro();
   if (G.state === 'replay' && G.rp.angle.flip) {
     view.ctx.save();
     view.ctx.translate(IW, IH);

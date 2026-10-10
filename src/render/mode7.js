@@ -1,4 +1,5 @@
 import { GB, GT, IH, IW, K, ND, NETS, RR, RX0, RX1, RY0, RY1 } from '../config';
+import { drawPyro3D } from './pyro';
 import { clamp, lerp } from '../core/math';
 import { clock } from '../core/time';
 import { STADIUMS } from '../data/stadiums';
@@ -422,6 +423,7 @@ export function render3D(overlay = true) {
       Math.round(56 * sc),
     );
   };
+  drawPyro3D(proj);
   const items = [];
   for (const p of players) items.push({ e: p, k: p.role, d: (p.x - C3.x) * Fx + (p.y - C3.y) * Fy });
   items.push({ e: ref, k: 'R', d: (ref.x - C3.x) * Fx + (ref.y - C3.y) * Fy });
