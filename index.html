@@ -59,7 +59,7 @@
         <div class="ov" id="menu">
           <div class="card mcard">
             <div class="mhead">
-              <p class="kicker">3-ON-3 · 3 PERIODS × 1:00</p>
+              <p class="kicker" id="kicker">3-ON-3 · 3 PERIODS × 1:00</p>
               <h1><span class="a">BLUE LINE</span> <span class="b">BLITZ</span></h1>
             </div>
             <nav class="tabs" role="tablist" aria-label="Menu sections">
@@ -91,6 +91,16 @@
                   <button role="radio" id="d-rookie" data-d="rookie" aria-checked="false">Rookie</button>
                   <button role="radio" id="d-pro" data-d="pro" aria-checked="true">Pro</button>
                   <button role="radio" id="d-allstar" data-d="allstar" aria-checked="false">All-Star</button>
+                </div>
+              </div>
+              <div class="opt">
+                <span class="olbl">PERIOD LENGTH</span>
+                <div class="seg five" role="radiogroup" aria-label="Period length" id="lenSeg">
+                  <button role="radio" data-v="30" aria-checked="false">0:30</button>
+                  <button role="radio" data-v="60" aria-checked="true">1:00</button>
+                  <button role="radio" data-v="120" aria-checked="false">2:00</button>
+                  <button role="radio" data-v="180" aria-checked="false">3:00</button>
+                  <button role="radio" data-v="300" aria-checked="false">5:00</button>
                 </div>
               </div>
               <button class="btn go" id="startBtn">DROP THE PUCK</button>

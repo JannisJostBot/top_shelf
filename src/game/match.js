@@ -2,7 +2,6 @@ import { audio } from '../audio/engine';
 import { goalMusic, stopSong } from '../audio/music';
 import { S } from '../audio/sfx';
 import { setCrowd } from '../audio/voices';
-import { PERIOD_LEN } from '../config';
 import { $ } from '../core/dom';
 import { clamp, rnd } from '../core/math';
 import { loadRec, saveRec } from '../core/storage';
@@ -118,7 +117,7 @@ export function endPeriod() {
     banner('END OF ' + ORD[G.period], 'small', '');
     G.bannerT = 0;
     G.period++;
-    G.clock = PERIOD_LEN;
+    G.clock = settings.periodLen;
     G.state = 'inter';
     G.timer = 2;
   } else if (G.score[0] === G.score[1]) {
@@ -194,7 +193,7 @@ export function startGame(watch) {
   G.controlled = null;
   G.score = [0, 0];
   G.period = 1;
-  G.clock = PERIOD_LEN;
+  G.clock = settings.periodLen;
   G.ignoreRelease = false;
   $('menu').hidden = true;
   $('overOv').hidden = true;

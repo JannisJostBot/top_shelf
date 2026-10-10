@@ -13,6 +13,8 @@ export const settings: {
   celOn: boolean;
   fightsOn: boolean;
   zamOn: boolean;
+  /** period length in seconds */
+  periodLen: number;
 } = {
   puckKey: 'classic',
   diffKey: 'pro',
@@ -26,6 +28,7 @@ export const settings: {
   celOn: true,
   fightsOn: true,
   zamOn: true,
+  periodLen: 60,
 };
 
 export const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;

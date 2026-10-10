@@ -102,20 +102,22 @@ const G_BODY = [
   '..BBBBBB..BBBBBB..',
 ];
 export const SPR = {};
+// Goalie mask: painted in the team colour with a helmet-colour stripe, a wire cage over the face (front) and a white
+// backplate held by straps (back), the shape of a real goalie mask rather than a round helmet with a visor.
 SPR.goalieF = [
   '......OOOOOO......',
-  '.....OWWWWWWO.....',
-  '.....OWVVVVWO.....',
-  '.....OWVVVVWO.....',
-  '.....OOWWWWOO.....',
+  '.....OhhHHhhO.....',
+  '.....OhMmmMhO.....',
+  '.....OhmMMmhO.....',
+  '......OhMMhO......',
   ...G_BODY,
 ];
 SPR.goalieB = [
   '......OOOOOO......',
-  '.....OHHHHHHO.....',
-  '.....OHhHHHHO.....',
-  '.....OHHHHHHO.....',
-  '.....OOSSSSOO.....',
+  '.....OhhHHhhO.....',
+  '.....OhhhhhhO.....',
+  '.....OhWWWWhO.....',
+  '......OWWWWO......',
   ...G_BODY,
 ];
 const stripe = m =>
@@ -143,6 +145,8 @@ export function mkPal(c) {
     B: '#d9e2ec',
     W: '#f2f4f7',
     C: '#c9a46a',
+    M: '#cfd6df',
+    m: '#1c2230',
   };
 }
 export const REFPAL = Object.assign(

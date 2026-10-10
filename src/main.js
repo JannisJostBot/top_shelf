@@ -40,7 +40,18 @@ import { settings } from './settings';
 import { applyColors, initCustomize, setArena, setPuck } from './ui/customize';
 import { hud } from './ui/hud';
 import { keymapHTML } from './ui/keyhint';
-import { initMenu, setCel, setDiff, setFights, setVib, setView, setZam, showTab } from './ui/menu';
+import {
+  PERIOD_LENGTHS,
+  initMenu,
+  setCel,
+  setDiff,
+  setFights,
+  setPeriodLen,
+  setVib,
+  setView,
+  setZam,
+  showTab,
+} from './ui/menu';
 import { drawPreview } from './ui/preview';
 import { initReplayBar } from './ui/replayBar';
 
@@ -67,6 +78,7 @@ setArena(pr.arena && STADIUMS[pr.arena] ? pr.arena : 'frost', false);
 applyColors();
 genRoster();
 setDiff(settings.diffKey);
+setPeriodLen(PERIOD_LENGTHS.includes(pr.len) ? pr.len : 60);
 setView(settings.viewMode);
 $('keymapMenu').innerHTML = keymapHTML();
 $('pauseKeys').innerHTML = keymapHTML();

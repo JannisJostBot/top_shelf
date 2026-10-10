@@ -8,7 +8,7 @@ import { G } from '../game/world';
 import { fit } from '../render/camera';
 import { arenaThumbs } from '../render/ice';
 import { settings } from '../settings';
-import { showRec } from './hud';
+import { clockText, hudClock, showRec } from './hud';
 
 // menu tabs
 export function showTab(name) {
@@ -32,6 +32,15 @@ export function setDiff(k) {
     .querySelectorAll('#diffSeg button')
     .forEach(x => x.setAttribute('aria-checked', String(x.dataset.d === k)));
   showRec();
+}
+export const PERIOD_LENGTHS = [30, 60, 120, 180, 300];
+export function setPeriodLen(sec) {
+  settings.periodLen = sec;
+  document
+    .querySelectorAll('#lenSeg button')
+    .forEach(x => x.setAttribute('aria-checked', String(+x.dataset.v === sec)));
+  $('kicker').textContent = '3-ON-3 · 3 PERIODS × ' + clockText(sec);
+  hudClock();
 }
 export function setView(v) {
   settings.viewMode = v;
@@ -84,6 +93,12 @@ export function initMenu() {
   document.querySelectorAll('#diffSeg button').forEach(b =>
     b.addEventListener('click', () => {
       setDiff(b.dataset.d);
+      savePrefs();
+    }),
+  );
+  document.querySelectorAll('#lenSeg button').forEach(b =>
+    b.addEventListener('click', () => {
+      setPeriodLen(+b.dataset.v);
       savePrefs();
     }),
   );

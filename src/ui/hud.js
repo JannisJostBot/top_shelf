@@ -12,14 +12,14 @@ export function hud() {
   hudClock();
 }
 let lastClock = '';
+export const clockText = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
 export function hudClock() {
   let t;
   if (G.practice) t = 'FREE';
-  else if (G.demo) t = '1:00';
+  else if (G.demo) t = clockText(settings.periodLen);
   else if (G.period > 3) t = 'SD';
   else {
-    const s = Math.max(0, Math.ceil(G.clock));
-    t = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    t = clockText(Math.max(0, Math.ceil(G.clock)));
   }
   if (t !== lastClock) {
     lastClock = t;

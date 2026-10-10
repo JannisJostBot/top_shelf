@@ -37,6 +37,7 @@ export function savePrefs() {
         fights: settings.fightsOn,
         zam: settings.zamOn,
         puck: settings.puckKey,
+        len: settings.periodLen,
       }),
     );
   } catch (e) {}

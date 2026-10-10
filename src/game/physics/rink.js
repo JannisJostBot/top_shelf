@@ -151,7 +151,8 @@ export function netPuck(px, py) {
       puck.vx += rnd(-20, 20);
       return false;
     }
-    if (!puck.owner && Math.hypot(puck.vx, puck.vy) > 60) netHit(n, clamp(puck.x, n.x0, n.x1), 0.5);
+    if (!puck.owner && Math.hypot(puck.vx, puck.vy) > 60)
+      netHit(n, clamp(puck.x, n.x0, n.x1), 0.5, side === 'I' ? 1 : -1);
     if (side === 'L') {
       puck.x = ex0 - 0.01;
       puck.vx = -Math.abs(puck.vx) * 0.5;

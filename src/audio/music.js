@@ -37,6 +37,22 @@ export const SONGS = {
     bass: 'A2:2 A3:2 A2:2 A3:2 F2:2 F3:2 G2:2 G3:2 A2:2 A3:2 E2:2 E3:2 A2:4',
     drums: 'khshkhsh',
   },
+  lumber: {
+    name: 'Lumberjack Reel',
+    bpm: 138,
+    wave: 'square',
+    lead: 'G4:1 B4:1 D5:2 D5:1 E5:1 D5:1 B4:1 G4:2 A4:1 B4:1 C5:2 B4:1 A4:1 G4:4 R:1 D5:1 G5:2 F#5:1 E5:1 D5:2 B4:1 C5:1 D5:1 B4:1 A4:1 B4:1 G4:4',
+    bass: 'G2:4 G3:4 C3:4 G2:4 D3:4 D3:4 G2:4 C3:4 D3:2 G2:4',
+    drums: 'k.hks.h.',
+  },
+  forge: {
+    name: 'Forge Hammer',
+    bpm: 126,
+    wave: 'sawtooth',
+    lead: 'E4:2 E4:1 G4:1 E4:1 A4:1 G4:1 E4:1 B4:2 A4:1 G4:1 E4:4 R:2 E5:1 D5:1 B4:2 G4:2 A4:1 B4:1 E5:4',
+    bass: 'E2:2 E2:2 E2:2 G2:2 A2:2 A2:2 B2:2 B2:2 E2:2 E2:2 C3:2 D3:2 E2:6',
+    drums: 'k.ksk.s.',
+  },
   visitors: {
     name: 'Visitors',
     bpm: 150,

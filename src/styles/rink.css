@@ -92,6 +92,12 @@ h2 {
 .seg.two {
   grid-template-columns: 1fr 1fr;
 }
+.seg.five {
+  grid-template-columns: repeat(5, 1fr);
+}
+.seg.five button {
+  font-size: 11px;
+}
 .seg button {
   font-family: var(--pixel);
   font-size: 12px;
