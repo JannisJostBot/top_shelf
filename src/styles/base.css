@@ -1,0 +1,68 @@
+[hidden]:not([hidden='until-found' i]) {
+  display: none !important;
+}
+/* Layout: one-screen arcade cabinet. Scoreboard strip on top, follow-cam rink fills the rest, thumb controls float over the bottom of the ice. Single dark arena look. */
+:root {
+  --arena: #0a0f1e;
+  --panel: #121a30;
+  --line: #28365a;
+  --ink: #eaf0ff;
+  --muted: #8f9cc0;
+  --led: #ffc845;
+  --led-ink: #2a1d00;
+  --shadow: #000;
+  --hit: #ff5a3c;
+  --rec: #ff3b3b;
+  --home: #3d7bff;
+  --home-ink: #fff;
+  --home-ui: #6f9bff;
+  --away: #ef4b52;
+  --away-ink: #fff;
+  --away-ui: #ff6b71;
+  --display: 'Press Start 2P', ui-monospace, monospace;
+  --pixel: 'Silkscreen', ui-monospace, monospace;
+  color-scheme: dark;
+}
+html {
+  box-sizing: border-box;
+  height: 100%;
+  background: var(--arena);
+  overflow: hidden;
+}
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--arena);
+  color: var(--ink);
+  font-family: var(--pixel);
+  font-size: 13px;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#app {
+  height: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-inline: 16px;
+  padding-block: 8px;
+  touch-action: none;
+}
+button {
+  font: inherit;
+}
+button:focus-visible {
+  outline: 3px solid var(--led);
+  outline-offset: 2px;
+}

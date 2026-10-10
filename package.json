@@ -1,0 +1,21 @@
+{
+  "name": "blue-line-blitz",
+  "version": "1.0.0",
+  "description": "3-on-3 pixel-art arcade hockey for the browser",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc",
+    "test": "vitest run",
+    "format": "prettier --write \"src/**/*.{js,ts,css}\" \"tests/**/*.ts\" index.html"
+  },
+  "type": "module",
+  "devDependencies": {
+    "prettier": "^3.9.10",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
+  },
+  "private": true
+}

@@ -1,0 +1,131 @@
+import { K } from '../config';
+import { toS } from '../core/math';
+import { clock } from '../core/time';
+import { kit } from '../game/kit';
+import { blade } from '../game/physics/motion';
+import { G, puck, ref } from '../game/world';
+import { view } from './canvas';
+import { AMB, SH, WOOD, WOOD_D } from './colors';
+import { drawFighter } from './fight';
+import { R, blit, line } from './pixels';
+import { FACES, REFPAL, REFSET, SPR } from './sprites';
+
+function drawStick(p, sx, sy) {
+  const side = p.fx < -0.25 ? -1 : 1,
+    b = blade(p),
+    bx = toS(b.x),
+    by = toS(b.y);
+  const hx = sx + side * 5,
+    hy = sy - 9;
+  line(hx, hy, bx - Math.round(p.fx * 2), by - 1, WOOD);
+  line(hx + 1, hy, bx - Math.round(p.fx * 2) + 1, by - 1, WOOD_D);
+  const tape = p.look.tape;
+  if (Math.abs(p.fx) > 0.5) R(bx - 1, by - 1, 2, 3, tape);
+  else R(bx - 1, by, 4, 2, tape);
+}
+function stars(sx, sy) {
+  if (view.sil || !(Math.floor(clock.now * 11) & 1)) return;
+  R(sx - 5, sy - 3, 2, 2, AMB);
+  R(sx + 4, sy - 4, 2, 2, AMB);
+  R(sx, sy - 6, 2, 2, '#ffffff');
+}
+export function drawSkater(p) {
+  if (G.state === 'brawl' && G.br && (p === G.br.a || p === G.br.b) && p.down <= 0) {
+    drawFighter(p);
+    return;
+  }
+  const pal = p.pal || kit.PAL[p.team],
+    set = FACES[p.look.face] || FACES.eyes,
+    sx = toS(p.x),
+    sy = toS(p.y);
+  if (p.down > 0) {
+    // sprawled on the ice, stick dropped beside them
+    R(sx - 11, sy, 22, 3, SH);
+    line(sx - 9, sy + 3, sx + 7, sy + 1, WOOD);
+    R(sx + 7, sy, 3, 2, p.look.tape);
+    blit(set.fallen, pal, sx - 10, sy - 10, p.fallDir < 0);
+    stars(p.fallDir < 0 ? sx - 8 : sx + 8, sy - 9);
+    return;
+  }
+  const mv = Math.hypot(p.vx, p.vy) > 8,
+    st = mv ? Math.floor(p.anim) & 1 : 0,
+    jy = Math.round(p.jump || 0);
+  const sideV = Math.abs(p.fx) > Math.abs(p.fy) + 0.2,
+    back = !sideV && p.fy < -0.35;
+  const map = sideV
+    ? st
+      ? set.sideB
+      : set.sideA
+    : back
+      ? st
+        ? set.backB
+        : set.backA
+      : st
+        ? set.frontB
+        : set.frontA;
+  R(sx - 6, sy, 12, 2, SH);
+  R(sx - 4, sy + 2, 8, 1, SH);
+  if (p.stickUp) {
+    const side = p.fx < -0.25 ? -1 : 1;
+    blit(map, pal, sx - 6, sy - 19 - jy, sideV && p.fx < 0);
+    line(sx + side * 5, sy - 9 - jy, sx + side * 7, sy - 30 - jy, WOOD);
+    line(sx + side * 5 + 1, sy - 9 - jy, sx + side * 7 + 1, sy - 30 - jy, WOOD_D);
+    R(sx + side * 7 - 1, sy - 33 - jy, 3, 4, p.look.tape);
+    return;
+  }
+  if (back) drawStick(p, sx, sy - jy);
+  blit(map, pal, sx - 6, sy - 19 - jy, sideV && p.fx < 0);
+  if (!back) drawStick(p, sx, sy - jy);
+  if (p.stun > 0) stars(sx, sy - 20);
+}
+export function drawGoalie(g) {
+  const pal = g.pal || kit.PAL[g.team],
+    sx = toS(g.x),
+    sy = toS(g.y),
+    front = g.fy > 0;
+  R(sx - 8, sy, 16, 2, SH);
+  R(sx - 6, sy + 2, 12, 1, SH);
+  const lean = g.saveT > 0 ? g.saveDir * 2 : 0;
+  blit(front ? SPR.goalieF : SPR.goalieB, pal, sx - 9 + lean, sy - 19, !front);
+  if (g.saveT > 0) {
+    const ex = sx + g.saveDir * 11;
+    R(ex - 3, sy - 8, 6, 4, '#0b0f1a');
+    R(ex - 2, sy - 7, 4, 2, g.saveDir * (front ? 1 : -1) < 0 ? '#c9a46a' : '#f2f4f7');
+    R(ex - 3, sy - 3, 6, 3, '#f2f4f7');
+  }
+  if (front) {
+    line(sx + 5, sy - 9, sx + 3, sy, WOOD);
+    R(sx - 5, sy + 1, 9, 2, g.look.tape);
+  }
+}
+export function drawRef() {
+  const sx = toS(ref.x),
+    sy = toS(ref.y);
+  R(sx - 6, sy, 12, 2, SH);
+  if (G.state === 'faceoff') {
+    blit(REFSET.frontA, REFPAL, sx - 6, sy - 19, false);
+    if (puck.z > 0) {
+      const px = toS(puck.x) + 3,
+        py = toS(puck.y) - Math.round(puck.z * K);
+      line(sx - 6, sy - 12, px, py, '#151515');
+      line(sx - 6, sy - 11, px, py + 1, '#151515');
+    }
+    return;
+  }
+  const mv = Math.hypot(ref.vx, ref.vy) > 8,
+    st = mv ? Math.floor(ref.anim) & 1 : 0;
+  const sideV = Math.abs(ref.fx) > Math.abs(ref.fy) + 0.2,
+    back = !sideV && ref.fy < -0.35;
+  const map = sideV
+    ? st
+      ? REFSET.sideB
+      : REFSET.sideA
+    : back
+      ? st
+        ? REFSET.backB
+        : REFSET.backA
+      : st
+        ? REFSET.frontB
+        : REFSET.frontA;
+  blit(map, REFPAL, sx - 6, sy - 19, sideV && ref.fx < 0);
+}

@@ -1,0 +1,37 @@
+export const DIFF = {
+  rookie: {
+    spd: 0.84,
+    steal: 0.8,
+    goalie: 0.6,
+    err: 8,
+    react: 38,
+    fo: 0.42,
+    ourSteal: 1.1,
+    dodge: 0.15,
+    chk: 0.18,
+  },
+  pro: {
+    spd: 0.96,
+    steal: 1.4,
+    goalie: 0.77,
+    err: 5,
+    react: 54,
+    fo: 0.31,
+    ourSteal: 0.8,
+    dodge: 0.35,
+    chk: 0.4,
+  },
+  allstar: {
+    spd: 1.05,
+    steal: 2.1,
+    goalie: 0.86,
+    err: 3,
+    react: 64,
+    fo: 0.24,
+    ourSteal: 0.6,
+    dodge: 0.55,
+    chk: 0.65,
+  },
+};
+export const LABEL = { rookie: 'Rookie', pro: 'Pro', allstar: 'All-Star' };
+export const ORD = ['', '1ST', '2ND', '3RD', 'OT'];

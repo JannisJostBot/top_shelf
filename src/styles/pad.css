@@ -1,0 +1,149 @@
+/* thumb controls, floating over the bottom of the rink */
+#pad {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 150px;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 0 10px 10px;
+  pointer-events: none;
+}
+#zone {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  touch-action: none;
+  pointer-events: auto;
+}
+#zone .lbl {
+  position: absolute;
+  left: 4px;
+  bottom: 2px;
+  font-size: 10px;
+  color: rgba(234, 240, 255, 0.45);
+  letter-spacing: 0.12em;
+}
+#base {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  left: 50%;
+  top: 50%;
+  margin: -50px 0 0 -50px;
+  border-radius: 50%;
+  background: rgba(18, 26, 48, 0.42);
+  border: 3px solid rgba(143, 156, 192, 0.4);
+  pointer-events: none;
+}
+#knob {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  left: 25px;
+  top: 25px;
+  border-radius: 50%;
+  background: rgba(234, 240, 255, 0.8);
+  box-shadow:
+    inset -3px -4px 0 rgba(0, 0, 0, 0.25),
+    0 3px 0 rgba(0, 0, 0, 0.5);
+}
+#btns {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex: 0 0 auto;
+  pointer-events: auto;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.act {
+  border: 0;
+  border-radius: 50%;
+  font-family: var(--display);
+  cursor: pointer;
+  touch-action: none;
+  padding: 0;
+  opacity: 0.88;
+  transition: background-color 0.12s;
+  box-shadow:
+    inset -4px -5px 0 rgba(0, 0, 0, 0.3),
+    inset 3px 3px 0 rgba(255, 255, 255, 0.25),
+    0 4px 0 rgba(0, 0, 0, 0.6);
+}
+.act.down {
+  transform: translateY(4px);
+  opacity: 1;
+  box-shadow:
+    inset -4px -5px 0 rgba(0, 0, 0, 0.3),
+    inset 3px 3px 0 rgba(255, 255, 255, 0.25),
+    0 0 0 rgba(0, 0, 0, 0.6);
+}
+#swBtn {
+  width: 46px;
+  height: 46px;
+  background: rgba(18, 26, 48, 0.75);
+  color: var(--ink);
+  font-size: 6px;
+  border: 2px solid rgba(143, 156, 192, 0.5);
+}
+#swBtn.dim {
+  opacity: 0.3;
+}
+#passBtn {
+  width: 64px;
+  height: 64px;
+  background: var(--home);
+  color: var(--home-ink);
+  font-size: 9px;
+}
+#passBtn.def {
+  background: var(--hit);
+  color: #fff;
+}
+#shootBtn {
+  width: 90px;
+  height: 90px;
+  background: var(--led);
+  color: var(--led-ink);
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+@media (max-height: 600px) {
+  #pad {
+    height: 116px;
+  }
+  #base {
+    width: 84px;
+    height: 84px;
+    margin: -42px 0 0 -42px;
+  }
+  #knob {
+    width: 38px;
+    height: 38px;
+    left: 20px;
+    top: 20px;
+  }
+  #swBtn {
+    width: 38px;
+    height: 38px;
+  }
+  #passBtn {
+    width: 54px;
+    height: 54px;
+  }
+  #shootBtn {
+    width: 74px;
+    height: 74px;
+  }
+  .col {
+    gap: 6px;
+  }
+}

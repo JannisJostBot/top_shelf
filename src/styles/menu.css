@@ -1,0 +1,240 @@
+/* tabbed menu */
+.mcard {
+  max-width: 380px;
+  padding: 0;
+  gap: 0;
+}
+.mhead {
+  padding: 14px 14px 10px;
+  display: grid;
+  gap: 6px;
+}
+.mcard h1 {
+  font-size: 18px;
+}
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  background: var(--panel);
+  border-block: 2px solid var(--line);
+}
+.tabs button {
+  font-family: var(--pixel);
+  font-size: 10px;
+  padding: 10px 1px 8px;
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.tabs button[aria-selected='true'] {
+  color: var(--led);
+  border-bottom-color: var(--led);
+}
+.tabp {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+.matchup,
+.playarena {
+  font-family: var(--pixel);
+  color: var(--ink);
+  background: var(--arena);
+  border: 2px solid var(--line);
+  cursor: pointer;
+  text-align: left;
+  padding: 6px;
+}
+.matchup {
+  display: grid;
+  gap: 6px;
+}
+.matchup canvas,
+#pv {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 140/36;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  background: #e8f0f7;
+}
+.mline {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+}
+.go {
+  color: var(--led);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.playarena {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+.playarena canvas {
+  width: 110px;
+  height: auto;
+  aspect-ratio: 120/82;
+  image-rendering: pixelated;
+  display: block;
+}
+.playarena > span {
+  display: grid;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.playarena b {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+.arenas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.acard {
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  background: var(--arena);
+  border: 2px solid var(--line);
+  cursor: pointer;
+  text-align: left;
+  color: var(--ink);
+  font-family: var(--pixel);
+}
+.acard[aria-checked='true'] {
+  border-color: var(--led);
+  box-shadow: 0 0 0 2px rgba(255, 200, 69, 0.25);
+}
+.acard canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 120/82;
+  image-rendering: pixelated;
+  display: block;
+  background: #0a0f1e;
+}
+.acard b {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.acard span {
+  font-size: 9px;
+  color: var(--muted);
+  line-height: 1.3;
+}
+.orow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding-block: 4px;
+  border-bottom: 1px solid var(--line);
+}
+.orow b {
+  display: block;
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 700;
+}
+.orow span {
+  font-size: 10px;
+  color: var(--muted);
+}
+.orow .seg {
+  grid-template-columns: auto auto;
+}
+.orow .seg button {
+  padding: 7px 10px;
+}
+.keymap {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 7px 10px;
+  text-align: left;
+  font-size: 11px;
+  color: var(--muted);
+  align-items: center;
+}
+kbd {
+  display: inline-block;
+  min-width: 18px;
+  margin: 1px 3px 1px 0;
+  padding: 3px 5px 2px;
+  font-family: var(--display);
+  font-size: 7px;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--ink);
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-bottom-width: 3px;
+}
+#keyhint {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: center;
+  max-width: calc(100% - 16px);
+  padding: 5px 8px;
+  background: rgba(10, 15, 30, 0.74);
+  border: 2px solid var(--line);
+  font-size: 10px;
+  color: var(--muted);
+  pointer-events: none;
+}
+#keyhint span {
+  white-space: nowrap;
+}
+
+.tcard {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  background: var(--arena);
+  border: 2px solid var(--line);
+}
+.tcard > b {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.tcard > span {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.tcard .orow {
+  border-bottom: 0;
+  padding-block: 0;
+}
+.seg.three {
+  grid-template-columns: repeat(3, auto);
+}
+.seg.four {
+  grid-template-columns: repeat(4, auto);
+}
+.orow .seg.four button,
+.orow .seg.three button {
+  padding: 7px 6px;
+  font-size: 11px;
+}

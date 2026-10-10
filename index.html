@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>Blue Line Blitz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <header id="hud">
+        <button class="ibtn" id="muteBtn" aria-pressed="false" aria-label="Sound on or off">SFX</button>
+        <div class="team home">
+          <span class="tname" id="nm0">YOU</span><span class="score" id="s0">0</span>
+        </div>
+        <div class="mid"><span id="per">DEMO</span><span id="clock">1:00</span></div>
+        <div class="team away">
+          <span class="score" id="s1">0</span><span class="tname" id="nm1">CPU</span>
+        </div>
+        <button class="ibtn" id="pauseBtn" aria-label="Pause" disabled>II</button>
+      </header>
+
+      <main id="stage">
+        <canvas id="c" width="224" height="320" aria-label="Hockey rink"></canvas>
+        <div id="banner" hidden>
+          <div id="bt"></div>
+          <div id="bs"></div>
+        </div>
+        <div id="pcard" hidden>
+          <div class="pn">
+            <span id="pcNum">#00</span><span id="pcName">NAME</span><span id="pcPos">C</span>
+          </div>
+          <div class="pst" id="pcStats"></div>
+        </div>
+        <div id="rpBar" hidden>
+          <button class="rpb" id="angleBtn">ANGLE ▸</button><button class="rpb" id="skipBtn">SKIP ▸▸</button>
+        </div>
+
+        <div id="keyhint" hidden></div>
+        <div id="pad" hidden>
+          <div id="zone">
+            <div id="base"><div id="knob"></div></div>
+            <span class="lbl">SKATE</span>
+          </div>
+          <div id="btns">
+            <div class="col">
+              <button class="act" id="swBtn">SWITCH</button>
+              <button class="act" id="passBtn">PASS</button>
+            </div>
+            <button class="act" id="shootBtn">SHOOT</button>
+          </div>
+        </div>
+
+        <div class="ov" id="menu">
+          <div class="card mcard">
+            <div class="mhead">
+              <p class="kicker">3-ON-3 · 3 PERIODS × 1:00</p>
+              <h1><span class="a">BLUE LINE</span> <span class="b">BLITZ</span></h1>
+            </div>
+            <nav class="tabs" role="tablist" aria-label="Menu sections">
+              <button role="tab" id="t-play" data-tab="play" aria-selected="true">Play</button>
+              <button role="tab" id="t-train" data-tab="train" aria-selected="false">Train</button>
+              <button role="tab" id="t-teams" data-tab="teams" aria-selected="false">Teams</button>
+              <button role="tab" id="t-arena" data-tab="arena" aria-selected="false">Arena</button>
+              <button role="tab" id="t-options" data-tab="options" aria-selected="false">Setup</button>
+              <button role="tab" id="t-help" data-tab="help" aria-selected="false">Keys</button>
+            </nav>
+
+            <section class="tabp" id="p-play" role="tabpanel" aria-labelledby="t-play">
+              <button class="matchup" data-goto="teams" aria-label="Change jerseys">
+                <canvas id="pv2" width="140" height="36" aria-hidden="true"></canvas>
+                <span class="mline"
+                  ><span id="matchLine">Blue vs Red</span><span class="go">Jerseys ›</span></span
+                >
+              </button>
+              <button class="playarena" data-goto="arena" aria-label="Change arena">
+                <canvas id="pvArena" width="120" height="82" aria-hidden="true"></canvas>
+                <span
+                  ><b id="paName">Frost Hollow Arena</b><span id="paTeam">Home of the Wolves</span
+                  ><span class="go">Arena ›</span></span
+                >
+              </button>
+              <div class="opt">
+                <span class="olbl">CPU LEVEL</span>
+                <div class="seg" role="radiogroup" aria-label="CPU difficulty" id="diffSeg">
+                  <button role="radio" id="d-rookie" data-d="rookie" aria-checked="false">Rookie</button>
+                  <button role="radio" id="d-pro" data-d="pro" aria-checked="true">Pro</button>
+                  <button role="radio" id="d-allstar" data-d="allstar" aria-checked="false">All-Star</button>
+                </div>
+              </div>
+              <button class="btn go" id="startBtn">DROP THE PUCK</button>
+              <button class="btn ghost" id="watchBtn">WATCH CPU VS CPU</button>
+              <p class="small" id="rec"></p>
+            </section>
+
+            <section class="tabp" id="p-train" role="tabpanel" aria-labelledby="t-train" hidden>
+              <div class="tcard">
+                <b>Free skate</b
+                ><span
+                  >No clock and no score pressure. Count your goals and shots. Quit from the pause menu.</span
+                >
+                <div class="orow">
+                  <div><b>Opponents</b></div>
+                  <div class="seg four" role="radiogroup" aria-label="Practice opponents" id="opSeg">
+                    <button role="radio" data-v="none" aria-checked="false">None</button
+                    ><button role="radio" data-v="dummy" aria-checked="true">Dummy</button
+                    ><button role="radio" data-v="easy" aria-checked="false">Easy</button
+                    ><button role="radio" data-v="cpu" aria-checked="false">CPU</button>
+                  </div>
+                </div>
+                <div class="orow">
+                  <div><b>Teammates</b></div>
+                  <div class="seg two" role="radiogroup" aria-label="Practice teammates" id="tmSeg">
+                    <button role="radio" data-v="on" aria-checked="false">On</button
+                    ><button role="radio" data-v="off" aria-checked="true">Off</button>
+                  </div>
+                </div>
+                <div class="orow">
+                  <div><b>Their goalie</b></div>
+                  <div class="seg three" role="radiogroup" aria-label="Practice goalie" id="gkSeg">
+                    <button role="radio" data-v="none" aria-checked="false">None</button
+                    ><button role="radio" data-v="dummy" aria-checked="false">Dummy</button
+                    ><button role="radio" data-v="cpu" aria-checked="true">CPU</button>
+                  </div>
+                </div>
+                <button class="btn go" id="pFree">START FREE SKATE</button>
+              </div>
+              <div class="tcard">
+                <b>Fight practice</b
+                ><span
+                  >One bout with a CPU enforcer at your chosen CPU level. Block when you see the red !,
+                  counter when they miss.</span
+                >
+                <button class="btn ghost" id="pFight">START A FIGHT</button>
+              </div>
+              <div class="tcard">
+                <b>Resurfacer practice</b
+                ><span>25 seconds to polish a chewed-up rink. <span id="zamBest"></span></span>
+                <button class="btn ghost" id="pZam">DRIVE THE RESURFACER</button>
+              </div>
+            </section>
+
+            <section class="tabp" id="p-teams" role="tabpanel" aria-labelledby="t-teams" hidden>
+              <canvas id="pv" width="140" height="36" aria-label="Jersey preview"></canvas>
+              <div class="opt">
+                <span class="olbl">YOUR JERSEY</span>
+                <div class="sw" role="radiogroup" aria-label="Your jersey color" id="swatches"></div>
+                <p class="small" id="cpuLine"></p>
+              </div>
+              <div class="opt">
+                <span class="olbl">CPU JERSEY</span>
+                <div class="sw" role="radiogroup" aria-label="CPU jersey color" id="cpuSwatches"></div>
+              </div>
+              <div class="opt">
+                <span class="olbl">PUCK</span>
+                <div class="sw pk" role="radiogroup" aria-label="Puck color" id="puckSwatches"></div>
+                <p class="small" id="puckLine"></p>
+              </div>
+            </section>
+
+            <section class="tabp" id="p-arena" role="tabpanel" aria-labelledby="t-arena" hidden>
+              <div class="arenas" role="radiogroup" aria-label="Arena" id="arenaSeg"></div>
+              <p class="small" id="arenaLine"></p>
+            </section>
+
+            <section class="tabp" id="p-options" role="tabpanel" aria-labelledby="t-options" hidden>
+              <div class="orow">
+                <div><b>Camera</b><span>How close the view follows the play</span></div>
+                <div class="seg two" role="radiogroup" aria-label="Camera zoom" id="camSeg">
+                  <button role="radio" id="v-close" data-v="close" aria-checked="true">Close</button
+                  ><button role="radio" id="v-wide" data-v="wide" aria-checked="false">Wide</button>
+                </div>
+              </div>
+              <div class="orow">
+                <div><b>Celebrations</b><span>Players party after a goal</span></div>
+                <div class="seg two" role="radiogroup" aria-label="Goal celebrations" id="celSeg">
+                  <button role="radio" id="ce-on" data-v="on" aria-checked="true">On</button
+                  ><button role="radio" id="ce-off" data-v="off" aria-checked="false">Off</button>
+                </div>
+              </div>
+              <div class="orow">
+                <div><b>Fights</b><span>A sore loser may drop the gloves</span></div>
+                <div class="seg two" role="radiogroup" aria-label="Fights" id="fightSeg">
+                  <button role="radio" id="fi-on" data-v="on" aria-checked="true">On</button
+                  ><button role="radio" id="fi-off" data-v="off" aria-checked="false">Off</button>
+                </div>
+              </div>
+              <div class="orow">
+                <div><b>Ice resurfacing</b><span>Polish the ice between periods</span></div>
+                <div class="seg two" role="radiogroup" aria-label="Ice resurfacing minigame" id="zamSeg">
+                  <button role="radio" id="zm-on" data-v="on" aria-checked="true">On</button
+                  ><button role="radio" id="zm-off" data-v="off" aria-checked="false">Off</button>
+                </div>
+              </div>
+              <div class="orow">
+                <div><b>Vibration</b><span>Android browsers only</span></div>
+                <div class="seg two" role="radiogroup" aria-label="Vibration" id="vibSeg">
+                  <button role="radio" id="vb-on" data-v="on" aria-checked="true">On</button
+                  ><button role="radio" id="vb-off" data-v="off" aria-checked="false">Off</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="tabp" id="p-help" role="tabpanel" aria-labelledby="t-help" hidden>
+              <div class="opt" id="touchHelp">
+                <span class="olbl">TOUCH</span>
+                <ul class="how">
+                  <li><b>Stick</b>drag anywhere on the left to skate</li>
+                  <li><b>Shoot</b>hold to wind up, let go to fire. On defense it pokes.</li>
+                  <li><b>Pass</b>pass to the open teammate. On defense it checks.</li>
+                  <li><b>Switch</b>jump to the skater nearest the puck</li>
+                  <li><b>Face-off</b>tap DRAW the instant the puck drops</li>
+                </ul>
+              </div>
+              <div class="opt">
+                <span class="olbl" id="keysLbl">KEYBOARD</span>
+                <div class="keymap" id="keymapMenu"></div>
+              </div>
+              <p class="small">
+                The buttons change with the situation: Poke and Check on defense, Punch and Block in a fight,
+                Horn and Finish on the resurfacer.
+              </p>
+            </section>
+          </div>
+        </div>
+
+        <div class="ov" id="pauseOv" hidden>
+          <div class="card">
+            <h2>PAUSED</h2>
+            <div class="row">
+              <button class="btn go" id="resumeBtn">RESUME</button
+              ><button class="btn ghost" id="quitBtn">QUIT</button>
+            </div>
+            <div class="keymap" id="pauseKeys"></div>
+          </div>
+        </div>
+
+        <div class="ov" id="overOv" hidden>
+          <div class="card">
+            <p class="kicker" id="overK">FINAL</p>
+            <h2 id="overT">YOU WIN</h2>
+            <div class="final" id="overS">3 – 2</div>
+            <p class="small" id="overR"></p>
+            <div class="row">
+              <button class="btn go" id="againBtn">REMATCH</button
+              ><button class="btn ghost" id="menuBtn">MENU</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

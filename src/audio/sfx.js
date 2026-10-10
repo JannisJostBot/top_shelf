@@ -1,0 +1,361 @@
+import { AC, crowdG, master, mixer, nz, osc, playBuf, stopBufs, strideBufs } from './engine';
+import { clatter, crowdVoices, grunt, stickClatter, swell } from './voices';
+import { BASE, K } from '../config';
+import { clamp, pick, rnd } from '../core/math';
+import { clock } from '../core/time';
+import { SKATERS } from '../game/players';
+import { G } from '../game/world';
+import { cam, view } from '../render/canvas';
+import { settings } from '../settings';
+
+export const SFX = {
+  clack(v) {
+    const t = AC.currentTime;
+    v = v || 1;
+    nz(t, 0.035, 0.6 * v, 'highpass', 2200);
+    osc('triangle', 1500, t, 0.05, 0.25 * v, 450);
+  },
+  shot() {
+    const t = AC.currentTime;
+    SFX.clack(1);
+    osc('sine', 90, t, 0.08, 0.25, 50);
+    nz(t + 0.01, 0.26, 0.14, 'bandpass', 600, 2600, 2, 0.03);
+  },
+  pass() {
+    SFX.clack(0.5);
+  },
+  tick() {
+    osc('sine', 1250, AC.currentTime, 0.035, 0.06);
+  },
+  stride(v) {
+    playBuf(pick(strideBufs), 0.42 * v, rnd(0.9, 1.1));
+  },
+  spray() {
+    playBuf(pick(stopBufs), 0.55, rnd(0.95, 1.05));
+  },
+  board(v) {
+    const t = AC.currentTime;
+    v = clamp(v || 1, 0.25, 1);
+    osc('sine', 105, t, 0.22, 0.5 * v, 48);
+    nz(t, 0.16, 0.35 * v, 'lowpass', 900, 300);
+    nz(t + 0.01, 0.22, 0.08 * v, 'bandpass', 1800, 1200, 3);
+  },
+  post() {
+    const t = AC.currentTime;
+    osc('sine', 1860, t, 0.7, 0.14);
+    osc('sine', 2790, t, 0.5, 0.08);
+    osc('sine', 4100, t, 0.25, 0.04);
+    SFX.clack(0.4);
+    SFX.ooh();
+  },
+  save() {
+    const t = AC.currentTime;
+    nz(t, 0.14, 0.45, 'lowpass', 650, 250);
+    osc('sine', 160, t, 0.14, 0.3, 85);
+  },
+  steal() {
+    SFX.clack(0.45);
+    setTimeout(() => {
+      if (AC && !settings.muted) SFX.clack(0.3);
+    }, 55);
+  },
+  whiff() {
+    nz(AC.currentTime, 0.16, 0.14, 'bandpass', 1400, 500, 2, 0.02);
+  },
+  dash() {
+    playBuf(pick(strideBufs), 0.5, 1.1);
+    setTimeout(() => {
+      if (AC && !settings.muted) playBuf(pick(strideBufs), 0.45, 1.15);
+    }, 110);
+  },
+  check(a) {
+    const t = AC.currentTime,
+      v = a && a.victim,
+      by = a && a.by;
+    osc('sine', 70, t, 0.34, 0.85, 36);
+    nz(t, 0.24, 0.5, 'lowpass', 520, 140);
+    SFX.clack(0.3);
+    grunt(v ? v.look.voice : 120, 0.01);
+    if (by) grunt(by.look.voice * 1.1, 0, true);
+    if (a && a.boards) {
+      nz(t + 0.01, 0.4, 0.22, 'bandpass', 1500, 900, 3);
+      nz(t + 0.02, 0.3, 0.1, 'highpass', 4000, 2500, 1);
+    }
+    setTimeout(() => {
+      if (AC && !settings.muted) {
+        osc('sine', 60, AC.currentTime, 0.25, 0.5, 40);
+        nz(AC.currentTime, 0.3, 0.18, 'highpass', 3000, 1800, 1);
+      }
+    }, 230);
+    crowdVoices(9, 'o', 1.1, 0.07);
+    swell(mixer.crowdBase + 0.1, 0.1, 0.3, 0.9);
+  },
+  // body contact family: every outcome gets its own clearly different sound
+  charge(a) {
+    const t = AC.currentTime;
+    playBuf(pick(strideBufs), 0.7, 1.05);
+    setTimeout(() => {
+      if (AC && !settings.muted) playBuf(pick(strideBufs), 0.65, 1.12);
+    }, 95);
+    nz(t, 0.32, 0.22, 'bandpass', 500, 2200, 1.6, 0.05);
+    if (a && a.by) grunt(a.by.look.voice * 1.12, 0, true);
+  },
+  hitBig(a) {
+    const t = AC.currentTime,
+      v = a && a.victim,
+      by = a && a.by;
+    osc('sine', 55, t, 0.38, 1, 30, 0.002);
+    osc('sine', 115, t, 0.12, 0.55, 60, 0.002);
+    nz(t, 0.14, 0.95, 'bandpass', 900, 380, 1.2, 0.002);
+    nz(t, 0.05, 0.5, 'highpass', 3200, null, 1, 0.001);
+    clatter(t, 6, 0.4);
+    if (v) grunt(v.look.voice, 0.02);
+    if (by) grunt(by.look.voice * 1.1, 0, true);
+    if (a && a.boards) {
+      nz(t + 0.01, 0.6, 0.32, 'bandpass', 2700, 1700, 6, 0.002);
+      osc('square', 190, t, 0.25, 0.05, 120);
+      nz(t + 0.02, 0.4, 0.18, 'lowpass', 400, 120);
+    }
+    stickClatter(t + 0.26);
+    crowdVoices(12, 'o', 1.3, 0.09);
+    swell(mixer.crowdBase + 0.14, 0.08, 0.35, 1);
+  },
+  hitMed(a) {
+    const t = AC.currentTime,
+      v = a && a.victim;
+    osc('sine', 72, t, 0.26, 0.75, 40, 0.002);
+    nz(t, 0.1, 0.65, 'bandpass', 850, 420, 1.3, 0.002);
+    clatter(t, 3, 0.28);
+    if (v) grunt(v.look.voice * 1.05, 0.01, true);
+    playBuf(pick(stopBufs), 0.4, 1.1);
+    crowdVoices(7, 'o', 0.8, 0.05);
+  },
+  hitSoft(a) {
+    const t = AC.currentTime,
+      by = a && a.by;
+    osc('sine', 88, t, 0.18, 0.55, 58, 0.002);
+    nz(t, 0.12, 0.45, 'lowpass', 520, 200, 1, 0.002);
+    clatter(t, 2, 0.22);
+    if (by) grunt(by.look.voice * 1.15, 0.03, true);
+    playBuf(pick(strideBufs), 0.4, 0.85);
+    crowdVoices(5, 'a', 0.5, 0.03);
+  },
+  fart() {
+    const t = AC.currentTime,
+      dur = rnd(0.6, 1.15),
+      f0 = rnd(68, 105);
+    const o = AC.createOscillator(),
+      lfo = AC.createOscillator(),
+      lg = AC.createGain(),
+      f = AC.createBiquadFilter(),
+      am = AC.createOscillator(),
+      ag = AC.createGain(),
+      amg = AC.createGain(),
+      g = AC.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(f0 * 1.25, t);
+    o.frequency.exponentialRampToValueAtTime(f0 * 0.7, t + dur);
+    lfo.type = 'square';
+    lfo.frequency.value = rnd(18, 30);
+    lg.gain.value = f0 * 0.35;
+    lfo.connect(lg);
+    lg.connect(o.frequency);
+    f.type = 'lowpass';
+    f.frequency.setValueAtTime(900, t);
+    f.frequency.exponentialRampToValueAtTime(330, t + dur);
+    f.Q.value = 4;
+    am.frequency.value = rnd(9, 15);
+    ag.gain.value = 0.4;
+    amg.gain.value = 0.6;
+    am.connect(ag);
+    ag.connect(amg.gain);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.55, t + 0.03);
+    g.gain.setValueAtTime(0.45, t + dur * 0.7);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(f);
+    f.connect(amg);
+    amg.connect(g);
+    g.connect(master);
+    for (const x of [o, lfo, am]) {
+      x.start(t);
+      x.stop(t + dur + 0.05);
+    }
+    nz(t, dur * 0.8, 0.12, 'bandpass', 300, 150, 2, 0.02);
+    setTimeout(() => {
+      if (AC && !settings.muted) crowdVoices(9, 'a', 0.9, 0.06);
+    }, dur * 1000);
+  },
+  punch(a) {
+    const t = AC.currentTime;
+    osc('sine', 85, t, 0.15, 0.95, 48, 0.002);
+    nz(t, 0.07, 0.85, 'bandpass', 1150, 600, 1.4, 0.001);
+    nz(t, 0.03, 0.35, 'highpass', 3200, null, 1, 0.001);
+    if (a && a.victim) grunt(a.victim.look.voice, 0.02, !a.big);
+    swell(mixer.crowdBase + 0.12, 0.06, 0.2, 0.6);
+  },
+  block() {
+    const t = AC.currentTime;
+    osc('sine', 150, t, 0.09, 0.45, 90, 0.002);
+    nz(t, 0.06, 0.4, 'lowpass', 900, 300, 1, 0.001);
+  },
+  grumble(a) {
+    const v = a && a.look ? a.look.voice * 0.85 : 100;
+    grunt(v, 0, true);
+    grunt(v * 0.95, 0.17, true);
+  },
+  bell() {
+    const t = AC.currentTime;
+    for (const d of [0, 0.22, 0.44]) {
+      osc('triangle', 880, t + d, 0.5, 0.12);
+      osc('sine', 1320, t + d, 0.4, 0.05);
+    }
+    crowdVoices(14, 'a', 1.8, 0.1);
+    swell(0.24, 0.2, 1.2, 1.5);
+  },
+  miss() {
+    const t = AC.currentTime;
+    nz(t, 0.3, 0.3, 'bandpass', 2400, 500, 1.6, 0.01);
+    playBuf(pick(stopBufs), 0.5, 1);
+  },
+  bump(a) {
+    const t = AC.currentTime;
+    osc('sine', 95, t, 0.2, 0.45, 55);
+    nz(t, 0.15, 0.3, 'lowpass', 650, 200);
+    SFX.clack(0.2);
+    if (a && a.victim) grunt(a.victim.look.voice, 0, true);
+    if (!(a && a.soft)) crowdVoices(6, 'o', 0.7, 0.045);
+  },
+  whistle() {
+    const t = AC.currentTime,
+      o = AC.createOscillator(),
+      l = AC.createOscillator(),
+      lg = AC.createGain(),
+      g = AC.createGain();
+    o.type = 'sine';
+    o.frequency.value = 2650;
+    l.frequency.value = 32;
+    lg.gain.value = 140;
+    l.connect(lg);
+    lg.connect(o.frequency);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.1, t + 0.02);
+    g.gain.setValueAtTime(0.1, t + 0.3);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
+    o.connect(g);
+    g.connect(master);
+    o.start(t);
+    l.start(t);
+    o.stop(t + 0.45);
+    l.stop(t + 0.45);
+  },
+  horn() {
+    const t = AC.currentTime,
+      lp = AC.createBiquadFilter(),
+      g = AC.createGain();
+    lp.type = 'lowpass';
+    lp.frequency.value = 1100;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.15, t + 0.06);
+    g.gain.setValueAtTime(0.15, t + 1.9);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+    lp.connect(g);
+    g.connect(master);
+    for (const f of [138.6, 174.6, 207.7, 277.2]) {
+      const o = AC.createOscillator();
+      o.type = 'sawtooth';
+      o.frequency.value = f;
+      o.detune.value = rnd(-8, 8);
+      o.connect(lp);
+      o.start(t);
+      o.stop(t + 2.45);
+    }
+    SFX.cheer();
+  },
+  cheer() {
+    crowdVoices(14, 'a', 2.6, 0.11);
+    crowdVoices(8, 'e', 2.2, 0.06);
+    swell(0.22, 0.25, 1.6, 2);
+  },
+  groan() {
+    crowdVoices(12, 'u', 1.5, 0.09, 0.72);
+    swell(mixer.crowdBase + 0.06, 0.2, 0.4, 1);
+  },
+  ooh() {
+    crowdVoices(10, 'o', 1.2, 0.08);
+    swell(mixer.crowdBase + 0.08, 0.25, 0.3, 1);
+  },
+  buzzer() {
+    const t = AC.currentTime;
+    osc('square', 196, t, 1.1, 0.06, null, 0.01);
+    osc('square', 199, t, 1.1, 0.05, null, 0.01);
+  },
+  drop() {
+    SFX.clack(0.35);
+    osc('sine', 900, AC.currentTime, 0.05, 0.05);
+  },
+  win() {
+    const t = AC.currentTime;
+    osc('square', 660, t, 0.07, 0.045);
+    osc('square', 990, t + 0.07, 0.12, 0.045);
+  },
+  lose() {
+    const t = AC.currentTime;
+    osc('square', 330, t, 0.08, 0.045);
+    osc('square', 220, t + 0.08, 0.16, 0.045);
+  },
+  organ() {
+    const t = AC.currentTime + 0.05,
+      N = [
+        [392, 0, 0.14],
+        [523, 0.16, 0.14],
+        [659, 0.32, 0.14],
+        [784, 0.48, 0.3],
+        [659, 0.84, 0.14],
+        [784, 1.0, 0.55],
+      ];
+    for (const [f, s, d] of N)
+      for (const [m, v] of [
+        [1, 0.07],
+        [2, 0.035],
+        [4, 0.014],
+      ])
+        osc('sine', f * m, t + s, d + 0.08, v, null, 0.01);
+  },
+};
+export function S(n, a) {
+  if (G.demo || settings.muted || !AC) return;
+  try {
+    SFX[n](a);
+  } catch (e) {}
+}
+export function audioTick() {
+  if (!AC || !crowdG || settings.muted || mixer.crowdBase <= 0) return;
+  const t = AC.currentTime;
+  if (t > mixer.swellEnd && clock.now > mixer.wobT) {
+    mixer.wobT = clock.now + rnd(0.4, 1.1);
+    crowdG.gain.setTargetAtTime(mixer.crowdBase * rnd(0.7, 1.35), t, 0.35);
+  }
+}
+export function strideSounds(dt) {
+  G.stepCd -= dt;
+  for (const p of SKATERS) {
+    if (p.benched) continue;
+    const sp = Math.hypot(p.vx, p.vy);
+    p.stride += sp * dt * 0.045;
+    const k = Math.floor(p.stride);
+    if (k === p.lastStride) continue;
+    p.lastStride = k;
+    if (G.demo || !AC || settings.muted || sp < 22 || p.down > 0) continue;
+    const me = p === G.controlled && !G.ai0;
+    if (!me) {
+      const vw = view.CW / K,
+        vh = view.CH / K;
+      if (G.stepCd > 0 || p.x < cam.x || p.x > cam.x + vw || p.y < cam.y || p.y > cam.y + vh) continue;
+      G.stepCd = 0.09;
+    }
+    try {
+      SFX.stride(clamp(sp / BASE, 0.35, 1.3) * (me ? 1 : 0.35));
+    } catch (e) {}
+  }
+}
