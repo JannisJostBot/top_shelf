@@ -90,7 +90,24 @@ function segPick(id, attr, cb) {
     }),
   );
 }
+// The menu title stays put while the content scrolls, but only when that still leaves a useful amount of
+// room for the content; on short screens the whole card scrolls instead.
+const MIN_CONTENT = 300;
+function layoutMenu() {
+  const card = document.querySelector('#menu .mcard'),
+    head = card && card.querySelector('.mhead');
+  if (!head) return;
+  const avail = $('menu').clientHeight - 16,
+    sticky = avail - head.offsetHeight >= MIN_CONTENT;
+  card.classList.toggle('stickyhead', sticky);
+  card.style.setProperty('--headh', head.offsetHeight + 'px');
+}
 export function initMenu() {
+  layoutMenu();
+  addEventListener('resize', layoutMenu);
+  const ro = new ResizeObserver(layoutMenu);
+  ro.observe($('menu'));
+  ro.observe(document.querySelector('#menu .mhead')); // its height settles once fonts and the logo load
   document
     .querySelectorAll('.tabs button')
     .forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));

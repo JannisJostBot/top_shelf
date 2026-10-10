@@ -388,3 +388,13 @@ body.padnav button:focus {
   font-family: var(--display);
   font-size: 12px;
 }
+
+/* with enough height the title stays at the top of the menu and only the content below it scrolls */
+.mcard.stickyhead .mhead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+.mcard.stickyhead .tabs {
+  top: var(--headh);
+}
