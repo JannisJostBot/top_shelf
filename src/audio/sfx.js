@@ -24,6 +24,11 @@ export const SFX = {
   pass() {
     SFX.clack(0.5);
   },
+  go() {
+    const t = AC.currentTime;
+    osc('square', 880, t, 0.35, 0.09);
+    osc('square', 1320, t + 0.05, 0.3, 0.05);
+  },
   tick() {
     osc('sine', 1250, AC.currentTime, 0.035, 0.06);
   },

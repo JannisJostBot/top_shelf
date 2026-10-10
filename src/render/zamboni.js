@@ -91,6 +91,8 @@ export function drawZamboni() {
 export function drawZamHud() {
   const z = G.zam;
   if (!z) return;
+  if (z.phase === 'count') drawCountdown(z.cd, 0);
+  else if (z.phase === 'drive' && z.t > 25 - 0.7) drawCountdown(0, (25 - z.t) / 0.7);
   const pct = z.count / Math.max(1, z.total),
     w = Math.floor(view.CW * 0.5),
     x0 = (view.CW - w) >> 1,
@@ -107,4 +109,27 @@ export function drawZamHud() {
     y + 10,
   );
   view.ctx.textAlign = 'left';
+}
+
+/** Big 3, 2, 1, GO! in the middle of the screen: each number pops in large and settles. */
+function drawCountdown(count, goAge) {
+  const g = view.ctx,
+    n = Math.ceil(count),
+    label = n > 0 ? String(n) : 'GO!',
+    k = n > 0 ? 1 - (count - (n - 1)) : goAge, // 0..1 through this number's second (or GO!'s moment)
+    pop = k < 0.18 ? 1 + (1 - k / 0.18) * 1.2 : 1,
+    size = Math.round(Math.min(view.CW, view.CH) * (n > 0 ? 0.32 : 0.2) * pop),
+    x = view.CW / 2,
+    y = view.CH * 0.5;
+  g.save();
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.font = size + 'px "Press Start 2P", monospace';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.globalAlpha = Math.max(0, k > 0.8 ? 1 - (k - 0.8) / 0.2 : 1);
+  g.fillStyle = '#0b0f1a';
+  g.fillText(label, x + 4, y + 5);
+  g.fillStyle = n > 0 ? '#ffc845' : '#4fd38a';
+  g.fillText(label, x, y);
+  g.restore();
 }

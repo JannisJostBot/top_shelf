@@ -19,19 +19,22 @@ import { banner, hideBanner } from '../../ui/hud';
 const ZCELL = 4,
   ZW = W / ZCELL,
   ZH = H / ZCELL;
+const COUNTDOWN = 3; // seconds of 3, 2, 1 before driving starts
 export function startZamboni() {
   pops.length = 0;
   rings.length = 0;
   bubbles.length = 0;
   parts.length = 0;
   G.state = 'zamboni';
+  // start at the side boards at centre ice, facing up the rink, so there is room to drive off
   G.zam = {
-    x: 80,
-    y: 236,
+    x: 20,
+    y: 150,
     a: 0,
     v: 0,
     t: 25,
-    phase: 'drive',
+    phase: 'count',
+    cd: COUNTDOWN, // countdown before driving
     done: new Uint8Array(ZW * ZH),
     total: 0,
     count: 0,
@@ -73,6 +76,7 @@ export function startZamboni() {
   fctx.globalAlpha = 1;
   hideBanner();
   banner('ICE RESURFACING', 'alert', 'Steer with the stick. Polish as much ice as you can.');
+  S('tick'); // the first beat of the 3, 2, 1
   G.bannerT = 2.2;
   G.controlled = null;
   view.camZ = 1;
@@ -117,6 +121,15 @@ export function stopEngine() {
 }
 export function zamStep(dt) {
   const z = G.zam;
+  if (z.phase === 'count') {
+    // 3, 2, 1, GO! before the clock starts, so the player is ready to steer
+    const before = Math.ceil(z.cd);
+    z.cd -= dt;
+    input.sp = input.pp = input.swp = input.sr = false;
+    if (Math.ceil(z.cd) !== before) S(z.cd <= 0 ? 'go' : 'tick');
+    if (z.cd <= 0) z.phase = 'drive';
+    return;
+  }
   if (z.phase === 'done') {
     z.end -= dt;
     input.sp = input.pp = input.swp = input.sr = false;
