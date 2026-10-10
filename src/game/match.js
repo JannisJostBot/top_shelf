@@ -66,6 +66,7 @@ export function goalScored(team, n) {
     return;
   }
   G.score[team]++;
+  G.stats.sog[team]++; // every goal is a shot on goal
   hud();
   G.timer = 1.8;
   if (team === 0 || G.watch) {
@@ -144,6 +145,22 @@ export function showPad(on) {
   }
   fit();
 }
+/** Shots on goal, saves and save percentage for both teams on the results card. */
+function showMatchStats() {
+  const s = G.stats,
+    pct = t => (s.sog[1 - t] ? (s.saves[t] / s.sog[1 - t]).toFixed(3).replace(/^0/, '') : '–'),
+    row = (label, a, b) =>
+      '<span>' + a + '</span><span class="lbl">' + label + '</span><span>' + b + '</span>';
+  $('overStats').innerHTML =
+    '<span class="team">' +
+    teamLabel(0) +
+    '</span><span></span><span class="team">' +
+    teamLabel(1) +
+    '</span>' +
+    row('SHOTS ON GOAL', s.sog[0], s.sog[1]) +
+    row('SAVES', s.saves[0], s.saves[1]) +
+    row('SAVE %', pct(0), pct(1));
+}
 export function endGame() {
   stopEngine();
   G.state = 'over';
@@ -165,6 +182,7 @@ export function endGame() {
   $('overT').textContent = G.watch ? teamLabel(w) + ' WINS' : w === 0 ? 'YOU WIN' : 'CPU WINS';
   $('overT').style.color = w === 0 ? 'var(--home-ui)' : 'var(--away-ui)';
   $('overS').textContent = G.score[0] + ' – ' + G.score[1];
+  showMatchStats();
   if (G.watch) {
     $('overR').textContent = 'CPU vs CPU exhibition. Your record is unchanged.';
   } else {
@@ -202,6 +220,7 @@ export function startGame(watch) {
   G.ai0 = G.watch;
   G.controlled = null;
   G.score = [0, 0];
+  G.stats = { sog: [0, 0], saves: [0, 0] };
   G.period = 1;
   G.clock = settings.periodLen;
   G.ignoreRelease = false;

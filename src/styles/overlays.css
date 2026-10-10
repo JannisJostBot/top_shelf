@@ -102,3 +102,24 @@
 .seg.arena button[aria-checked='true'] span {
   color: var(--ink);
 }
+
+/* match stats on the results card */
+.mstats {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 6px 10px;
+  align-items: center;
+  font-family: var(--display);
+  font-size: 12px;
+  color: var(--ink);
+}
+.mstats .lbl {
+  font-family: var(--pixel);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.mstats .team {
+  font-size: 9px;
+  color: #9fc0e2;
+}

@@ -70,7 +70,8 @@ export function goalieCheck() {
         (Math.abs(dx) > reach - 2 ? 0.2 : 0);
       ch = clamp(ch, 0.08, 0.96);
       if (Math.random() < ch) {
-        const r = Math.random(),
+        const shooter = puck.lastTeam, // noted before the save hands the puck to the goalie's team
+          r = Math.random(),
           out = g.team ? 1 : -1,
           side = Math.abs(dx) > 1 ? Math.sign(dx) : Math.random() < 0.5 ? -1 : 1;
         let kind;
@@ -93,6 +94,11 @@ export function goalieCheck() {
           puck.hard = false;
           puck.lastTeam = g.team;
           puck.trail.length = 0;
+        }
+        if (shooter !== g.team) {
+          // an opponent's shot stopped: a save, and a shot on goal for the shooting team
+          G.stats.saves[g.team]++;
+          G.stats.sog[1 - g.team]++;
         }
         g.saveT = 0.32;
         g.saveDir = side;
