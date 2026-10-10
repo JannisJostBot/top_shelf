@@ -8,6 +8,7 @@ import { pollGamepad } from '../input/gamepad';
 import { render } from '../render/renderer';
 import { updPad } from '../ui/pad';
 import { updCard } from '../ui/playerCard';
+import { drawGuideDemos } from '../ui/guideDemos';
 import { drawLogo } from '../ui/logo';
 import { drawPreview } from '../ui/preview';
 
@@ -37,6 +38,7 @@ export function frame(now) {
   if (!$('menu').hidden) {
     drawPreview();
     drawLogo();
+    drawGuideDemos();
   }
   requestAnimationFrame(frame);
 }

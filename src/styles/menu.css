@@ -398,3 +398,27 @@ body.padnav button:focus {
 .mcard.stickyhead .tabs {
   top: var(--headh);
 }
+
+/* animated action demos in the Guide */
+.demo {
+  margin: 2px 0 4px;
+  display: grid;
+  gap: 5px;
+}
+.demo canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 128/56;
+  image-rendering: pixelated;
+  border: 2px solid var(--line);
+  border-radius: 4px;
+}
+.demo figcaption {
+  font-size: 10px;
+  color: #dbe9f6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
