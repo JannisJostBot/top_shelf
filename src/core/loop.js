@@ -1,4 +1,5 @@
 import { audioTick } from '../audio/sfx';
+import { G } from '../game/world';
 import { STEP } from '../config';
 import { $ } from './dom';
 import { clock } from './time';
@@ -15,6 +16,9 @@ let last = performance.now(),
 export function frame(now) {
   clock.now = now / 1000;
   pollGamepad();
+  // menus and the pause screen need the mouse pointer back
+  if (document.pointerLockElement && (G.demo || G.state === 'paused' || G.state === 'over'))
+    document.exitPointerLock();
   let d = (now - last) / 1000;
   last = now;
   if (d > 0.1) d = 0.1;

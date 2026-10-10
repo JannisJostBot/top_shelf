@@ -8,7 +8,7 @@ import { GK, SK } from './players';
 import { openness, passTo, shoot, steal } from './puck';
 import { G, puck } from './world';
 import { vib } from '../input/haptics';
-import { input, mouse, mouseWorld, readStick } from '../input/state';
+import { input, mouse, readStick } from '../input/state';
 import { CY } from '../render/colors';
 import { pop } from '../render/effects';
 import { settings } from '../settings';
@@ -120,8 +120,9 @@ function humanShoot(p) {
     gk = GK[1];
   if (p.y < 150 && p.fy < 0.35) {
     let off;
-    const mw = mouse.on && !input.touch ? mouseWorld() : null;
-    if (mw && mw.y < GT + 70) off = clamp(mw.x - 80, -10.5, 10.5);
+    // mouse aim: follow the aim direction to the goal line to pick the spot
+    const am = mouse.on && !input.touch && input.aim && input.aim.y < -0.2 ? input.aim : null;
+    if (am) off = clamp(p.x + (am.x / -am.y) * (p.y - GT) - 80, -10.5, 10.5);
     else {
       if (Math.abs(input.jx) > 0.3) off = Math.sign(input.jx) * 10.5;
       else off = p.x < 80 ? 10.5 : -10.5;

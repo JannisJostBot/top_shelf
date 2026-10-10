@@ -1,7 +1,6 @@
 import { K } from '../config';
 import { G } from '../game/world';
 import { pad } from './gamepad';
-import { cam, view } from '../render/canvas';
 
 /* ---------- input ---------- */
 export const input = {
@@ -18,28 +17,30 @@ export const input = {
   pp: false,
   swp: false,
 };
-// mouse: point to skate and aim; any movement key hands control back to the keyboard
-export const mouse = { sx: 0, sy: 0, on: false };
-export function mouseWorld() {
-  return { x: cam.x + mouse.sx / (K * view.camZ), y: cam.y + mouse.sy / (K * view.camZ) };
+// Mouse steering works like slither.io-style games: mouse movement pushes a knob around inside a ring
+// (vx, vy within the unit circle) and the skater faces the way the knob points. Only the direction counts,
+// not where the cursor is relative to the player. During play the pointer is locked to the game, so the
+// mouse can never run off the screen.
+export const mouse = { sx: 0, sy: 0, on: false, vx: 0, vy: -1 };
+const SENS = 1 / 70; // screen pixels of mouse travel to cross the ring's radius
+const DEAD = 0.15; // knob this close to the centre keeps the last direction
+export function nudgeAim(dx, dy) {
+  let x = mouse.vx + dx * SENS,
+    y = mouse.vy + dy * SENS;
+  const m = Math.hypot(x, y);
+  if (m > 1) {
+    x /= m;
+    y /= m;
+  }
+  mouse.vx = x;
+  mouse.vy = y;
 }
-// The mouse only aims. Keys still skate: with the mouse active, W/S go toward/away from the cursor and A/D strafe.
-// Near the cursor the aim is held instead of recomputed, and skating toward it slows to a stop on it. Otherwise,
-// once the camera stops at the end boards, the skater would run over the cursor and spin round as the aim flips.
-const AIM_HOLD = 7, // world units: inside this radius the previous aim direction is kept
-  ARRIVE = 12; // forward speed eases off from this distance and reaches zero at the cursor
-let held = null;
+let held = { x: 0, y: -1 };
 function aimDir() {
   if (!mouse.on || input.touch) return null;
-  const me = G.state === 'zamboni' && G.zam ? G.zam : G.controlled;
-  if (!me) return null;
-  const w = mouseWorld(),
-    dx = w.x - me.x,
-    dy = w.y - me.y,
-    d = Math.hypot(dx, dy);
-  if (d >= AIM_HOLD || !held || held.me !== me)
-    held = d > 0.01 ? { me, x: dx / d, y: dy / d } : { me, x: me.fx || 0, y: me.fy || -1 };
-  return { x: held.x, y: held.y, d };
+  const m = Math.hypot(mouse.vx, mouse.vy);
+  if (m >= DEAD) held = { x: mouse.vx / m, y: mouse.vy / m };
+  return held;
 }
 export function readStick() {
   input.aim = null;
@@ -64,7 +65,7 @@ export function readStick() {
   const a = aimDir();
   if (a) {
     input.aim = { x: a.x, y: a.y };
-    const fwd = -y > 0 ? -y * Math.min(1, Math.max(0, (a.d - 1.5) / (ARRIVE - 1.5))) : -y,
+    const fwd = -y,
       str = x,
       mx = a.x * fwd - a.y * str,
       my = a.y * fwd + a.x * str,
