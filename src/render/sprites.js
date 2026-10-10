@@ -1,6 +1,12 @@
 /* ---------- sprites (canvas pixels, 2 per world unit) ---------- */
 const LEGS_A = ['..OLLOOLLO..', '..OLLOOLLO..', '..OKKOOKKO..', '.OKKKOOKKKO.', '.BBBB..BBBB.'];
 const LEGS_B = ['..OLLOOLLO..', '..OKKOOLLO..', '.OKKKOOKKO..', '.BBBBOOKKKO.', '.......BBBB.'];
+// the other foot pushing (mirror of B), so a stride alternates feet: A, B, A, C
+const LEGS_C = ['..OLLOOLLO..', '..OLLOOKKO..', '..OKKOOKKKO.', '.OKKKOOBBBB.', '.BBBB.......'];
+// hockey stop: legs wide, knees bent, edges dug in
+const LEGS_STOP = ['.OLLO..OLLO.', 'OLLO....OLLO', 'OKKO....OKKO', 'OKKKO..OKKKO', 'BBBBB..BBBBB'];
+// skating backwards: feet out and in (C-cuts)
+const LEGS_VEE = ['..OLLOOLLO..', '.OLLO..OLLO.', '.OKKO..OKKO.', 'OKKKO..OKKKO', 'BBBB....BBBB'];
 const LOWER = ['.OTTTTTTTTO.', '.OPPPPPPPPO.', '.OPpPPPPpPO.', '.OPPPOOPPPO.'];
 const FRONT_TOP = [
   '....OOOO....',
@@ -47,6 +53,8 @@ const SIDE_TOP = [
 ];
 const SIDE_LEGS_A = ['..OLLOLLO...', '..OLLOLLO...', '..OKKOKKO...', '.OKKKKKKKO..', '.BBBBBBBBB..'];
 const SIDE_LEGS_B = ['..OLLO.OLLO.', '.OLLO...OLLO', '.OKKO...OKKO', 'OKKKO..OKKKO', 'BBBB....BBBB'];
+// side view hockey stop: skates out in front, leaning back against the edges
+const SIDE_LEGS_STOP = ['...OLLOLLO..', '...OLLOLLO..', '....OKKOKKO.', '...OKKKKKKKO', '...BBBBBBBBB'];
 // face styles: plain eyes, tinted visor, or a full metal cage
 function faceSet(f) {
   const ft = FRONT_TOP.slice(),
@@ -65,10 +73,17 @@ function faceSet(f) {
   const set = {
     frontA: [...ft, ...LOWER, ...LEGS_A],
     frontB: [...ft, ...LOWER, ...LEGS_B],
+    frontC: [...ft, ...LOWER, ...LEGS_C],
+    frontStop: [...ft, ...LOWER, ...LEGS_STOP],
+    frontVee: [...ft, ...LOWER, ...LEGS_VEE],
     backA: [...BACK_TOP, ...LOWER, ...LEGS_A],
     backB: [...BACK_TOP, ...LOWER, ...LEGS_B],
+    backC: [...BACK_TOP, ...LOWER, ...LEGS_C],
+    backStop: [...BACK_TOP, ...LOWER, ...LEGS_STOP],
+    backVee: [...BACK_TOP, ...LOWER, ...LEGS_VEE],
     sideA: [...st, ...SIDE_LEGS_A],
     sideB: [...st, ...SIDE_LEGS_B],
+    sideStop: [...st, ...SIDE_LEGS_STOP],
   };
   // a sprawled skater: the side view rotated a quarter turn, head to the right
   const s = set.sideA,
@@ -194,3 +209,26 @@ export const REFPAL = Object.assign(
   mkPal({ main: '#f4f4f4', dark: '#151515', trim: '#151515', helm: '#151515' }),
   { h: '#3a3a3a', L: '#151515', P: '#151515', p: '#2c2c2c' },
 );
+
+// Variants made from a finished map at draw time (cached, so the sprite cache can reuse them):
+const crouchCache = new Map(),
+  leanCache = new Map();
+/** Sprinting crouch: the body sits one pixel lower (a pants row is dropped and a blank row added on top). */
+export function crouched(map) {
+  let out = crouchCache.get(map);
+  if (!out) {
+    const drop = 12; // the second pants row, in both the front/back and the side layouts
+    out = ['.'.repeat(map[0].length), ...map.slice(0, drop), ...map.slice(drop + 1)];
+    crouchCache.set(map, out);
+  }
+  return out;
+}
+/** Side view leaning into a sprint: head and shoulders one pixel forward. */
+export function leaned(map) {
+  let out = leanCache.get(map);
+  if (!out) {
+    out = map.map((row, r) => (r < 7 ? '.' + row.slice(0, -1) : row));
+    leanCache.set(map, out);
+  }
+  return out;
+}

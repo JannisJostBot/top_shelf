@@ -1,4 +1,4 @@
-import { K } from '../config';
+import { BASE, K } from '../config';
 import { toS } from '../core/math';
 import { clock } from '../core/time';
 import { kit } from '../game/kit';
@@ -8,7 +8,7 @@ import { view } from './canvas';
 import { AMB, SH, WOOD, WOOD_D } from './colors';
 import { drawFighter } from './fight';
 import { R, blit, line } from './pixels';
-import { FACES, REFPAL, REFSET, SPR, withNumber } from './sprites';
+import { FACES, REFPAL, REFSET, SPR, crouched, leaned, withNumber } from './sprites';
 
 function drawStick(p, sx, sy) {
   const side = p.fx < -0.25 ? -1 : 1,
@@ -47,23 +47,36 @@ export function drawSkater(p) {
     stars(p.fallDir < 0 ? sx - 8 : sx + 8, sy - 9);
     return;
   }
-  const mv = Math.hypot(p.vx, p.vy) > 8,
-    st = mv ? Math.floor(p.anim) & 1 : 0,
+  const sp = Math.hypot(p.vx, p.vy),
+    mv = sp > 8,
     jy = Math.round(p.jump || 0);
   const sideV = Math.abs(p.fx) > Math.abs(p.fy) + 0.2,
     back = !sideV && p.fy < -0.35;
-  const map = sideV
-    ? st
-      ? set.sideB
-      : set.sideA
-    : back
-      ? withNumber(st ? set.backB : set.backA, p.num)
-      : st
-        ? set.frontB
-        : set.frontA;
+  // pose from movement: a four-step stride that alternates feet, a hockey stop when braking hard,
+  // C-cuts when skating backwards and a crouch (plus a forward lean from the side) when sprinting
+  const prev = p._psp === undefined ? sp : p._psp;
+  p._psp = sp;
+  if (prev - sp > 1.2 && sp > 18) p._stopUntil = clock.now + 0.2;
+  const stopping = clock.now < (p._stopUntil || 0),
+    backward = mv && (p.vx * p.fx + p.vy * p.fy) / sp < -0.3,
+    sprint = sp > BASE * 1.02,
+    step = Math.floor(p.anim) & 3;
+  let map;
+  if (sideV) {
+    map = !mv ? set.sideA : stopping ? set.sideStop : step & 1 ? set.sideB : set.sideA;
+    if (sprint && !stopping) map = leaned(crouched(map));
+  } else {
+    const k = back ? 'back' : 'front',
+      legs = !mv ? 'A' : stopping ? 'Stop' : backward ? (step & 1 ? 'Vee' : 'A') : ['A', 'B', 'A', 'C'][step];
+    map = set[k + legs];
+    if (back) map = withNumber(map, p.num);
+    if (sprint && !stopping && !backward) map = crouched(map);
+  }
+  // the stick stays up for a moment after a shot (follow-through), as during a wind-up
+  const stickUp = p.stickUp || clock.now < (p.followUntil || 0);
   R(sx - 6, sy, 12, 2, SH);
   R(sx - 4, sy + 2, 8, 1, SH);
-  if (p.stickUp) {
+  if (stickUp) {
     const side = p.fx < -0.25 ? -1 : 1;
     blit(map, pal, sx - 6, sy - 19 - jy, sideV && p.fx < 0);
     line(sx + side * 5, sy - 9 - jy, sx + side * 7, sy - 30 - jy, WOOD);

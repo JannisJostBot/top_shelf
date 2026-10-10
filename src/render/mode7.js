@@ -385,12 +385,17 @@ export function render3D(overlay = true) {
       oy = e.y,
       ofx = e.fx,
       ofy = e.fy,
+      ovx = e.vx,
+      ovy = e.vy,
       a = ofx * Fx + ofy * Fy,
       b = ofx * Rx + ofy * Ry;
     e.x = 0;
     e.y = 0;
     e.fx = b;
     e.fy = -a;
+    // velocity turns with the facing so poses that compare the two (skating backwards) stay right
+    e.vx = ovx * Rx + ovy * Ry;
+    e.vy = -(ovx * Fx + ovy * Fy);
     try {
       fn();
     } finally {
@@ -398,6 +403,8 @@ export function render3D(overlay = true) {
       e.y = oy;
       e.fx = ofx;
       e.fy = ofy;
+      e.vx = ovx;
+      e.vy = ovy;
     }
   };
   const billboard = (draw, q) => {

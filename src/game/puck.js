@@ -1,4 +1,5 @@
 import { S } from '../audio/sfx';
+import { clock } from '../core/time';
 import { HARD_SHOT } from '../config';
 import { clamp, dist, rnd } from '../core/math';
 import { blade, burst } from './physics/motion';
@@ -43,6 +44,7 @@ export function shoot(p, tx, ty, spd, err) {
     dy = ty - b.y,
     d = Math.hypot(dx, dy) || 1;
   release(p, (dx / d) * spd, (dy / d) * spd);
+  p.followUntil = clock.now + 0.3; // follow-through pose (visual only)
   puck.hard = spd >= HARD_SHOT;
   S('shot');
   if (d < 90 && !G.demo)
