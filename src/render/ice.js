@@ -230,6 +230,9 @@ export function buildIce(key, target) {
     red: hex('#d8343f'),
     blue: hex('#2f6bd8'),
     crease: hex('#a9d4f5'),
+    creaseD: hex('#98c6ec'),
+    creaseL: hex('#bcdff8'),
+    creaseW: hex('#d3e9f9'),
     board: hex('#f3f5f8'),
     boardS: hex('#c4cbd6'),
     kick: hex(S.kick),
@@ -264,6 +267,17 @@ export function buildIce(key, target) {
       [44, 148],
       [116, 148],
     ];
+  // the goal crease is worn, not freshly painted: speckled, a little deeper toward the red outline, and
+  // scraped pale where the goalie shuffles across in front of the goal line
+  const crease = (x, y, r, depth) => {
+    const n = Math.random(),
+      wear = 1 - r / 10,
+      streak = hash(Math.floor(x / 6) + y * 0.37, y) > 0.72 && depth < 6.5 && wear > 0.35;
+    if (streak && n < 0.75) return C.creaseW;
+    if (n < 0.1) return C.creaseD;
+    if (n > 0.93) return C.creaseL;
+    return r > 8 && n < 0.45 ? C.creaseD : C.crease;
+  };
   for (let y = 0; y < IH; y++)
     for (let x = 0; x < IW; x++) {
       const px = (x + 0.5) / K,
@@ -294,8 +308,8 @@ export function buildIce(key, target) {
         if (Math.hypot(px - 80, py - 128) < 17.6) c = n < 0.06 ? C.ice2 : C.tint;
         const ct = Math.hypot(px - 80, py - GT),
           cb = Math.hypot(px - 80, py - GB);
-        if (py > GT && ct < 10) c = ct > 9.5 ? C.red : C.crease;
-        if (py < GB && cb < 10) c = cb > 9.5 ? C.red : C.crease;
+        if (py > GT && ct < 10) c = ct > 9.5 ? C.red : crease(x, y, ct, py - GT);
+        if (py < GB && cb < 10) c = cb > 9.5 ? C.red : crease(x, y, cb, GB - py);
         for (const [cx, cy] of endC) {
           if (ring(px, py, cx, cy, 13) || dot(px, py, cx, cy, 1.8)) c = C.red;
           if (Math.abs(Math.abs(px - cx) - 13.5) < 1 && Math.abs(Math.abs(py - cy) - 2) < 0.3) c = C.red;
