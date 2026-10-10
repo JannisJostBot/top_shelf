@@ -139,7 +139,7 @@ export function netPuck(px, py) {
           return true;
         }
         grab(GK[n.def]);
-        S('save');
+        S('save', { kind: 'glove' });
         return true;
       }
       if (!puck.owner) {

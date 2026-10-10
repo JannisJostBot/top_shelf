@@ -53,10 +53,27 @@ export const SFX = {
     SFX.clack(0.4);
     SFX.ooh();
   },
-  save() {
-    const t = AC.currentTime;
-    nz(t, 0.14, 0.45, 'lowpass', 650, 250);
-    osc('sine', 160, t, 0.14, 0.3, 85);
+  // each kind of save sounds different, so you can hear what happened
+  save(a) {
+    const t = AC.currentTime,
+      kind = (a && a.kind) || 'glove';
+    if (kind === 'glove') {
+      // leather thwap, then the snap of the glove closing
+      nz(t, 0.07, 0.55, 'bandpass', 1300, 600, 1.4, 0.002);
+      osc('sine', 150, t, 0.12, 0.35, 80);
+      nz(t + 0.06, 0.03, 0.25, 'highpass', 2600, null, 1, 0.001);
+    } else if (kind === 'deflect') {
+      // hard plastic clack off the blocker and a ringing ricochet
+      osc('square', 950, t, 0.05, 0.12, 600, 0.001);
+      nz(t, 0.04, 0.5, 'highpass', 2400, null, 1, 0.001);
+      osc('sine', 2300, t + 0.01, 0.16, 0.08, 1700);
+    } else {
+      // pad save: a dull padded thud and the rebound skittering away on the ice
+      nz(t, 0.2, 0.6, 'lowpass', 420, 160);
+      osc('sine', 110, t, 0.2, 0.4, 60);
+      clatter(t + 0.08, 3, 0.18);
+      playBuf(pick(strideBufs), 0.25, 1.3);
+    }
   },
   steal() {
     SFX.clack(0.45);
@@ -121,6 +138,9 @@ export const SFX = {
       osc('square', 190, t, 0.25, 0.05, 120);
       nz(t + 0.02, 0.4, 0.18, 'lowpass', 400, 120);
     }
+    // knockdown signature: a second impact as the body lands on the ice
+    osc('sine', 48, t + 0.2, 0.3, 0.7, 28, 0.003);
+    nz(t + 0.2, 0.18, 0.45, 'lowpass', 320, 140, 1, 0.003);
     stickClatter(t + 0.26);
     crowdVoices(12, 'o', 1.3, 0.09);
     swell(mixer.crowdBase + 0.14, 0.08, 0.35, 1);
@@ -133,13 +153,22 @@ export const SFX = {
     clatter(t, 3, 0.28);
     if (v) grunt(v.look.voice * 1.05, 0.01, true);
     playBuf(pick(stopBufs), 0.4, 1.1);
+    // stumble signature: a skid and a couple of stagger steps to stay up
+    setTimeout(() => {
+      if (AC && !settings.muted) playBuf(pick(strideBufs), 0.35, 1.35);
+    }, 140);
+    setTimeout(() => {
+      if (AC && !settings.muted) playBuf(pick(strideBufs), 0.3, 1.25);
+    }, 260);
     crowdVoices(7, 'o', 0.8, 0.05);
   },
   hitSoft(a) {
     const t = AC.currentTime,
       by = a && a.by;
-    osc('sine', 88, t, 0.18, 0.55, 58, 0.002);
-    nz(t, 0.12, 0.45, 'lowpass', 520, 200, 1, 0.002);
+    osc('sine', 88, t, 0.18, 0.4, 58, 0.002);
+    nz(t, 0.1, 0.35, 'lowpass', 520, 200, 1, 0.002);
+    // bounce-off signature: a springy rising boing
+    osc('triangle', 210, t + 0.02, 0.18, 0.16, 430);
     clatter(t, 2, 0.22);
     if (by) grunt(by.look.voice * 1.15, 0.03, true);
     playBuf(pick(strideBufs), 0.4, 0.85);

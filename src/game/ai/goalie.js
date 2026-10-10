@@ -96,7 +96,7 @@ export function goalieCheck() {
         }
         g.saveT = 0.32;
         g.saveDir = side;
-        S('save');
+        S('save', { kind: kind === 'GLOVE SAVE' ? 'glove' : kind === 'DEFLECTED' ? 'deflect' : 'pad' });
         if (sp > 200) S('ooh');
         if (sp > 170) pop(g.x, g.y, kind, '#ffffff');
         return true;
