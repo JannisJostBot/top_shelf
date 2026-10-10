@@ -52,7 +52,7 @@ export function setPeriodLen(sec) {
 export function setCpuStyle(v) {
   settings.cpuStyle = v === 'realistic' ? 'realistic' : 'classic';
   document
-    .querySelectorAll('#styleSeg button')
+    .querySelectorAll('.styleSeg button')
     .forEach(x => x.setAttribute('aria-checked', String(x.dataset.v === settings.cpuStyle)));
 }
 export function setView(v) {
@@ -132,7 +132,7 @@ export function initMenu() {
       savePrefs();
     }),
   );
-  document.querySelectorAll('#styleSeg button').forEach(b =>
+  document.querySelectorAll('.styleSeg button').forEach(b =>
     b.addEventListener('click', () => {
       setCpuStyle(b.dataset.v);
       savePrefs();
