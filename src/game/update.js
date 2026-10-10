@@ -1,4 +1,5 @@
 import { S, strideSounds } from '../audio/sfx';
+import { teamAIRealistic } from './ai/realistic';
 import { startGoalFx } from '../render/goalFx';
 import { NETS, W } from '../config';
 import { pick, rnd } from '../core/math';
@@ -181,8 +182,10 @@ export function update(dt) {
     autoSwitch(dt);
     humanUpdate(dt);
   }
-  teamAI(0, dt);
-  teamAI(1, dt);
+  // CPU skaters (and your AI teammates) use the behaviour chosen in Setup
+  const ai = settings.cpuStyle === 'realistic' ? teamAIRealistic : teamAI;
+  ai(0, dt);
+  ai(1, dt);
   for (const p of SKATERS) if (p.checkT > 0) checkStep(p, dt);
   for (const g of GK) goalieAI(g, dt);
   refAI(dt);

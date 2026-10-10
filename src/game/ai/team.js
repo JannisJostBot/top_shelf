@@ -8,7 +8,7 @@ import { G, puck } from '../world';
 import { settings } from '../../settings';
 
 /* ---------- AI ---------- */
-function teamMul(t) {
+export function teamMul(t) {
   if (G.practice && t === 1 && G.practice.opp === 'easy') return 0.55;
   return t === 1 ? settings.diff.spd : G.demo ? 0.94 : 0.95;
 }

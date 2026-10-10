@@ -258,6 +258,13 @@
 
             <section class="tabp" id="p-options" role="tabpanel" aria-labelledby="t-options" hidden>
               <div class="orow">
+                <div><b>CPU style</b><span>How CPU skaters move and decide</span></div>
+                <div class="seg two" role="radiogroup" aria-label="CPU style" id="styleSeg">
+                  <button role="radio" data-v="classic" aria-checked="true">Classic</button
+                  ><button role="radio" data-v="realistic" aria-checked="false">Realistic</button>
+                </div>
+              </div>
+              <div class="orow">
                 <div>
                   <b>Fullscreen</b><span id="fsHint">Just the game, without the browser around it (F)</span>
                 </div>
@@ -443,10 +450,12 @@
                 shows. Punching drains stamina, so tired punches are weak; it recovers when you wait. Higher
                 CPU levels block and counter more.
               </p>
-              <h3>CPU level</h3>
+              <h3>CPU level and style</h3>
               <p>
-                Raises the CPU's skating speed, stealing, goalie skill, shooting accuracy, reactions, face-off
-                speed and checking.
+                The level raises the CPU's skating speed, stealing, goalie skill, shooting accuracy,
+                reactions, face-off speed and checking. The style (in Setup) changes how skaters play: Classic
+                is the original arcade AI; Realistic skaters react with a short delay, skate in arcs, keep
+                their positions, mark a man on defence, deke and wind up before they shoot.
               </p>
               <h3>Replays</h3>
               <p>

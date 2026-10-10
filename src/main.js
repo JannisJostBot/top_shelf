@@ -46,6 +46,7 @@ import {
   PERIOD_LENGTHS,
   initMenu,
   setCel,
+  setCpuStyle,
   setDiff,
   setFights,
   setPeriodLen,
@@ -83,6 +84,7 @@ applyColors();
 genRoster();
 setDiff(settings.diffKey);
 setPeriodLen(PERIOD_LENGTHS.includes(pr.len) ? pr.len : 60);
+setCpuStyle(pr.style);
 setView(settings.viewMode);
 $('keymapMenu').innerHTML = keymapHTML();
 $('padmapMenu').innerHTML = padmapHTML();

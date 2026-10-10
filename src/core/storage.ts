@@ -38,6 +38,7 @@ export function savePrefs() {
         zam: settings.zamOn,
         puck: settings.puckKey,
         len: settings.periodLen,
+        style: settings.cpuStyle,
       }),
     );
   } catch (e) {}

@@ -49,6 +49,12 @@ export function setPeriodLen(sec) {
   $('kicker').textContent = '3-ON-3 · 3 PERIODS × ' + clockText(sec);
   hudClock();
 }
+export function setCpuStyle(v) {
+  settings.cpuStyle = v === 'realistic' ? 'realistic' : 'classic';
+  document
+    .querySelectorAll('#styleSeg button')
+    .forEach(x => x.setAttribute('aria-checked', String(x.dataset.v === settings.cpuStyle)));
+}
 export function setView(v) {
   settings.viewMode = v;
   document
@@ -123,6 +129,12 @@ export function initMenu() {
   document.querySelectorAll('#lenSeg button').forEach(b =>
     b.addEventListener('click', () => {
       setPeriodLen(+b.dataset.v);
+      savePrefs();
+    }),
+  );
+  document.querySelectorAll('#styleSeg button').forEach(b =>
+    b.addEventListener('click', () => {
+      setCpuStyle(b.dataset.v);
       savePrefs();
     }),
   );
