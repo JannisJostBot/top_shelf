@@ -4,6 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
     <title>Top Shelf</title>
+    <meta name="theme-color" content="#0a0f1e" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Top Shelf" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,37 +22,65 @@
       <main id="stage">
         <canvas id="c" width="224" height="320" aria-label="Hockey rink"></canvas>
         <header id="hud">
-          <button class="ibtn" id="muteBtn" aria-pressed="false" aria-label="Sound on or off">
-            <svg class="spk spk-on" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
-              <rect x="2" y="6" width="3" height="4" />
-              <rect x="5" y="5" width="1" height="6" />
-              <rect x="6" y="4" width="1" height="8" />
-              <rect x="7" y="3" width="1" height="10" />
-              <rect x="9" y="5" width="1" height="1" />
-              <rect x="10" y="6" width="1" height="4" />
-              <rect x="9" y="10" width="1" height="1" />
-              <rect x="11" y="3" width="1" height="1" />
-              <rect x="12" y="4" width="1" height="1" />
-              <rect x="13" y="5" width="1" height="6" />
-              <rect x="12" y="11" width="1" height="1" />
-              <rect x="11" y="12" width="1" height="1" /></svg
-            ><svg class="spk spk-off" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
-              <rect x="2" y="6" width="3" height="4" />
-              <rect x="5" y="5" width="1" height="6" />
-              <rect x="6" y="4" width="1" height="8" />
-              <rect x="7" y="3" width="1" height="10" />
-              <rect x="10" y="5" width="1" height="1" />
-              <rect x="11" y="6" width="1" height="1" />
-              <rect x="12" y="7" width="1" height="1" />
-              <rect x="13" y="8" width="1" height="1" />
-              <rect x="14" y="9" width="1" height="1" />
-              <rect x="14" y="5" width="1" height="1" />
-              <rect x="13" y="6" width="1" height="1" />
-              <rect x="12" y="7" width="1" height="1" />
-              <rect x="11" y="8" width="1" height="1" />
-              <rect x="10" y="9" width="1" height="1" />
-            </svg>
-          </button>
+          <div class="hudbtns">
+            <button class="ibtn" id="muteBtn" aria-pressed="false" aria-label="Sound on or off">
+              <svg class="spk spk-on" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="2" y="6" width="3" height="4" />
+                <rect x="5" y="5" width="1" height="6" />
+                <rect x="6" y="4" width="1" height="8" />
+                <rect x="7" y="3" width="1" height="10" />
+                <rect x="9" y="5" width="1" height="1" />
+                <rect x="10" y="6" width="1" height="4" />
+                <rect x="9" y="10" width="1" height="1" />
+                <rect x="11" y="3" width="1" height="1" />
+                <rect x="12" y="4" width="1" height="1" />
+                <rect x="13" y="5" width="1" height="6" />
+                <rect x="12" y="11" width="1" height="1" />
+                <rect x="11" y="12" width="1" height="1" /></svg
+              ><svg class="spk spk-off" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="2" y="6" width="3" height="4" />
+                <rect x="5" y="5" width="1" height="6" />
+                <rect x="6" y="4" width="1" height="8" />
+                <rect x="7" y="3" width="1" height="10" />
+                <rect x="10" y="5" width="1" height="1" />
+                <rect x="11" y="6" width="1" height="1" />
+                <rect x="12" y="7" width="1" height="1" />
+                <rect x="13" y="8" width="1" height="1" />
+                <rect x="14" y="9" width="1" height="1" />
+                <rect x="14" y="5" width="1" height="1" />
+                <rect x="13" y="6" width="1" height="1" />
+                <rect x="12" y="7" width="1" height="1" />
+                <rect x="11" y="8" width="1" height="1" />
+                <rect x="10" y="9" width="1" height="1" />
+              </svg></button
+            ><button
+              class="ibtn"
+              id="fsBtn"
+              aria-pressed="false"
+              aria-label="Fullscreen"
+              title="Fullscreen (F)"
+            >
+              <svg class="fsi fs-on" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="2" y="2" width="4" height="2" />
+                <rect x="2" y="2" width="2" height="4" />
+                <rect x="10" y="2" width="4" height="2" />
+                <rect x="12" y="2" width="2" height="4" />
+                <rect x="2" y="12" width="4" height="2" />
+                <rect x="2" y="10" width="2" height="4" />
+                <rect x="10" y="12" width="4" height="2" />
+                <rect x="12" y="10" width="2" height="4" /></svg
+              ><svg class="fsi fs-off" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="2" y="4" width="4" height="2" />
+                <rect x="4" y="2" width="2" height="4" />
+                <rect x="10" y="4" width="4" height="2" />
+                <rect x="10" y="2" width="2" height="4" />
+                <rect x="2" y="10" width="4" height="2" />
+                <rect x="4" y="10" width="2" height="4" />
+                <rect x="10" y="10" width="4" height="2" />
+                <rect x="10" y="10" width="2" height="4" />
+              </svg>
+            </button>
+          </div>
           <div class="team home">
             <span class="tname" id="nm0">YOU</span><span class="score" id="s0">0</span>
           </div>
@@ -223,6 +257,15 @@
             </section>
 
             <section class="tabp" id="p-options" role="tabpanel" aria-labelledby="t-options" hidden>
+              <div class="orow">
+                <div>
+                  <b>Fullscreen</b><span id="fsHint">Just the game, without the browser around it (F)</span>
+                </div>
+                <div class="seg two" role="radiogroup" aria-label="Fullscreen" id="fsSeg">
+                  <button role="radio" data-v="on" aria-checked="false">On</button
+                  ><button role="radio" data-v="off" aria-checked="true">Off</button>
+                </div>
+              </div>
               <div class="orow">
                 <div><b>Sound</b><span>Effects, crowd and music</span></div>
                 <div class="seg two" role="radiogroup" aria-label="Sound" id="sndSeg">

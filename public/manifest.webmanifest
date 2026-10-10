@@ -1,0 +1,11 @@
+{
+  "name": "Top Shelf",
+  "short_name": "Top Shelf",
+  "description": "3-on-3 pixel-art arcade hockey",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "background_color": "#0a0f1e",
+  "theme_color": "#0a0f1e",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

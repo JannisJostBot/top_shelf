@@ -21,6 +21,7 @@ const KEYMAP = [
   [['V'], 'Next replay angle'],
   [['P', 'Esc'], 'Pause'],
   [['H', '?'], 'Show the key map'],
+  [['F'], 'Fullscreen'],
 ];
 export const keymapHTML = () =>
   KEYMAP.map(
