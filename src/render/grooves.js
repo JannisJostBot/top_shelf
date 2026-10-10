@@ -1,5 +1,6 @@
-// Blade grooves for the replay. They are rebuilt every frame straight from the replay recording (REC), so they
-// need no extra game state and restart cleanly whenever the replay switches camera angle.
+// Blade grooves for the replay. The ice starts clean when the replay starts and the skaters cut grooves into it
+// as they move. They are rebuilt every frame from the replay recording (REC) between the replay's first frame and
+// the current one, so they need no extra game state and start over whenever the replay switches camera angle.
 //
 // Each skate only cuts while it pushes: one foot carves a curved stroke outward, lifts, and the other foot takes
 // over, which leaves the alternating S-shaped marks of real skating. Goalies leave shorter shuffle marks in their
@@ -10,7 +11,7 @@ import { REC, PF, G } from '../game/world';
 import { players } from '../game/players';
 import { view } from './canvas';
 
-const HISTORY = 360, // frames of grooves kept before the current replay frame (6 s at 60 fps)
+const HISTORY = 360, // oldest groove kept, in frames behind the current replay frame (6 s at 60 fps)
   BUCKETS = 6, // age buckets, each stroked at its own opacity
   MIN_SPEED = 12; // below this a blade glides without leaving a visible cut
 
@@ -18,7 +19,7 @@ export function skateGrooves() {
   const rp = G.rp;
   if (!rp || REC.length < 2) return;
   const cur = Math.min(REC.length - 1, Math.floor(rp.i)),
-    from = Math.max(0, cur - HISTORY),
+    from = Math.max(rp.i0, cur - HISTORY),
     flip = rp.angle.flip,
     cut = [],
     shine = [];
@@ -68,8 +69,13 @@ export function skateGrooves() {
             sy = drawing ? ly : y;
           cut[b].moveTo(sx, sy);
           shine[b].moveTo(sx + 0.8, sy + 0.8);
+          const fresh = !drawing;
           bucket = b;
           drawing = true;
+          lx = x;
+          ly = y;
+          // a run's first point only places the blade; the groove appears once it has moved
+          if (fresh) continue;
         }
         cut[b].lineTo(x, y);
         shine[b].lineTo(x + 0.8, y + 0.8);
