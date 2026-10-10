@@ -10,6 +10,18 @@ import { FACES, FACEV, SPR } from '../render/sprites';
 
 // menu preview: your skater from three sides plus your goalie, against a CPU skater
 const PV_LOOK = { skin: '#e8b48a', face: 'visor', tape: '#15171d', skate: '#16181f' };
+// Rebuilt only when the team palettes change, so the sprite cache can reuse the preview sprites.
+let pals = null;
+function previewPals() {
+  if (!pals || pals.home !== kit.PAL[0] || pals.away !== kit.PAL[1])
+    pals = {
+      home: kit.PAL[0],
+      away: kit.PAL[1],
+      pal: Object.assign({}, kit.PAL[0], { S: PV_LOOK.skin, V: FACEV.visor }),
+      cpal: Object.assign({}, kit.PAL[1], { S: '#c98d5f', V: FACEV.cage }),
+    };
+  return pals;
+}
 export function drawPreview() {
   const save = view.ctx;
   view.ctx = pvx;
@@ -17,8 +29,7 @@ export function drawPreview() {
   view.ctx.fillRect(0, 0, 140, 36);
   view.ctx.fillStyle = '#d3e1ec';
   view.ctx.fillRect(0, 31, 140, 5);
-  const pal = Object.assign({}, kit.PAL[0], { S: PV_LOOK.skin, V: FACEV.visor }),
-    cpal = Object.assign({}, kit.PAL[1], { S: '#c98d5f', V: FACEV.cage });
+  const { pal, cpal } = previewPals();
   const st = Math.floor(clock.now * 5) & 1,
     f = FACES.visor,
     y = 30;

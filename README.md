@@ -35,7 +35,7 @@ src/
     practice.js       training modes
     update.js         per-tick state dispatch
   render/             canvas drawing: sprites, ice, stands, players, puck, effects, mode-7 replay cam
-  audio/              Web Audio engine, synth voices, SFX table, goal songs
+  audio/              Web Audio engine, procedural skate sounds, synth voices, SFX table, goal songs
   input/              shared input state + keyboard, mouse, touch, haptics
   ui/                 DOM UI: HUD, menu, customization, player card, touch pad
   styles/             CSS split by area

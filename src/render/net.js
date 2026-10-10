@@ -3,7 +3,7 @@ import { clamp, rnd, toS } from '../core/math';
 import { clock } from '../core/time';
 import { view } from './canvas';
 import { SH } from './colors';
-import { R, disc, line } from './pixels';
+import { R, disc, line, pixelAligned } from './pixels';
 
 // The mesh is a small cloth: a grid of nodes pinned to the rigid frame (crossbar, back bar, side posts).
 // Interior nodes move with verlet integration and stretch constraints, so a puck strike sends a real ripple.
@@ -97,12 +97,8 @@ export function resetCloth() {
       d.y = d.py = d.ry;
     }
 }
-export function drawNet(n) {
-  const x0 = n.x0 * K,
-    x1 = n.x1 * K,
-    y0 = n.y0 * K,
-    y1 = n.y1 * K,
-    cl = n.cloth,
+function drawMesh(n, x0, y0, x1, y1) {
+  const cl = n.cloth,
     N = cl.nodes,
     C = cl.C;
   R(x0, y0, x1 - x0, y1 - y0, '#f4f7fa');
@@ -118,6 +114,46 @@ export function drawNet(n) {
         line(toS(a.x), toS(a.y), toS(b.x), toS(b.y), '#b9c7d6');
       }
     }
+}
+// The mesh only changes when a node moves onto a different pixel, so it is cached between ripples.
+function meshImage(n, x0, y0, x1, y1) {
+  const cl = n.cloth,
+    N = cl.nodes;
+  if (!cl.img) {
+    cl.img = document.createElement('canvas');
+    cl.img.width = x1 - x0 + 1;
+    cl.img.height = y1 - y0 + 1;
+    cl.drawnAt = new Int32Array(N.length * 2).fill(-1);
+  }
+  let dirty = false;
+  for (let i = 0; i < N.length; i++) {
+    const sx = toS(N[i].x),
+      sy = toS(N[i].y);
+    if (cl.drawnAt[2 * i] !== sx || cl.drawnAt[2 * i + 1] !== sy) {
+      cl.drawnAt[2 * i] = sx;
+      cl.drawnAt[2 * i + 1] = sy;
+      dirty = true;
+    }
+  }
+  if (dirty) {
+    const save = view.ctx;
+    view.ctx = cl.img.getContext('2d');
+    view.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    view.ctx.clearRect(0, 0, cl.img.width, cl.img.height);
+    view.ctx.setTransform(1, 0, 0, 1, -x0, -y0);
+    drawMesh(n, x0, y0, x1, y1);
+    view.ctx = save;
+  }
+  return cl.img;
+}
+export function drawNet(n) {
+  const x0 = n.x0 * K,
+    x1 = n.x1 * K,
+    y0 = n.y0 * K,
+    y1 = n.y1 * K;
+  if (view.ctx.globalAlpha === 1 && pixelAligned(view.ctx) && !view.sil)
+    view.ctx.drawImage(meshImage(n, x0, y0, x1, y1), x0, y0);
+  else drawMesh(n, x0, y0, x1, y1);
   const red = '#d8343f',
     redD = '#8f1f28';
   R(x0, y0, 2, y1 - y0, red);

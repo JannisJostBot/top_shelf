@@ -1,4 +1,4 @@
-import { AC, crowdG, master, mixer, nz, osc, playBuf, stopBufs, strideBufs } from './engine';
+import { AC, crowdG, glideG, master, mixer, nz, osc, playBuf, stopBufs, strideBufs } from './engine';
 import { clatter, crowdVoices, grunt, stickClatter, swell } from './voices';
 import { BASE, K } from '../config';
 import { clamp, pick, rnd } from '../core/math';
@@ -27,8 +27,8 @@ export const SFX = {
   tick() {
     osc('sine', 1250, AC.currentTime, 0.035, 0.06);
   },
-  stride(v) {
-    playBuf(pick(strideBufs), 0.42 * v, rnd(0.9, 1.1));
+  stride(v, pan) {
+    playBuf(pick(strideBufs), 0.42 * v, rnd(0.92, 1.08), pan);
   },
   spray() {
     playBuf(pick(stopBufs), 0.55, rnd(0.95, 1.05));
@@ -330,6 +330,7 @@ export function S(n, a) {
   } catch (e) {}
 }
 export function audioTick() {
+  glideTick();
   if (!AC || !crowdG || settings.muted || mixer.crowdBase <= 0) return;
   const t = AC.currentTime;
   if (t > mixer.swellEnd && clock.now > mixer.wobT) {
@@ -354,8 +355,39 @@ export function strideSounds(dt) {
       if (G.stepCd > 0 || p.x < cam.x || p.x > cam.x + vw || p.y < cam.y || p.y > cam.y + vh) continue;
       G.stepCd = 0.09;
     }
+    // alternate left/right foot; other skaters are also placed by where they are on screen
+    p.foot = !p.foot;
+    const pan =
+      (p.foot ? -0.18 : 0.18) + (me ? 0 : clamp(((p.x - cam.x) / (view.CW / K) - 0.5) * 1.2, -0.6, 0.6));
     try {
-      SFX.stride(clamp(sp / BASE, 0.35, 1.3) * (me ? 1 : 0.35));
+      SFX.stride(clamp(sp / BASE, 0.35, 1.3) * (me ? 1 : 0.35), pan);
     } catch (e) {}
+  }
+}
+
+// Continuous blade-on-ice glide under the strides, louder the faster the skaters on screen are moving.
+let glideLevel = 0;
+function glideTick() {
+  if (!glideG) return;
+  let target = 0;
+  const st = G.state;
+  if (
+    !settings.muted &&
+    !G.demo &&
+    (st === 'play' || st === 'faceoff' || st === 'celebrate' || st === 'goal')
+  ) {
+    const vw = view.CW / K,
+      vh = view.CH / K;
+    for (const p of SKATERS) {
+      if (p.benched || p.down > 0) continue;
+      const me = p === G.controlled && !G.ai0;
+      if (!me && (p.x < cam.x || p.x > cam.x + vw || p.y < cam.y || p.y > cam.y + vh)) continue;
+      target += clamp((Math.hypot(p.vx, p.vy) - 10) / BASE, 0, 1.3) * (me ? 1 : 0.3);
+    }
+    target = Math.min(target, 1.4) * 0.08;
+  }
+  if (Math.abs(target - glideLevel) > 0.002) {
+    glideLevel = target;
+    glideG.gain.setTargetAtTime(target, AC.currentTime, 0.12);
   }
 }
