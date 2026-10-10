@@ -83,7 +83,7 @@ export function drawFightHud() {
   if (!B) return;
   const w = Math.floor(view.CW * 0.36),
     h = 5,
-    y = 10;
+    y = 10 + view.topInset; // below the floating scoreboard
   view.ctx.font = '6px "Press Start 2P", monospace';
   view.ctx.textBaseline = 'top';
   R(5, y - 1, w + 4, h + 4, '#0b0f1a');

@@ -1,4 +1,5 @@
 import { H, W } from '../config';
+import { clearGoalFx } from '../render/goalFx';
 import { $ } from '../core/dom';
 import { lerp, rnd } from '../core/math';
 import { endGame } from './match';
@@ -140,6 +141,7 @@ export function beginAngle() {
   G.rp.netHit = false;
   if (G.rp.fart === undefined) G.rp.fart = null;
   resetCloth();
+  clearGoalFx();
   view.lamp = null;
   G.rp.i = G.rp.i0;
   view.camZ = G.rp.angle.z;

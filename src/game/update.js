@@ -1,4 +1,5 @@
 import { S, strideSounds } from '../audio/sfx';
+import { startGoalFx } from '../render/goalFx';
 import { NETS, W } from '../config';
 import { pick, rnd } from '../core/math';
 import { clock } from '../core/time';
@@ -70,6 +71,7 @@ export function update(dt) {
       const fl = G.rp.angle.flip,
         tn = fl ? NETS[G.lastNet === NETS[0] ? 1 : 0] : G.lastNet;
       netHit(tn, fl ? W - G.goalX : G.goalX, 1.5);
+      startGoalFx(settings.puckKey, fl ? W - G.goalX : G.goalX, tn.top ? tn.y0 + 3 : tn.y1 - 3, tn.top);
       view.lamp = { n: tn, until: clock.now + 2.6 };
     }
     applyFrame(G.rp.i);

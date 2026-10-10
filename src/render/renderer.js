@@ -1,4 +1,5 @@
 import { IH, IW, K, NETS } from '../config';
+import { drawGoalFx } from './goalFx';
 import { rnd, toS } from '../core/math';
 import { clock } from '../core/time';
 import { puckStyle } from '../data/pucks';
@@ -124,6 +125,7 @@ export function render() {
   }
   view.ctx.globalAlpha = 1;
   drawFx();
+  drawGoalFx();
   drawBubbles();
   if (cine) sparkles();
   view.ctx.setTransform(1, 0, 0, 1, 0, 0);

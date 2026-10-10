@@ -94,7 +94,7 @@ export function drawZamHud() {
   const pct = z.count / Math.max(1, z.total),
     w = Math.floor(view.CW * 0.5),
     x0 = (view.CW - w) >> 1,
-    y = 10;
+    y = 10 + view.topInset; // below the floating scoreboard
   R(x0 - 2, y - 2, w + 4, 9, '#0b0f1a');
   R(x0, y, Math.round(w * pct), 5, '#7fe3ff');
   view.ctx.font = '6px "Press Start 2P", monospace';

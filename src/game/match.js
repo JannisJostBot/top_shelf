@@ -1,4 +1,5 @@
 import { audio } from '../audio/engine';
+import { startGoalFx } from '../render/goalFx';
 import { goalMusic, stopSong } from '../audio/music';
 import { S } from '../audio/sfx';
 import { setCrowd } from '../audio/voices';
@@ -45,6 +46,7 @@ export function goalScored(team, n) {
   puck.y = n.top ? n.y0 + 3 : n.y1 - 3;
   puck.trail.length = 0;
   netHit(n, ix, 1.5);
+  startGoalFx(settings.puckKey, ix, puck.y, n.top);
   view.lamp = { n, until: clock.now + 3.2 };
   G.goalX = ix;
   G.goalFrame = REC.length;
