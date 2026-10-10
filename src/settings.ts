@@ -17,6 +17,8 @@ export const settings: {
   periodLen: number;
   /** how CPU skaters behave: 'classic' or 'realistic' */
   cpuStyle: 'classic' | 'realistic';
+  /** stick style per team (keys of STICKS) */
+  sticks: [string, string];
 } = {
   puckKey: 'classic',
   diffKey: 'pro',
@@ -32,6 +34,7 @@ export const settings: {
   zamOn: true,
   periodLen: 60,
   cpuStyle: 'classic',
+  sticks: ['wood', 'wood'],
 };
 
 export const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;

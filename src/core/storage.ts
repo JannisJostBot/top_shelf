@@ -39,6 +39,8 @@ export function savePrefs() {
         puck: settings.puckKey,
         len: settings.periodLen,
         style: settings.cpuStyle,
+        stk0: settings.sticks[0],
+        stk1: settings.sticks[1],
       }),
     );
   } catch (e) {}

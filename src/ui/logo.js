@@ -3,6 +3,7 @@
 // winds up and slaps the puck onto the "top shelf", where it lands on top of the word TOP and the crowd jumps.
 import { $ } from '../core/dom';
 import { clock } from '../core/time';
+import { STICKS, stickCol } from '../data/sticks';
 import { STADIUMS } from '../data/stadiums';
 import { kit } from '../game/kit';
 import { settings } from '../settings';
@@ -204,7 +205,12 @@ function paintSkater(pose) {
 }
 const EXTRA = { WOOD: '#9a6a35', TAPE: '#f2f4f7', VIS: '#6ec2f2', SKIN: '#e8b48a' };
 function drawSkater(pose) {
-  pal = Object.assign({}, kit.PAL[0] || {}, EXTRA);
+  // the logo skater carries your team's stick
+  const st = STICKS[settings.sticks[0]] || STICKS.wood;
+  pal = Object.assign({}, kit.PAL[0] || {}, EXTRA, {
+    WOOD: stickCol(st.shaft, 5, 10, clock.now),
+    TAPE: st.blade || EXTRA.TAPE,
+  });
   paintSkater(pose);
   // ice shadow under the skates
   g.globalAlpha = 0.35;

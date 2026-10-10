@@ -1,15 +1,28 @@
 import { BASE, K } from '../config';
+import { STICKS, stickCol } from '../data/sticks';
+import { settings } from '../settings';
 import { toS } from '../core/math';
 import { clock } from '../core/time';
 import { kit } from '../game/kit';
 import { blade } from '../game/physics/motion';
 import { G, puck, ref } from '../game/world';
 import { view } from './canvas';
-import { AMB, SH, WOOD, WOOD_D } from './colors';
+import { AMB, SH } from './colors';
 import { drawFighter } from './fight';
 import { R, blit, line } from './pixels';
 import { FACES, REFPAL, REFSET, SPR, crouched, leaned, withNumber } from './sprites';
 
+/** A stick line in the team's style: pixel by pixel, so patterned and animated sticks work. */
+function stickLine(p, x0, y0, x1, y1, part) {
+  const st = STICKS[settings.sticks[p.team]] || STICKS.wood,
+    c = st[part],
+    n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) | 0;
+  for (let i = 0; i <= n; i++) {
+    const t = n ? i / n : 0;
+    R(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), 1, 1, stickCol(c, i, n, clock.now));
+  }
+}
+const bladeTape = p => (STICKS[settings.sticks[p.team]] || STICKS.wood).blade || p.look.tape;
 function drawStick(p, sx, sy) {
   const side = p.fx < -0.25 ? -1 : 1,
     b = blade(p),
@@ -17,9 +30,9 @@ function drawStick(p, sx, sy) {
     by = toS(b.y);
   const hx = sx + side * 5,
     hy = sy - 9;
-  line(hx, hy, bx - Math.round(p.fx * 2), by - 1, WOOD);
-  line(hx + 1, hy, bx - Math.round(p.fx * 2) + 1, by - 1, WOOD_D);
-  const tape = p.look.tape;
+  stickLine(p, hx, hy, bx - Math.round(p.fx * 2), by - 1, 'shaft');
+  stickLine(p, hx + 1, hy, bx - Math.round(p.fx * 2) + 1, by - 1, 'edge');
+  const tape = bladeTape(p);
   if (Math.abs(p.fx) > 0.5) R(bx - 1, by - 1, 2, 3, tape);
   else R(bx - 1, by, 4, 2, tape);
 }
@@ -41,8 +54,8 @@ export function drawSkater(p) {
   if (p.down > 0) {
     // sprawled on the ice, stick dropped beside them
     R(sx - 11, sy, 22, 3, SH);
-    line(sx - 9, sy + 3, sx + 7, sy + 1, WOOD);
-    R(sx + 7, sy, 3, 2, p.look.tape);
+    stickLine(p, sx - 9, sy + 3, sx + 7, sy + 1, 'shaft');
+    R(sx + 7, sy, 3, 2, bladeTape(p));
     blit(set.fallen, pal, sx - 10, sy - 10, p.fallDir < 0);
     stars(p.fallDir < 0 ? sx - 8 : sx + 8, sy - 9);
     return;
@@ -79,9 +92,9 @@ export function drawSkater(p) {
   if (stickUp) {
     const side = p.fx < -0.25 ? -1 : 1;
     blit(map, pal, sx - 6, sy - 19 - jy, sideV && p.fx < 0);
-    line(sx + side * 5, sy - 9 - jy, sx + side * 7, sy - 30 - jy, WOOD);
-    line(sx + side * 5 + 1, sy - 9 - jy, sx + side * 7 + 1, sy - 30 - jy, WOOD_D);
-    R(sx + side * 7 - 1, sy - 33 - jy, 3, 4, p.look.tape);
+    stickLine(p, sx + side * 5, sy - 9 - jy, sx + side * 7, sy - 30 - jy, 'shaft');
+    stickLine(p, sx + side * 5 + 1, sy - 9 - jy, sx + side * 7 + 1, sy - 30 - jy, 'edge');
+    R(sx + side * 7 - 1, sy - 33 - jy, 3, 4, bladeTape(p));
     return;
   }
   if (back) drawStick(p, sx, sy - jy);
@@ -105,8 +118,8 @@ export function drawGoalie(g) {
     R(ex - 3, sy - 3, 6, 3, '#f2f4f7');
   }
   if (front) {
-    line(sx + 5, sy - 9, sx + 3, sy, WOOD);
-    R(sx - 5, sy + 1, 9, 2, g.look.tape);
+    stickLine(g, sx + 5, sy - 9, sx + 3, sy, 'shaft');
+    R(sx - 5, sy + 1, 9, 2, bladeTape(g));
   }
 }
 export function drawRef() {

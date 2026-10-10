@@ -1,4 +1,5 @@
 import { audio } from '../audio/engine';
+import { STICKS } from '../data/sticks';
 import { SONGS, chime, playSong } from '../audio/music';
 import { $ } from '../core/dom';
 import { savePrefs } from '../core/storage';
@@ -49,6 +50,15 @@ export function applyColors() {
 const sw = $('swatches');
 const csw = $('cpuSwatches');
 const psw = $('puckSwatches');
+export function setStick(team, k) {
+  if (!STICKS[k]) return;
+  settings.sticks[team] = k;
+  document
+    .querySelectorAll('#stickSwatches' + team + ' button')
+    .forEach(b => b.setAttribute('aria-checked', String(b.dataset.s === k)));
+  const name = t => STICKS[settings.sticks[t]].name + (STICKS[settings.sticks[t]].sp ? ' (special)' : '');
+  $('stickLine').textContent = 'Sticks: ' + name(0) + ' vs ' + name(1);
+}
 export function setPuck(k) {
   if (!PUCKS[k]) return;
   settings.puckKey = k;
@@ -143,6 +153,22 @@ export function initCustomize() {
     });
     psw.appendChild(b);
   }
+  for (const team of [0, 1])
+    for (const k of Object.keys(STICKS)) {
+      const st = STICKS[k],
+        b = document.createElement('button');
+      b.setAttribute('role', 'radio');
+      b.dataset.s = k;
+      b.setAttribute('aria-label', st.name + ' sticks');
+      b.title = st.name;
+      b.style.background = st.swatch;
+      if (st.anim) b.classList.add('anim');
+      b.addEventListener('click', () => {
+        setStick(team, k);
+        savePrefs();
+      });
+      $('stickSwatches' + team).appendChild(b);
+    }
   for (const k of Object.keys(STADIUMS)) {
     const S = STADIUMS[k],
       b = document.createElement('button');
