@@ -59,61 +59,85 @@ export function insideRinkW(x, y) {
   return cx === null || cy === null || Math.hypot(x - cx, y - cy) <= RR;
 }
 // Broadcast-style shots of the CPU game playing behind the main menu, cutting to a new one every few seconds.
+// Each shot picks its goal and side at the cut and keeps them, and the camera follows a smoothed focus point
+// with capped turning speed, so the only sudden changes are the cuts themselves.
 const DEMO_SHOTS = ['chase', 'orbit', 'net', 'boards'],
-  SHOT_LEN = 6.5;
-let demoShot = -1;
+  SHOT_LEN = 6.5,
+  FOCUS_K = 0.035, // how quickly the focus point glides after the puck (per frame)
+  MOVE_K = 0.035, // how quickly the camera moves to its spot
+  TURN_MAX = 0.012, // radians per frame (about 0.7 rad/s)
+  MOVE_MAX = 0.6; // world units per frame (about 36 per second)
+const demo = { shot: -1, fx: 80, fy: 128, net: null, side: 1, orbit0: 0 };
 export function updDemoCam() {
   const idx = Math.floor(clock.now / SHOT_LEN) % DEMO_SHOTS.length,
-    snap = idx !== demoShot,
-    kind = DEMO_SHOTS[idx];
-  demoShot = idx;
-  const C = G.cam3 || (G.cam3 = { x: 80, y: 128, yaw: 0, h: 8.5 }),
-    px = puck.x,
-    py = puck.y,
-    // the goal the play is heading for: the carrier's target, otherwise the nearer one
-    attackTop = puck.owner ? puck.owner.team === 0 : py < 128,
-    n = NETS[attackTop ? 0 : 1],
-    gy = attackTop ? GT : GB;
-  let tx, ty, yaw, h;
+    // a new shot, or the puck jumped (a face-off after a goal): cut rather than sweep across the rink
+    snap = idx !== demo.shot || Math.hypot(puck.x - demo.fx, puck.y - demo.fy) > 70,
+    kind = DEMO_SHOTS[idx],
+    C = G.cam3 || (G.cam3 = { x: 80, y: 128, yaw: 0, h: 8.5 });
+  if (snap) {
+    // a cut: choose this shot's goal and side from where the play is now, and keep them until the next cut
+    demo.shot = idx;
+    demo.fx = puck.x;
+    demo.fy = puck.y;
+    const attackTop = puck.owner ? puck.owner.team === 0 : puck.y < 128;
+    demo.net = NETS[attackTop ? 0 : 1];
+    demo.side = puck.x < 80 ? -1 : 1;
+    demo.orbit0 = clock.now;
+  } else {
+    demo.fx += (puck.x - demo.fx) * FOCUS_K;
+    demo.fy += (puck.y - demo.fy) * FOCUS_K;
+  }
+  const fx = demo.fx,
+    fy = demo.fy,
+    n = demo.net,
+    gy = n.top ? GT : GB;
+  let tx, ty, h;
   if (kind === 'chase') {
-    // behind the puck, looking at the goal it is heading for
-    const dx = 80 - px,
-      dy = gy - py;
-    yaw = Math.hypot(dx, dy) < 18 && C.pyaw !== undefined && !snap ? C.pyaw : Math.atan2(dy, dx);
-    C.pyaw = yaw;
-    tx = px - Math.cos(yaw) * 28;
-    ty = py - Math.sin(yaw) * 28;
+    // behind the play on the rink's long axis, looking toward this shot's goal
+    tx = 80 + (fx - 80) * 0.6;
+    ty = fy + (n.top ? 30 : -30);
     h = 8.5;
   } else if (kind === 'orbit') {
     // a slow high orbit around the play
-    const a = clock.now * 0.35;
-    tx = px + Math.cos(a) * 34;
-    ty = py + Math.sin(a) * 34;
-    yaw = Math.atan2(py - ty, px - tx);
+    const a = (clock.now - demo.orbit0) * 0.25 + (demo.side > 0 ? 0 : Math.PI);
+    tx = fx + Math.cos(a) * 34;
+    ty = fy + Math.sin(a) * 34;
     h = 12;
   } else if (kind === 'net') {
-    // beside the goal, at crossbar height, watching the play come in
-    tx = px < 80 ? n.x0 - 7 : n.x1 + 7;
+    // beside this shot's goal at crossbar height, watching the play come in
+    tx = demo.side < 0 ? n.x0 - 7 : n.x1 + 7;
     ty = n.top ? GT - 3 : GB + 3;
-    yaw = Math.atan2(py - ty, px - tx);
     h = 6.5;
   } else {
-    // low at the far boards, looking across the ice
-    tx = px < 80 ? 150 : 10;
-    ty = py;
-    yaw = Math.atan2(py - ty, px - tx);
+    // low at the boards opposite the play, looking across the ice
+    tx = demo.side < 0 ? 150 : 10;
+    ty = fy;
     h = 5;
   }
   for (let i = 0; i < 30 && !insideRinkW(tx, ty); i++) {
     tx = lerp(tx, 80, 0.1);
     ty = lerp(ty, 128, 0.1);
   }
-  const k = snap ? 1 : 0.08;
-  C.x += (tx - C.x) * k;
-  C.y += (ty - C.y) * k;
+  if (snap) {
+    C.x = tx;
+    C.y = ty;
+  } else {
+    let mx = (tx - C.x) * MOVE_K,
+      my = (ty - C.y) * MOVE_K;
+    const m = Math.hypot(mx, my);
+    if (m > MOVE_MAX) {
+      mx *= MOVE_MAX / m;
+      my *= MOVE_MAX / m;
+    }
+    C.x += mx;
+    C.y += my;
+  }
   C.h = h;
+  // the chase cam looks along the rink toward the goal; the others look at the focus point
+  const yaw =
+    kind === 'chase' ? Math.atan2(gy - C.y, 80 + (fx - 80) * 0.3 - C.x) : Math.atan2(fy - C.y, fx - C.x);
   const dyaw = ((yaw - C.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-  C.yaw += dyaw * (snap ? 1 : 0.08);
+  C.yaw += snap ? dyaw : Math.max(-TURN_MAX, Math.min(TURN_MAX, dyaw * 0.06));
 }
 export function upd3D(snap) {
   const A = G.rp && G.rp.angle;
