@@ -186,7 +186,11 @@
       <p>
         Every sound in Top Shelf is synthesised live. For each effect, <b>▶</b> plays a variant (press it a few times:
         each play varies a little, as in the game). <b>Pick</b> the one you like; option A is always what the game plays
-        today. Your picks are listed at the bottom. Tell me which ones you want, and only those will be built into the game.
+        before the first round of picks. Your picks are listed at the bottom. Tell me which ones you want, and only those will be built into the game.
+      </p>
+      <p>
+        <b>Built into the game:</b> strides B Carve, shot C Composite crack, pass B Tock, body check C Heavy (in the real
+        hits), and pitch and level variation. Everything else stayed A.
       </p>
       <p>Crowd reactions that some effects trigger in the game (the "ooh" after a check, the cheer after the horn) are left out here, so you only hear the effect itself.</p>
     </header>
@@ -203,7 +207,22 @@
     </footer>
 
     <script type="module">
-      import { glideBuffer, stopBuffer, strideBuffer } from '/src/audio/skates.js';
+      import { glideBuffer, renderBlade, stopBuffer } from '/src/audio/skates.js';
+      // the stride the game used before the Carve stride replaced it
+      const strideBuffer = AC => {
+        const dur = rnd(0.24, 0.3),
+          push = dur * rnd(0.55, 0.7),
+          peak = rnd(0.85, 1);
+        return renderBlade(AC, {
+          dur,
+          env: t => (t < push ? 0.25 + 0.75 * smooth(t / push) : Math.exp(-(t - push) * 38)) * peak,
+          grains: rnd(900, 1300),
+          bands: [rnd(1900, 2500), rnd(3800, 4600)],
+          hiss: 1,
+          bright: [3000, 7000],
+          knock: 5,
+        });
+      };
 
       /* ---------- engine: the same chain as the game (master -> compressor), plus an optional effects reverb ---------- */
       let AC, master, fx, wet, noiseBuf;
@@ -973,7 +992,7 @@
           row.dataset.card = c.id;
           row.dataset.opt = L;
           row.innerHTML = `<button class="play" title="Play">▶</button>
-            <div><b>${L} · ${name}${i === 0 ? ' <i class="cur">(now in the game)</i>' : ''}</b><span>${desc}</span></div>
+            <div><b>${L} · ${name}${i === 0 ? ' <i class="cur">(original)</i>' : ''}</b><span>${desc}</span></div>
             <button class="choose">Pick</button>`;
           row.querySelector('.play').onclick = () => {
             init();

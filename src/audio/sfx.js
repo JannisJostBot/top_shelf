@@ -8,21 +8,44 @@ import { G } from '../game/world';
 import { cam, view } from '../render/canvas';
 import { settings } from '../settings';
 
+/** A random factor around 1, so puck and body sounds never repeat exactly. */
+const vary = amt => rnd(1 - amt, 1 + amt);
+/** The weight of a heavy body hit: a sub-bass drop and a long low boom (k scales it down for lighter hits). */
+function heavyImpact(t, k) {
+  const p = vary(0.08);
+  osc('sine', 60 * p, t, 0.5 * k, 1 * k, 26, 0.002);
+  osc('sine', 120 * p, t, 0.15, 0.5 * k, 55);
+  nz(t, 0.35 * k, 0.7 * k, 'lowpass', 700, 120);
+  nz(t + 0.03, 0.45 * k, 0.35 * k, 'lowpass', 300, 90);
+}
+/** Stick on puck for passes: a rounded wooden tock. */
+function tock(k) {
+  const t = AC.currentTime,
+    p = vary(0.08);
+  nz(t, 0.03, 0.45 * k, 'bandpass', 1250 * p, null, 4, 0.001);
+  osc('sine', 620 * p, t, 0.05, 0.12 * k, 400);
+}
+
 export const SFX = {
   clack(v) {
     const t = AC.currentTime;
     v = v || 1;
-    nz(t, 0.035, 0.6 * v, 'highpass', 2200);
-    osc('triangle', 1500, t, 0.05, 0.25 * v, 450);
+    const p = vary(0.06);
+    nz(t, 0.035, 0.6 * v, 'highpass', 2200 * p);
+    osc('triangle', 1500 * p, t, 0.05, 0.25 * v, 450 * p);
   },
+  // a modern composite stick: a sharp crack with a short ring, a thump, and the puck hissing away
   shot() {
-    const t = AC.currentTime;
-    SFX.clack(1);
-    osc('sine', 90, t, 0.08, 0.25, 50);
-    nz(t + 0.01, 0.26, 0.14, 'bandpass', 600, 2600, 2, 0.03);
+    const t = AC.currentTime,
+      p = vary(0.06);
+    nz(t, 0.015, 0.9, 'highpass', 1800, null, 1, 0.0005);
+    osc('sine', 1150 * p, t, 0.09, 0.18, 1100 * p, 0.001);
+    osc('sine', 2950 * p, t, 0.06, 0.08, null, 0.001);
+    osc('triangle', 140, t, 0.1, 0.4, 70, 0.002);
+    nz(t + 0.01, 0.22, 0.07, 'bandpass', 800, 3000, 2, 0.03);
   },
   pass() {
-    SFX.clack(0.5);
+    tock(1);
   },
   go() {
     const t = AC.currentTime;
@@ -33,7 +56,7 @@ export const SFX = {
     osc('sine', 1250, AC.currentTime, 0.035, 0.06);
   },
   stride(v, pan) {
-    playBuf(pick(strideBufs), 0.42 * v, rnd(0.92, 1.08), pan);
+    playBuf(pick(strideBufs), 0.42 * v, rnd(0.94, 1.06), pan);
   },
   spray() {
     playBuf(pick(stopBufs), 0.55, rnd(0.95, 1.05));
@@ -41,15 +64,17 @@ export const SFX = {
   board(v) {
     const t = AC.currentTime;
     v = clamp(v || 1, 0.25, 1);
-    osc('sine', 105, t, 0.22, 0.5 * v, 48);
+    const p = vary(0.1);
+    osc('sine', 105 * p, t, 0.22, 0.5 * v, 48);
     nz(t, 0.16, 0.35 * v, 'lowpass', 900, 300);
     nz(t + 0.01, 0.22, 0.08 * v, 'bandpass', 1800, 1200, 3);
   },
   post() {
-    const t = AC.currentTime;
-    osc('sine', 1860, t, 0.7, 0.14);
-    osc('sine', 2790, t, 0.5, 0.08);
-    osc('sine', 4100, t, 0.25, 0.04);
+    const t = AC.currentTime,
+      p = vary(0.03);
+    osc('sine', 1860 * p, t, 0.7, 0.14);
+    osc('sine', 2790 * p, t, 0.5, 0.08);
+    osc('sine', 4100 * p, t, 0.25, 0.04);
     SFX.clack(0.4);
     SFX.ooh();
   },
@@ -76,9 +101,9 @@ export const SFX = {
     }
   },
   steal() {
-    SFX.clack(0.45);
+    tock(0.9);
     setTimeout(() => {
-      if (AC && !settings.muted) SFX.clack(0.3);
+      if (AC && !settings.muted) tock(0.6);
     }, 55);
   },
   whiff() {
@@ -94,21 +119,13 @@ export const SFX = {
     const t = AC.currentTime,
       v = a && a.victim,
       by = a && a.by;
-    osc('sine', 70, t, 0.34, 0.85, 36);
-    nz(t, 0.24, 0.5, 'lowpass', 520, 140);
-    SFX.clack(0.3);
+    heavyImpact(t, 1);
     grunt(v ? v.look.voice : 120, 0.01);
     if (by) grunt(by.look.voice * 1.1, 0, true);
     if (a && a.boards) {
       nz(t + 0.01, 0.4, 0.22, 'bandpass', 1500, 900, 3);
       nz(t + 0.02, 0.3, 0.1, 'highpass', 4000, 2500, 1);
     }
-    setTimeout(() => {
-      if (AC && !settings.muted) {
-        osc('sine', 60, AC.currentTime, 0.25, 0.5, 40);
-        nz(AC.currentTime, 0.3, 0.18, 'highpass', 3000, 1800, 1);
-      }
-    }, 230);
     crowdVoices(9, 'o', 1.1, 0.07);
     swell(mixer.crowdBase + 0.1, 0.1, 0.3, 0.9);
   },
@@ -126,9 +143,8 @@ export const SFX = {
     const t = AC.currentTime,
       v = a && a.victim,
       by = a && a.by;
-    osc('sine', 55, t, 0.38, 1, 30, 0.002);
-    osc('sine', 115, t, 0.12, 0.55, 60, 0.002);
-    nz(t, 0.14, 0.95, 'bandpass', 900, 380, 1.2, 0.002);
+    heavyImpact(t, 1);
+    nz(t, 0.1, 0.5, 'bandpass', 900, 380, 1.2, 0.002);
     nz(t, 0.05, 0.5, 'highpass', 3200, null, 1, 0.001);
     clatter(t, 6, 0.4);
     if (v) grunt(v.look.voice, 0.02);
@@ -148,8 +164,8 @@ export const SFX = {
   hitMed(a) {
     const t = AC.currentTime,
       v = a && a.victim;
-    osc('sine', 72, t, 0.26, 0.75, 40, 0.002);
-    nz(t, 0.1, 0.65, 'bandpass', 850, 420, 1.3, 0.002);
+    heavyImpact(t, 0.7);
+    nz(t, 0.08, 0.4, 'bandpass', 850, 420, 1.3, 0.002);
     clatter(t, 3, 0.28);
     if (v) grunt(v.look.voice * 1.05, 0.01, true);
     playBuf(pick(stopBufs), 0.4, 1.1);
@@ -165,7 +181,8 @@ export const SFX = {
   hitSoft(a) {
     const t = AC.currentTime,
       by = a && a.by;
-    osc('sine', 88, t, 0.18, 0.4, 58, 0.002);
+    const p = vary(0.08);
+    osc('sine', 88 * p, t, 0.18, 0.4, 58, 0.002);
     nz(t, 0.1, 0.35, 'lowpass', 520, 200, 1, 0.002);
     // bounce-off signature: a springy rising boing
     osc('triangle', 210, t + 0.02, 0.18, 0.16, 430);

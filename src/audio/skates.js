@@ -96,20 +96,83 @@ function normalize(d, peak) {
 }
 const smooth = x => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
 
-/** One push of a stride: pressure builds through the push, then the blade lifts off quickly. */
+/** RBJ band-pass biquad whose centre can be moved while it runs. */
+function sweepBandpass(sr) {
+  let b0 = 0,
+    b2 = 0,
+    a1 = 0,
+    a2 = 0,
+    x1 = 0,
+    x2 = 0,
+    y1 = 0,
+    y2 = 0;
+  return {
+    set(f, q) {
+      const w = (2 * Math.PI * f) / sr,
+        alpha = Math.sin(w) / (2 * q),
+        a0 = 1 + alpha;
+      b0 = alpha / a0;
+      b2 = -alpha / a0;
+      a1 = (-2 * Math.cos(w)) / a0;
+      a2 = (1 - alpha) / a0;
+    },
+    run(x) {
+      const y = b0 * x + b2 * x2 - a1 * y1 - a2 * y2;
+      x2 = x1;
+      x1 = x;
+      y2 = y1;
+      y1 = y;
+      return y;
+    },
+  };
+}
+
+/**
+ * One push of a stride, "carved": the edge digs in and the friction hiss sweeps from bright to dark as the push
+ * releases, with only a light crunch of crystals and a soft touchdown, all through a gentle low-pass. Smoother
+ * than the dense crackle of renderBlade, so it stays pleasant when it repeats every stride.
+ */
 export function strideBuffer(AC) {
-  const dur = rnd(0.24, 0.3),
-    push = dur * rnd(0.55, 0.7),
-    peak = rnd(0.85, 1);
-  return renderBlade(AC, {
-    dur,
-    env: t => (t < push ? 0.25 + 0.75 * smooth(t / push) : Math.exp(-(t - push) * 38)) * peak,
-    grains: rnd(900, 1300),
-    bands: [rnd(1900, 2500), rnd(3800, 4600)],
-    hiss: 1,
-    bright: [3000, 7000],
-    knock: 5,
-  });
+  const sr = AC.sampleRate,
+    dur = rnd(0.26, 0.32),
+    push = dur * rnd(0.55, 0.65),
+    n = Math.floor(dur * sr),
+    buf = AC.createBuffer(1, n, sr),
+    d = buf.getChannelData(0),
+    band = sweepBandpass(sr),
+    crunch = sweepBandpass(sr),
+    f0 = 3600 * rnd(0.94, 1.06),
+    f1 = 1900 * rnd(0.94, 1.06),
+    lpA = onePoleCoef(sr, 6500),
+    knockA = onePoleCoef(sr, 300);
+  crunch.set(2600 * rnd(0.92, 1.08), 2.5);
+  let l1 = 0,
+    l2 = 0,
+    kn = 0,
+    grain = 0,
+    rough = 0.5;
+  for (let i = 0; i < n; i++) {
+    const t = i / sr,
+      e = t < push ? 0.15 + 0.85 * smooth(t / push) : Math.exp(-(t - push) * 26);
+    if (i % 64 === 0) band.set(f0 * Math.pow(f1 / f0, t / dur), 1.3);
+    const x = Math.random() * 2 - 1;
+    rough += (Math.random() - rough) * 0.015;
+    let s = band.run(x) * (0.6 + rough * 0.8);
+    if (Math.random() < (320 * e) / sr) grain = (Math.random() < 0.5 ? -1 : 1) * (0.3 + Math.random() ** 2);
+    s += crunch.run(grain) * 5;
+    grain *= 0.35;
+    s *= e;
+    l1 += lpA * (s - l1);
+    l2 += lpA * (l1 - l2);
+    let k = 0;
+    if (t < 0.04) {
+      kn += knockA * (x - kn);
+      k = kn * 2.2 * Math.exp(-t * 120);
+    }
+    d[i] = l2 + k;
+  }
+  normalize(d, 0.9);
+  return buf;
 }
 
 /** Hockey stop: the blades bite sideways and throw a spray of shavings that tails off. */
