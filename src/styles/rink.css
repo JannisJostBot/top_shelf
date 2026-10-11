@@ -234,32 +234,43 @@ h2 {
   text-align: center;
   padding-inline: 8px;
 }
+/* banners are messages on an LED board in a steel frame, edged in the colour of the team they are about */
 #bt {
   font-family: var(--display);
-  font-size: clamp(16px, 6.5vw, 28px);
-  color: #fff;
-  text-shadow: 3px 3px 0 var(--shadow);
+  font-size: 16px;
+  line-height: 1;
+  color: #ffd25e;
+  text-shadow:
+    0 0 2px rgba(255, 210, 94, 0.9),
+    0 0 8px rgba(255, 170, 40, 0.35);
   padding: 10px 14px;
-  background: rgba(10, 15, 30, 0.78);
+  background: var(--lcd);
+  border: 2px solid #05070c;
+  box-shadow:
+    0 0 0 3px #232a3e,
+    0 4px 0 3px #0b0f1a;
   animation: pop 0.25s steps(4) both;
 }
 #bt.home {
-  color: var(--home-ui);
+  box-shadow:
+    0 0 0 3px var(--home-ui),
+    0 4px 0 3px #0b0f1a;
 }
 #bt.away {
-  color: var(--away-ui);
+  box-shadow:
+    0 0 0 3px var(--away-ui),
+    0 4px 0 3px #0b0f1a;
 }
 #bt.small {
-  font-size: 13px;
-}
-#bt.alert {
-  color: var(--led);
+  font-size: 10px;
 }
 #bs {
   font-size: 12px;
-  color: var(--ink);
-  background: rgba(10, 15, 30, 0.78);
-  padding: 3px 8px;
+  color: var(--led-warm);
+  background: var(--lcd);
+  border: 2px solid #05070c;
+  box-shadow: 0 0 0 2px #232a3e;
+  padding: 4px 9px;
 }
 #bs:empty {
   display: none;
@@ -334,17 +345,32 @@ h2 {
 #banner.big .bbar.bot {
   animation: barFromRight 0.38s cubic-bezier(0.2, 1.4, 0.4, 1) 0.06s both;
 }
+/* the big moments in true dot-matrix: one LED per font pixel (sizes on the font's 8 px grid), drawn per letter
+   so each can fly in on its own */
 #banner.big #bt {
+  --p: 3px;
   position: relative;
   overflow: hidden;
   width: 100%;
-  font-size: clamp(22px, 10vw, 42px);
-  padding: 12px 8px 10px;
-  background: rgba(10, 15, 30, 0.84);
+  font-size: 24px;
+  padding: 14px 8px 12px;
+  box-shadow: none;
+  border-width: 3px 0;
+  border-color: #232a3e;
   animation: bandOpen 0.24s steps(5) 0.12s both;
+}
+@media (min-width: 600px) {
+  #banner.big #bt {
+    --p: 4px;
+    font-size: 32px;
+  }
 }
 #bt.big .ch {
   display: inline-block;
+  line-height: 1;
+  color: #ffe390; /* a touch brighter: the gaps between the LEDs darken the letters overall */
+  -webkit-mask: radial-gradient(circle closest-side, #000 0 78%, transparent 84%) 0 0 / var(--p) var(--p);
+  mask: radial-gradient(circle closest-side, #000 0 78%, transparent 84%) 0 0 / var(--p) var(--p);
   animation: letterIn 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
   animation-delay: calc(var(--i) * 45ms + 220ms);
 }

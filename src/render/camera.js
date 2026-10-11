@@ -74,7 +74,14 @@ export function fit() {
   cv.style.height = r.height + 'px';
   G.padWorld = pad.hidden ? 0 : (pad.offsetHeight * (view.CW / r.width)) / K;
   const hud = $('hud');
-  view.topInset = hud ? Math.round((hud.offsetTop + hud.offsetHeight) * (view.CW / r.width)) : 0;
+  // canvas overlays (minimap, resurfacer and fight meters) start below the scoreboard and the buttons hanging off it
+  const btn = $('pauseBtn'),
+    bottom =
+      !hud || !hud.offsetParent
+        ? 0
+        : hud.offsetTop +
+          Math.max(hud.offsetHeight, hud.contains(btn) ? btn.offsetTop + btn.offsetHeight : 0);
+  view.topInset = Math.round(bottom * (view.CW / r.width));
   updCam(0, true);
 }
 export function initCamera() {

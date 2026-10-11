@@ -1,37 +1,115 @@
-/* scoreboard: a translucent glass bar floating over the top of the rink, so the ice stays visible behind it */
+/* ---------- LED dot-matrix text ----------
+   The display font is drawn on an 8x8 pixel grid. With the font size a multiple of 8 and the dot pitch equal to one
+   font pixel (--p = font-size / 8), every glyph pixel becomes exactly one round LED, so the dots draw the letters
+   instead of cutting through them. Markup: <span class="dm s24"><b>2</b></span>. The glow is a drop shadow on the
+   wrapper because the mask on the inner element would clip a text shadow. */
+.dm {
+  --p: 3px;
+  display: inline-block;
+  line-height: 1;
+  filter: drop-shadow(0 0 1.5px rgba(255, 190, 60, 0.9)) drop-shadow(0 0 6px rgba(255, 150, 30, 0.35));
+}
+.dm > b {
+  display: block;
+  font-family: var(--display);
+  font-weight: 400;
+  line-height: 1;
+  color: #ffd25e;
+  -webkit-mask: radial-gradient(circle closest-side, #000 0 78%, transparent 84%) 0 0 / var(--p) var(--p);
+  mask: radial-gradient(circle closest-side, #000 0 78%, transparent 84%) 0 0 / var(--p) var(--p);
+}
+.dm.red {
+  filter: drop-shadow(0 0 1.5px rgba(255, 100, 70, 0.95)) drop-shadow(0 0 6px rgba(255, 60, 40, 0.4));
+}
+.dm.red > b {
+  color: #ff7a5c;
+}
+/* sizes: always a multiple of 8 so the dots land on the font's pixels */
+.dm.s16 {
+  font-size: 16px;
+  --p: 2px;
+}
+.dm.s24 {
+  font-size: 24px;
+  --p: 3px;
+}
+.dm.s32 {
+  font-size: 32px;
+  --p: 4px;
+}
+.dm.s40 {
+  font-size: 40px;
+  --p: 5px;
+}
+/* an LED panel: near-black with the unlit LEDs glimmering faintly */
+:root {
+  --lcd:
+    radial-gradient(circle closest-side, rgba(255, 190, 70, 0.1) 0 70%, transparent 78%) 0 0 / 3px 3px,
+    #07090f;
+  --lcd-red:
+    radial-gradient(circle closest-side, rgba(255, 90, 60, 0.1) 0 70%, transparent 78%) 0 0 / 2px 2px, #07090f;
+  --steel: linear-gradient(#2a3248, #161b2b);
+  --led-warm: #f2e3c0;
+}
+
+/* ---------- scoreboard: the arena's jumbotron hanging over the ice ----------
+   A steel housing with bolts and two cables holds three LED panels: home, clock and away. The buttons and the
+   boost panel hang below it. */
 #hud {
   position: absolute;
-  top: 6px;
-  left: 6px;
-  right: 6px;
+  top: 10px;
+  left: 8px;
+  right: 8px;
   z-index: 3;
-  height: 46px;
   display: grid;
-  grid-template-columns: auto 1fr auto 1fr 32px;
-  align-items: center;
-  gap: 8px;
-  padding: 0 6px;
-  border-radius: 12px;
-  border: 2px solid rgba(233, 238, 244, 0.55);
-  background: linear-gradient(rgba(10, 15, 30, 0.62), rgba(10, 15, 30, 0.38));
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 5px;
+  padding: 5px;
+  border: 2px solid #0b0f1a;
+  /* four bolts in the corners, then the steel */
+  background:
+    linear-gradient(#8a93a8, #8a93a8) left 3px top 3px / 3px 3px no-repeat,
+    linear-gradient(#8a93a8, #8a93a8) right 3px top 3px / 3px 3px no-repeat,
+    linear-gradient(#8a93a8, #8a93a8) left 3px bottom 3px / 3px 3px no-repeat,
+    linear-gradient(#8a93a8, #8a93a8) right 3px bottom 3px / 3px 3px no-repeat,
+    var(--steel);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.18),
+    0 4px 0 #0b0f1a;
 }
-.team {
+/* the cables it hangs from */
+#hud::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 24%;
+  right: 24%;
+  height: 10px;
+  border-left: 2px solid #3a4258;
+  border-right: 2px solid #3a4258;
+}
+.team,
+.mid {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
+  padding: 4px 6px;
+  background: var(--lcd);
+  border: 2px solid #05070c;
+  box-shadow: inset 0 0 0 1px #2a3350;
 }
-.away {
-  justify-content: flex-end;
+.team {
+  justify-content: space-between;
 }
 .tname {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  padding: 3px 6px 2px;
+  font-family: var(--display);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  padding: 5px 6px 4px;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.35);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -46,52 +124,82 @@
   color: var(--away-ink);
 }
 .score {
-  font-family: var(--display);
-  font-size: 20px;
-  color: #ffffff;
-  text-shadow:
-    2px 2px 0 rgba(0, 0, 0, 0.55),
-    0 0 8px rgba(255, 255, 255, 0.25);
+  flex: none;
   font-variant-numeric: tabular-nums;
 }
-/* the clock panel is the one solid piece, like the centre of a real scoreboard */
 .mid {
-  display: flex;
   flex-direction: column;
-  align-items: center;
+  justify-content: center;
   gap: 4px;
   padding: 4px 10px 5px;
-  border-radius: 8px;
-  background: rgba(7, 11, 22, 0.78);
-  border-bottom: 2px solid #d8343f;
+  background: var(--lcd-red);
+}
+.dm > b#clock {
+  font-size: inherit;
+  color: #ff7a5c;
+}
+.per {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 #per {
-  font-size: 10px;
-  color: #9fc0e2;
-  letter-spacing: 0.14em;
+  font-size: 9px;
+  color: var(--led-warm);
+  letter-spacing: 0.12em;
 }
-#clock {
-  font-family: var(--display);
-  font-size: 13px;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
+/* one lamp per period */
+.plamps {
+  display: flex;
+  gap: 3px;
 }
+.plamps i {
+  width: 6px;
+  height: 6px;
+  background: #3a2a10;
+}
+.plamps i.on {
+  background: #ffd25e;
+  box-shadow: 0 0 4px #ffc845;
+}
+
+/* buttons: small steel boxes with amber icons, hanging below the right end of the scoreboard */
 .ibtn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 2px solid rgba(233, 238, 244, 0.35);
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--ink);
+  width: 30px;
+  height: 30px;
+  border: 2px solid #0b0f1a;
+  background: var(--steel);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 2px 0 #0b0f1a;
+  color: #ffd25e;
   font-family: var(--display);
-  font-size: 8px;
+  font-size: 9px;
   display: grid;
   place-items: center;
   cursor: pointer;
   padding: 0;
 }
 .ibtn[aria-pressed='true'] {
-  color: var(--muted);
+  color: #9a8a66;
+}
+.ibtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.hudbtns {
+  display: flex;
+  gap: 4px;
+}
+#hud .hudbtns {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 34px;
+}
+#hud #pauseBtn {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
 }
 /* the sound button shows a speaker, crossed out when muted */
 .spk {
@@ -106,20 +214,6 @@
 #muteBtn[aria-pressed='true'] .spk-off {
   display: block;
 }
-.ibtn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-/* the main menu has its own title; the scoreboard would only show the demo clock behind it */
-#stage:has(> #menu:not([hidden])) #hud {
-  visibility: hidden;
-}
-
-.hudbtns {
-  display: flex;
-  gap: 4px;
-}
 .fsi {
   width: 16px;
   height: 16px;
@@ -132,8 +226,59 @@
 #fsBtn[aria-pressed='true'] .fs-off {
   display: block;
 }
-/* Watch mode camera switch: a labelled pill in the bottom-right corner (free in Watch mode: no pad, no key
-   hints), lit while the cinematic camera is on */
+
+/* the main menu has its own title; the scoreboard would only show the demo clock behind it */
+#stage:has(> #menu:not([hidden])) #hud {
+  visibility: hidden;
+}
+
+/* team boost: lights up inside that team's own scoreboard panel, between the tag and the score: a bolt and the
+   seconds left in LED digits, blinking in its last seconds */
+.buff {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  order: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--display);
+  font-size: 8px;
+  color: #ffd25e;
+  text-shadow: 0 0 3px rgba(255, 190, 60, 0.8);
+}
+.tname {
+  flex: none;
+}
+.home .tname,
+.away .score {
+  order: 0;
+}
+.home .score,
+.away .tname {
+  order: 2;
+}
+.buff svg {
+  width: 8px;
+  height: 10px;
+  fill: #ffd25e;
+  filter: drop-shadow(0 0 2px rgba(255, 190, 60, 0.9));
+}
+.buff.ending {
+  animation: buffBlink 0.5s steps(2) infinite;
+}
+@keyframes buffBlink {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .buff.ending {
+    animation: none;
+  }
+}
+
+/* Watch mode camera switch: a small LED panel in the bottom-right corner (free in Watch mode: no pad, no key
+   hints), its camera icon lit while the cinematic camera is on */
 #camBtn {
   position: absolute;
   right: 10px;
@@ -143,10 +288,12 @@
   align-items: center;
   gap: 7px;
   padding: 7px 10px;
-  border-radius: 8px;
-  border: 2px solid rgba(233, 238, 244, 0.45);
-  background: rgba(5, 7, 13, 0.75);
-  color: var(--ink);
+  border: 2px solid #05070c;
+  background: var(--lcd);
+  box-shadow:
+    0 0 0 2px #232a3e,
+    0 3px 0 2px #0b0f1a;
+  color: var(--led-warm);
   font-family: var(--display);
   font-size: 8px;
   letter-spacing: 0.06em;
@@ -158,59 +305,6 @@
   fill: currentColor;
 }
 #camBtn[aria-pressed='true'] svg {
-  color: #ffc845;
-}
-/* team buff: a lightning badge; the ring is the time left */
-.buff {
-  --k: 1;
-  flex: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: #ffc845;
-  background:
-    radial-gradient(circle, #0a0f1e 0 7.5px, transparent 8px),
-    conic-gradient(#ffc845 calc(var(--k) * 360deg), rgba(255, 200, 69, 0.18) 0);
-  box-shadow: 0 0 8px rgba(255, 200, 69, 0.55);
-  animation: buffPulse 1.2s ease-in-out infinite;
-}
-.buff svg {
-  width: 10px;
-  height: 12px;
-  fill: currentColor;
-}
-.buff.ending {
-  animation: buffBlink 0.5s steps(2) infinite;
-}
-@keyframes buffPulse {
-  50% {
-    box-shadow: 0 0 14px rgba(255, 200, 69, 0.9);
-  }
-}
-@keyframes buffBlink {
-  50% {
-    opacity: 0.35;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .buff,
-  .buff.ending {
-    animation: none;
-  }
-}
-/* it hangs just below the clock, on the side of the team that has it, so it never squeezes the team names */
-.buff {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 50%;
-}
-#bf0 {
-  margin-left: -30px;
-  outline: 2px solid var(--home-ui);
-}
-#bf1 {
-  margin-left: 8px;
-  outline: 2px solid var(--away-ui);
+  color: #ffd25e;
+  filter: drop-shadow(0 0 2px rgba(255, 190, 60, 0.9));
 }

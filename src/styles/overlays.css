@@ -1,13 +1,19 @@
-/* player card */
+/* player card: a small LED panel in a steel frame, below the scoreboard on the left */
+:root {
+  --below-hud: 76px; /* just under the jumbotron housing */
+}
 #pcard {
   position: absolute;
-  left: 6px;
-  top: 60px;
+  left: 10px;
+  top: var(--below-hud);
   display: grid;
-  gap: 4px;
-  padding: 5px 7px;
-  background: rgba(10, 15, 30, 0.8);
-  border: 2px solid var(--line);
+  gap: 5px;
+  padding: 6px 8px;
+  background: var(--lcd);
+  border: 2px solid #05070c;
+  box-shadow:
+    0 0 0 2px #232a3e,
+    0 3px 0 2px #0b0f1a;
   pointer-events: none;
   font-size: 10px;
 }
@@ -17,35 +23,33 @@
   align-items: baseline;
   white-space: nowrap;
 }
-#pcNum {
-  font-family: var(--display);
-  font-size: 9px;
-  color: var(--led);
-}
+#pcNum,
 #pcName {
-  color: var(--ink);
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-family: var(--display);
+  font-size: 8px;
+  color: #ffd25e;
+  text-shadow: 0 0 3px rgba(255, 190, 60, 0.7);
 }
 #pcPos {
-  color: var(--muted);
+  color: var(--led-warm);
 }
 .pst {
   display: grid;
   grid-template-columns: auto auto;
-  gap: 3px 10px;
+  gap: 4px 10px;
 }
 .stat {
   display: flex;
-  gap: 4px;
+  gap: 5px;
   align-items: center;
-  color: var(--muted);
+  color: var(--led-warm);
   font-size: 9px;
   letter-spacing: 0.06em;
 }
 .stat span:first-child {
   min-width: 22px;
 }
+/* stat ratings as rows of round LEDs */
 .pips {
   display: flex;
   gap: 2px;
@@ -53,16 +57,18 @@
 .pip {
   width: 5px;
   height: 5px;
-  background: var(--line);
+  border-radius: 50%;
+  background: rgba(255, 190, 70, 0.16);
 }
 .pip.on {
-  background: var(--led);
+  background: #ffd25e;
+  box-shadow: 0 0 3px rgba(255, 190, 60, 0.8);
 }
+/* below the scoreboard on the left (the buttons hang off its right end) */
 #rpBar {
   position: absolute;
-  top: 60px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: var(--below-hud);
+  left: 8px;
   display: flex;
   gap: 6px;
 }

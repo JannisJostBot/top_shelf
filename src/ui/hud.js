@@ -8,11 +8,16 @@ import { settings } from '../settings';
 export function hud() {
   $('s0').textContent = G.score[0];
   $('s1').textContent = G.score[1];
-  $('per').textContent = G.demo ? 'DEMO' : G.practice ? 'PRACTICE' : ORD[G.period];
+  $('per').textContent = G.demo ? 'DEMO' : G.practice ? 'PRACTICE' : G.period > 3 ? 'OT' : ORD[G.period];
+  // one lamp per period played so far (all three lit in overtime)
+  const lit = G.demo || G.practice ? 0 : Math.min(3, G.period);
+  $('perLamps')
+    .querySelectorAll('i')
+    .forEach((l, i) => l.classList.toggle('on', i < lit));
   hudClock();
 }
-// Team buffs (the speed boost for polishing the ice or winning a fight): a lightning badge under the clock on that team's
-// side, with a ring that runs down as the boost wears off and a blink in its last seconds.
+// Team buffs (the speed boost for polishing the ice or winning a fight): a bolt and the seconds left light up in
+// that team's scoreboard panel, blinking in the last seconds.
 const BUFF_NAME = { ice: 'Fresh ice', fight: 'Fight won' };
 const BOLT =
   '<svg viewBox="0 0 8 10" shape-rendering="crispEdges" aria-hidden="true">' +
@@ -43,9 +48,8 @@ export function hudBuff() {
       show = on && m.team === t;
     el.hidden = !show;
     if (!show) continue;
-    if (!el.firstChild) el.innerHTML = BOLT;
     const left = Math.ceil(m.t);
-    el.style.setProperty('--k', String(Math.max(0, m.t / (m.dur || 20))));
+    el.innerHTML = BOLT + '<span>' + left + '</span>';
     el.classList.toggle('ending', left <= 4);
     el.title = (BUFF_NAME[m.src] || 'Boost') + ': skating faster, ' + left + 's left';
     el.setAttribute('aria-label', el.title);

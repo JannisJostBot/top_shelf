@@ -137,19 +137,20 @@ function applyLayout() {
   // the player card moves from the corner of the rink into the status panel
   const card = $('pcard');
   (on ? $('sdCard') : $('stage')).appendChild(card);
-  // the scoreboard leaves the top of the rink: scores into the banners, the clock into the left column and the
-  // buttons into the right one (the elements keep their ids, so the HUD code updates them wherever they are)
+  // the scoreboard leaves the top of the rink: both scores and the clock become one jumbotron in the left column
+  // and the buttons go to the right one (the elements keep their ids, so the HUD code updates them anywhere)
   const hud = $('hud'),
-    home = hud.querySelector('.team.home');
+    home = hud.querySelector('.team.home'),
+    sc0 = $('s0').parentElement,
+    sc1 = $('s1').parentElement,
+    mid = $('clock').closest('.mid');
   if (on) {
-    $('sdScore0').append($('s0'));
-    $('sdScore1').append($('s1'));
-    $('sdClock').append(hud.querySelector('.mid'));
+    $('sdBoard').append(sc0, mid, sc1);
     $('sdBtns').append(...hud.querySelector('.hudbtns').children, $('pauseBtn'));
-  } else if (!home.contains($('s0'))) {
-    $('nm0').after($('s0'));
-    $('nm1').before($('s1'));
-    home.after($('sdClock').firstElementChild);
+  } else if (!home.contains(sc0)) {
+    $('nm0').after(sc0);
+    $('nm1').before(sc1);
+    home.after(mid);
     const btns = hud.querySelector('.hudbtns');
     for (const id of ['muteBtn', 'fsBtn']) btns.append($(id));
     hud.append($('pauseBtn'));

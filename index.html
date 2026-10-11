@@ -20,8 +20,8 @@
   <body>
     <div id="app">
       <aside class="side" id="sideL" hidden aria-label="Match">
-        <div class="pennant home"><span id="sdBan0"></span><span class="pslot" id="sdScore0"></span></div>
-        <div class="sclock inmatchOnly" id="sdClock"></div>
+        <div class="pennant home"><span id="sdBan0"></span></div>
+        <div class="jumbo" id="sdBoard"></div>
         <section class="spanel inmatchOnly">
           <h3>MATCH STATS</h3>
           <div class="steams" id="sdTeams"></div>
@@ -95,12 +95,17 @@
             </button>
           </div>
           <div class="team home">
-            <span class="tname" id="nm0">YOU</span><span class="score" id="s0">0</span
+            <span class="tname" id="nm0">YOU</span><span class="score dm s24"><b id="s0">0</b></span
             ><span class="buff" id="bf0" hidden></span>
           </div>
-          <div class="mid"><span id="per">DEMO</span><span id="clock">1:00</span></div>
+          <div class="mid">
+            <span class="dm red s16"><b id="clock">1:00</b></span
+            ><span class="per"
+              ><span id="per">DEMO</span><span class="plamps" id="perLamps"><i></i><i></i><i></i></span
+            ></span>
+          </div>
           <div class="team away">
-            <span class="buff" id="bf1" hidden></span><span class="score" id="s1">0</span
+            <span class="buff" id="bf1" hidden></span><span class="score dm s24"><b id="s1">0</b></span
             ><span class="tname" id="nm1">CPU</span>
           </div>
           <button class="ibtn" id="pauseBtn" aria-label="Pause" disabled>II</button>
@@ -563,7 +568,7 @@
         </div>
       </main>
       <aside class="side" id="sideR" hidden aria-label="Status">
-        <div class="pennant away"><span id="sdBan1"></span><span class="pslot" id="sdScore1"></span></div>
+        <div class="pennant away"><span id="sdBan1"></span></div>
         <div class="sbtns inmatchOnly" id="sdBtns"></div>
         <section class="spanel inmatchOnly">
           <h3>ON THE ICE</h3>
