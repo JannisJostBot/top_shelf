@@ -105,7 +105,7 @@ export function render() {
   view.ctlFlash = Math.max(0, view.ctlFlash - 1 / 60);
   if (c) drawCtlBase(c);
   drawLitter();
-  puckGround();
+  if (G.state !== 'zamboni') puckGround(); // the puck is put away while the ice is resurfaced
   const items = G.state === 'zamboni' ? [] : players.filter(live).map(p => ({ y: p.y, p }));
   if (G.state !== 'zamboni') items.push({ y: ref.y, ref: true });
   items.sort((a, b) => a.y - b.y);
@@ -122,7 +122,16 @@ export function render() {
       if (p.role === 'G') drawGoalie(p);
       else if (p === c) drawOutlined(p);
       else drawSkater(p);
-      if (G.mom && G.mom.t > 0 && G.mom.team === p.team && p.role !== 'G' && p.down <= 0) drawBuffed(p);
+      // (not in replays: they show play from before the boost)
+      if (
+        G.state !== 'replay' &&
+        G.mom &&
+        G.mom.t > 0 &&
+        G.mom.team === p.team &&
+        p.role !== 'G' &&
+        p.down <= 0
+      )
+        drawBuffed(p);
       if (puck.owner === p) {
         drawPuck();
         drawn = true;

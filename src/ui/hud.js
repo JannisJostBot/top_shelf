@@ -33,7 +33,8 @@ const BOLT =
 let lastBuff = '';
 export function hudBuff() {
   const m = G.mom,
-    on = m && m.t > 0 && !G.demo && G.state !== 'over',
+    // hidden where other HUD sits in its spot (replay buttons, resurfacer bar, fight meters)
+    on = m && m.t > 0 && !G.demo && !['over', 'replay', 'zamboni', 'brawl'].includes(G.state),
     key = on ? m.team + m.src + Math.ceil(m.t) : '';
   if (key === lastBuff) return;
   lastBuff = key;
