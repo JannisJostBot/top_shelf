@@ -1,5 +1,5 @@
 import { AC, crowdBus, crowdG, master, mixer, noiseBuf, nz, osc } from './engine';
-import { awwBuffer, chantBuffer, eruptionBuffer, oohApplauseBuffer, riffClapsBuffer, shoutBuffer } from './crowd';
+import { shoutBuffer } from './crowd';
 import { pick, rnd } from '../core/math';
 
 // voices: a buzzy source shaped by three vowel formants
@@ -69,24 +69,6 @@ export function crowdPlay(buf, vol, delay = 0) {
 }
 // the organ riff's tempo (seconds per beat), shared by the organ and the crowd clapping it back
 export const RIFF_BEAT = 0.42;
-// The reactions the game uses (see SFX), pre-rendered one at a time in the background after audio starts.
-const REACTIONS = [
-  () => eruptionBuffer(AC),
-  () => awwBuffer(AC),
-  () => oohApplauseBuffer(AC, false),
-  () => oohApplauseBuffer(AC, true),
-  () => riffClapsBuffer(AC, RIFF_BEAT),
-  () => chantBuffer(AC),
-  () => shoutBuffer(AC, 'a', 1.8, 14),
-  () => shoutBuffer(AC, 'o', 0.7, 6),
-  () => shoutBuffer(AC, 'a', 0.9, 9),
-  () => shoutBuffer(AC, 'a', 0.5, 5),
-];
-export function warmShouts(i = 0) {
-  if (!AC || i >= REACTIONS.length) return;
-  REACTIONS[i]();
-  setTimeout(() => warmShouts(i + 1), 120);
-}
 export function clatter(t, n, vol) {
   for (let i = 0; i < n; i++)
     nz(t + rnd(0, 0.09), 0.028, vol * rnd(0.5, 1), 'bandpass', rnd(2200, 5200), null, 4, 0.001);

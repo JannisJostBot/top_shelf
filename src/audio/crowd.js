@@ -120,10 +120,33 @@ function toBuffer(AC, L, R) {
   b.getChannelData(1).set(R);
   return b;
 }
+/* ---------- rendering off the main thread ----------
+   Crowd sounds take a while to synthesise (a goal cheer is a few hundred milliseconds of work), so crowdWorker.js
+   renders them in the background as soon as the page loads, and the samples arrive here by key. A sound asked for
+   before it has arrived is rendered right away instead. Every sound is made once and kept: each is a fixed take. */
+const raw = new Map(),
+  made = new Map();
+/** Samples for `key` rendered by the worker. */
+export function acceptRaw(key, L, R) {
+  if (!made.has(key)) raw.set(key, [L, R]);
+}
+/** Whether the samples for `key` are at hand (rendered by the worker or made already). */
+export const hasSound = key => made.has(key) || raw.has(key);
+/** The AudioBuffer for `key` (or, without an AudioContext, in the worker: the rendered samples). */
+function buf(AC, key, render) {
+  if (!AC) return render();
+  let b = made.get(key);
+  if (b) return b;
+  const r = raw.get(key) || render();
+  raw.delete(key);
+  made.set(key, (b = toBuffer(AC, r[0], r[1])));
+  return b;
+}
 const smooth = x => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
 
 /** Seamless loop of the crowd chattering between plays: distant voices talking over each other. */
-export function crowdBedBuffer(AC) {
+/** Seamless loop of the crowd chattering (see crowdBedBuffer). */
+function renderBed() {
   const len = 8,
     fade = 0.5,
     total = Math.ceil((len + fade) * SR),
@@ -194,18 +217,17 @@ export function crowdBedBuffer(AC) {
     outR[i] = R[i] * a + R[n + i] * b;
   }
   normalizeRms([outL, outR], 0.3);
-  return toBuffer(AC, outL, outR);
+  return [outL, outR];
 }
+export const crowdBedBuffer = AC => buf(AC, 'bed', renderBed);
 
-const shoutCache = new Map();
 /**
  * A crowd reaction: many people shouting a vowel together, each starting a little apart.
  * `drop` bends the pitch down over the reaction (a groan); cheers ('a' and 'e') also get whistles and applause.
  */
-export function shoutBuffer(AC, vowel, dur, people, drop) {
-  const key = [vowel, dur, people, drop || 1].join('|');
-  let buf = shoutCache.get(key);
-  if (buf) return buf;
+export const shoutBuffer = (AC, vowel, dur, people, drop) =>
+  buf(AC, ['shout', vowel, dur, people, drop || 1].join('|'), () => renderShout(vowel, dur, people, drop));
+function renderShout(vowel, dur, people, drop) {
   const tail = 0.6,
     total = Math.ceil((dur + tail) * SR),
     L = new Float32Array(total),
@@ -276,9 +298,7 @@ export function shoutBuffer(AC, vowel, dur, people, drop) {
     }
   }
   normalizeRms([L, R], 0.3);
-  buf = toBuffer(AC, L, R);
-  shoutCache.set(key, buf);
-  return buf;
+  return [L, R];
 }
 
 /* ---------- reactions built from groups of voices, claps and whistles ---------- */
@@ -407,21 +427,14 @@ function chantVoices(L, R, syllables, voices) {
     });
   }
 }
-/** Renders once per key and keeps it (every reaction below is fixed, so one take each is enough). */
-const made = new Map();
-function once(key, render) {
-  let b = made.get(key);
-  if (!b) made.set(key, (b = render()));
-  return b;
-}
-function finish(AC, L, R) {
+function finish(L, R) {
   normalizeRms([L, R], 0.3);
-  return toBuffer(AC, L, R);
+  return [L, R];
 }
 
 /** Goal: the whole arena jumps up at once. An instant roar, high yelling, whistles, thunderous applause. */
 export const eruptionBuffer = AC =>
-  once('eruption', () => {
+  buf(AC, 'eruption', () => {
     const [L, R] = stereo(4.6);
     group(L, R, {
       voices: 70,
@@ -436,12 +449,12 @@ export const eruptionBuffer = AC =>
     });
     whistles(L, R, 7, 0.1, 2.4);
     applause(L, R, 0.25, 4.4, 260, 1, 0.25);
-    return finish(AC, L, R);
+    return finish(L, R);
   });
 
 /** Goal against: a deflated "awww" that sags all the way down, then a few scattered claps. */
 export const awwBuffer = AC =>
-  once('aww', () => {
+  buf(AC, 'aww', () => {
     const [L, R] = stereo(2.6);
     group(L, R, {
       voices: 40,
@@ -457,7 +470,7 @@ export const awwBuffer = AC =>
       fall: 1.6,
     });
     applause(L, R, 1.6, 2.6, 18, 0.8, 0.2);
-    return finish(AC, L, R);
+    return finish(L, R);
   });
 
 /**
@@ -465,7 +478,7 @@ export const awwBuffer = AC =>
  * "ooh" and only a little applause.
  */
 export const oohApplauseBuffer = (AC, short) =>
-  once(short ? 'oohShort' : 'ooh', () => {
+  buf(AC, short ? 'oohShort' : 'ooh', () => {
     const k = short ? 0.75 : 1,
       [L, R] = stereo(2.6 * k);
     group(L, R, {
@@ -480,20 +493,20 @@ export const oohApplauseBuffer = (AC, short) =>
       breath: 0.45,
     });
     applause(L, R, 0.7 * k, 2.5 * k, short ? 60 : 110, short ? 0.7 : 0.9, 0.4);
-    return finish(AC, L, R);
+    return finish(L, R);
   });
 
 /** The crowd clapping the organ's "da-da da-da-da" back, twice; `beat` matches the organ riff. */
 export const riffClapsBuffer = (AC, beat) =>
-  once('riffClaps', () => {
+  buf(AC, 'riffClaps|' + beat, () => {
     const [L, R] = stereo(8 * beat + 1);
     for (const bar of [4, 8]) for (const b of [0, 1, 2, 2.5, 3]) claps(L, R, (bar - 0.5 + b) * beat, 45, 0.025, 0.55);
-    return finish(AC, L, R);
+    return finish(L, R);
   });
 
 /** "Let's go Blue!" (clap clap clap-clap-clap), twice. */
 export const chantBuffer = AC =>
-  once('chant', () => {
+  buf(AC, 'chant', () => {
     const beat = 0.45,
       bar = 8 * beat,
       [L, R] = stereo(2 * bar + 1);
@@ -503,7 +516,7 @@ export const chantBuffer = AC =>
       for (const b of [4, 5, 6, 6.5, 7]) claps(L, R, b0 + b * beat, 40, 0.025, 0.5);
     }
     chantVoices(L, R, syl, 40);
-    return finish(AC, L, R);
+    return finish(L, R);
   });
 
 /** Impulse response of a large arena: a short pre-delay, then a dense, darkening ~2.4 s decay. */
@@ -524,3 +537,20 @@ export function arenaImpulse(AC) {
   }
   return b;
 }
+
+/** Everything the game plays from the crowd, for crowdWorker.js to render in advance: [key, render]. */
+export const PRERENDER = [
+  ['bed', () => crowdBedBuffer(null)],
+  ['eruption', () => eruptionBuffer(null)],
+  ['aww', () => awwBuffer(null)],
+  ['ooh', () => oohApplauseBuffer(null, false)],
+  ['oohShort', () => oohApplauseBuffer(null, true)],
+  ['chant', () => chantBuffer(null)],
+  ['riffClaps|0.42', () => riffClapsBuffer(null, 0.42)], // the organ riff's tempo (RIFF_BEAT in voices.js)
+  ...[
+    ['a', 1.8, 14],
+    ['o', 0.7, 6],
+    ['a', 0.9, 9],
+    ['a', 0.5, 5],
+  ].map(([v, d, n]) => [['shout', v, d, n, 1].join('|'), () => shoutBuffer(null, v, d, n)]),
+];

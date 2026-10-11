@@ -1,4 +1,5 @@
-import { setCrowd, warmShouts } from './voices';
+import { setCrowd } from './voices';
+import { whenSound } from './crowdLoad';
 import { arenaImpulse, crowdBedBuffer } from './crowd';
 import { glideBuffer, stopBuffer, strideBuffer } from './skates';
 import { settings } from '../settings';
@@ -57,8 +58,8 @@ export function audio() {
       crowdG = AC.createGain();
       crowdG.gain.value = 0;
       crowdG.connect(crowdBus);
-      // rendered just after the first click (and the reactions after that) so starting audio stays instant
-      setTimeout(() => {
+      // the chatter is rendered in the background since the page loaded (crowdLoad.js); it starts once it is there
+      whenSound('bed', () => {
         const bed = crowdBedBuffer(AC);
         for (const [rate, offset] of [
           [1, 0],
@@ -71,8 +72,7 @@ export function audio() {
           s.connect(crowdG);
           s.start(0, offset);
         }
-        warmShouts();
-      }, 50);
+      });
       for (let i = 0; i < 6; i++) strideBufs.push(strideBuffer(AC));
       for (let i = 0; i < 3; i++) stopBufs.push(stopBuffer(AC));
       // blade glide: a looping hiss whose level follows skating speed (see glideTick)
