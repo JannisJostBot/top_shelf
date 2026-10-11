@@ -41,6 +41,12 @@ import { drawZamHud, drawZamboni } from './zamboni';
 
 export function render() {
   kit.PS = puckStyle();
+  // after the final whistle: b-roll of the arena behind the results card, filmed like the menu background
+  if (G.state === 'over' && G.post) {
+    updDemoCam();
+    render3D(false);
+    return;
+  }
   // the arena intro before the opening face-off
   if (G.state === 'intro' && G.intro) {
     drawIntro();

@@ -1,4 +1,5 @@
-import { clamp, rnd } from '../core/math';
+import { catchUp } from './ai/team';
+import { clamp, dist, rnd } from '../core/math';
 import { loadRec, saveRec } from '../core/storage';
 import { clock } from '../core/time';
 import { LABEL, ORD } from '../data/difficulty';
@@ -33,6 +34,7 @@ import { SK, genRoster, players } from './players';
 import { practiceGoal, resetRosterFlags } from './practice';
 import { faceoff } from './states/faceoff';
 import { startIntro } from './states/intro';
+import { startPost } from './states/post';
 import { stopEngine } from './states/zamboni';
 import { G, REC, parts, puck } from './world';
 import { input } from '../input/state';
@@ -75,8 +77,17 @@ export function goalScored(team, n) {
     G.timer = 1.4;
     return;
   }
+  const behind = catchUp(1 - team);
   G.score[team]++;
   G.stats.sog[team]++; // every goal is a shot on goal
+  // a computer team falling well behind changes its tactics: say so on the play-by-play
+  const now = catchUp(1 - team);
+  if (now > behind)
+    feed(
+      (G.watch ? teamLabel(1 - team) : 'CPU') +
+        (now > 1 ? ' throws everything forward' : ' goes all out: pressing high, shooting from anywhere'),
+      1 - team,
+    );
   hud();
   G.timer = 1.8;
   if (team === 0 || G.watch) {
@@ -87,12 +98,6 @@ export function goalScored(team, n) {
     S('buzzer');
   }
   if (!G.ai0) vib(team === 0 ? [60, 40, 60, 40, 180] : [120]);
-  // the team that conceded lets off some (censored) steam
-  if ((G.watch || team === 0) && Math.random() < 0.55) {
-    const l = SK[1 - team].slice().sort(() => Math.random() - 0.5);
-    bubble(l[0], null, rnd(0.2, 0.6));
-    if (Math.random() < 0.35) bubble(l[1], null, rnd(0.9, 1.4));
-  }
   // fights get likelier with every goal that passes without one, so they turn up about once a game (and never twice)
   G.brawlNext = false;
   if (!G.ai0 && team === 0 && settings.fightsOn && !G.fought) {
@@ -100,6 +105,13 @@ export function goalScored(team, n) {
       G.brawlNext = true;
       G.fightP = 0.1;
     } else G.fightP = Math.min(0.5, G.fightP + 0.12);
+  }
+  // a fight is brewing: the sore loser nearest the scorer lets off some (censored) steam, sometimes a teammate too
+  if (G.brawlNext) {
+    const sc = G.lastShooter && G.lastShooter.team === team ? G.lastShooter : SK[team][0],
+      l = SK[1 - team].slice().sort((p, q) => dist(p, sc) - dist(q, sc));
+    bubble(l[0], null, rnd(0.2, 0.6));
+    if (Math.random() < 0.35) bubble(l[1], null, rnd(0.9, 1.4));
   }
   G.hype = team === 0 || G.watch ? 1 : 0.35;
   if (!reduceMotion) G.shake = 0.4;
@@ -160,6 +172,7 @@ export function endGame() {
   G.state = 'over';
   zoom(1);
   const w = G.score[0] > G.score[1] ? 0 : 1;
+  startPost(w); // the winners celebrate behind the results card
   if (G.watch) {
     S('horn');
   } else if (w === 0) {
@@ -201,6 +214,7 @@ export function endGame() {
 }
 export function startGame(watch) {
   G.practice = null;
+  G.post = null;
   G.aim = null;
   G.fought = false;
   resetRosterFlags();
@@ -237,6 +251,7 @@ export function toMenu() {
   stopEngine();
   showTab('play');
   G.practice = null;
+  G.post = null;
   G.aim = null;
   resetRosterFlags();
   G.zam = null;

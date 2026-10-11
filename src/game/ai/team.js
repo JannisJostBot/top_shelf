@@ -40,7 +40,7 @@ export function easingOff(ch, o, dt) {
   }
   if (dist(ch, o) < TIGHT) ch.pressT = (ch.pressT || 0) + dt;
   else ch.pressT = Math.max(0, (ch.pressT || 0) - dt * 0.5);
-  if (!ch.pressMax) ch.pressMax = rnd(1.4, 2.6) * (PRESS_LEN[settings.diffKey] || 1);
+  if (!ch.pressMax) ch.pressMax = rnd(1.4, 2.6) * (PRESS_LEN[settings.diffKey] || 1) * (1 + 0.25 * catchUp(ch.team));
   if (ch.pressT > ch.pressMax) {
     ch.pressT = 0;
     ch.pressMax = 0;
@@ -117,9 +117,17 @@ export function openLane(p, s, o, t, dt) {
   }
   return m.here || { x: s.x + m.x, y: s.y + m.y };
 }
+// Catching up: a computer team two goals behind changes its tactics (presses sooner and longer, shoots from
+// further out, its defenceman joins the attack) and digs in a little (a touch faster, sharper with the stick,
+// more checks); three or more behind, twice as much. Never your own AI teammates, never in practice.
+export function catchUp(t) {
+  if (G.practice || G.demo || (t === 0 && !G.ai0)) return 0;
+  const d = G.score[1 - t] - G.score[t];
+  return d >= 3 ? 2 : d >= 2 ? 1 : 0;
+}
 export function teamMul(t) {
   if (G.practice && t === 1 && G.practice.opp === 'easy') return 0.55;
-  return t === 1 ? settings.diff.spd : G.demo ? 0.94 : 0.95;
+  return (t === 1 ? settings.diff.spd : G.demo ? 0.94 : 0.95) * (1 + 0.03 * catchUp(t));
 }
 export function nearest(list, tg) {
   let b = null,
@@ -172,7 +180,9 @@ function carrierAI(o, t, dt) {
   const dg = Math.hypot(80 - o.x, aG - o.y),
     ahead = dir * (aG - o.y) > 8 && Math.abs(o.x - 80) < dir * (aG - o.y) * 1.6 + 14;
   if (ahead) {
-    const ps = dg < 38 ? 0.75 : dg < 62 ? 0.32 : dg < 85 && nd < 10 ? 0.25 : 0;
+    const cu = catchUp(t),
+      // behind, it shoots from further out too
+      ps = dg < 38 ? 0.75 : dg < 62 ? 0.32 + 0.08 * cu : dg < 85 && nd < 10 ? 0.25 : dg < 90 ? 0.08 * cu : 0;
     if (Math.random() < ps) {
       const gk = GK[1 - t];
       let off = gk.x > 80 ? -10.5 : 10.5;
@@ -236,7 +246,8 @@ export function teamAI(t, dt) {
       spots = [
         { x: o.x < 80 ? 118 : 42, y: lerp(o.y, aG - dir * 42, 0.65) },
         { x: 80 + (o.x < 80 ? 14 : -14), y: o.y - dir * 34 },
-        { x: 80, y: 128 },
+        // the safety skater at centre ice, pushed up to join the attack when behind
+        { x: 80, y: lerp(128, aG - dir * 60, 0.45 * catchUp(t)) },
       ];
     // supporting skaters look for an open passing lane to the carrier
     assign(avail, spots, mul, dt, o.role === 'S' ? (p, sp) => openLane(p, sp, o, t, dt) : null);
@@ -263,7 +274,7 @@ export function teamAI(t, dt) {
         const s = readCarrier(ch, o, dt),
           ease = easingOff(ch, o, dt);
         if (ease) steer(ch, s.x + (gx / gl) * 18, s.y + (gy / gl) * 18, dt, mul * 0.8, false);
-        else if (G.holdT > PRESS_AFTER) steer(ch, puck.x, puck.y, dt, mul, false);
+        else if (G.holdT > PRESS_AFTER * (1 - 0.3 * catchUp(t))) steer(ch, puck.x, puck.y, dt, mul, false);
         else steer(ch, s.x + (gx / gl) * 4 + s.vx * 0.15, s.y + (gy / gl) * 4 + s.vy * 0.15, dt, mul, false);
         faceTo(ch, o.x, o.y, 0.3);
         if (G.holdT > DOUBLE_AFTER && rest.length) {
@@ -282,7 +293,7 @@ export function teamAI(t, dt) {
           o.down <= 0 &&
           o.imm <= 0 &&
           dist(ch, o) < 22 &&
-          Math.random() < rate * (G.holdT > PRESS_AFTER ? 2 : 1) * dt
+          Math.random() < rate * (G.holdT > PRESS_AFTER ? 2 : 1) * (1 + 0.25 * catchUp(t)) * dt
         )
           startCheck(ch, o);
       }

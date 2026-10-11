@@ -19,7 +19,7 @@ import { GK, SK, live } from '../players';
 import { bestMate, passTo, shoot } from '../puck';
 import { G, puck } from '../world';
 import { settings } from '../../settings';
-import { DOUBLE_AFTER, PRESS_AFTER, easingOff, nearest, openLane, readCarrier, teamMul } from './team';
+import { DOUBLE_AFTER, PRESS_AFTER, catchUp, easingOff, nearest, openLane, readCarrier, teamMul } from './team';
 
 const wrap = a => ((a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
 
@@ -181,7 +181,9 @@ function carrier(o, t, dt) {
   const dg = Math.hypot(80 - o.x, aG - o.y),
     shootingLane = dir * (aG - o.y) > 8 && Math.abs(o.x - 80) < dir * (aG - o.y) * 1.4 + 12;
   if (shootingLane) {
-    const ps = dg < 36 ? 0.6 : dg < 60 ? 0.22 : 0;
+    const cu = catchUp(t),
+      // behind, it shoots from further out too
+      ps = dg < 36 ? 0.6 : dg < 60 ? 0.22 + 0.08 * cu : dg < 85 ? 0.08 * cu : 0;
     if (Math.random() < ps) {
       const gk = GK[1 - t];
       let off = gk.x > 80 ? -10.5 : 10.5;
@@ -239,7 +241,8 @@ export function teamAIRealistic(t, dt) {
     const side = o.x < 80 ? 1 : -1;
     for (const p of avail) {
       let s;
-      if (p.slot === 'D') s = { x: 80 - side * 18, y: o.y - dir * 38 };
+      // the defenceman hangs back, or pinches in to join the attack when the team is behind
+      if (p.slot === 'D') s = { x: 80 - side * 18, y: o.y - dir * (38 - 14 * catchUp(t)) };
       else if (o.slot === 'C' || p.slot === 'C')
         s = { x: 80 + side * (p.slot === 'C' ? 10 : 42), y: lerp(o.y + dir * 22, aG - dir * 34, 0.5) };
       else s = { x: 80 + side * 40, y: o.y + dir * 14 };
@@ -273,7 +276,7 @@ export function teamAIRealistic(t, dt) {
       const s = readCarrier(chaser, o, dt),
         ease = easingOff(chaser, o, dt);
       if (ease) skate(chaser, s.x + (gx / gl) * (gap + 16), s.y + (gy / gl) * (gap + 16), dt, mul * 0.8, 1);
-      else if (G.holdT > PRESS_AFTER) skate(chaser, puck.x, puck.y, dt, mul, 1);
+      else if (G.holdT > PRESS_AFTER * (1 - 0.3 * catchUp(t))) skate(chaser, puck.x, puck.y, dt, mul, 1);
       else skate(chaser, s.x + (gx / gl) * gap + s.vx * 0.2, s.y + (gy / gl) * gap + s.vy * 0.2, dt, mul, 1);
       faceTo(chaser, o.x, o.y, 0.25);
       const rate = G.practice && G.practice.opp === 'easy' ? 0 : t === 1 && !G.ai0 ? settings.diff.chk : 0.3;
@@ -284,7 +287,7 @@ export function teamAIRealistic(t, dt) {
         o.down <= 0 &&
         o.imm <= 0 &&
         dist(chaser, o) < 20 &&
-        Math.random() < rate * (G.holdT > PRESS_AFTER ? 2 : 1) * dt
+        Math.random() < rate * (G.holdT > PRESS_AFTER ? 2 : 1) * (1 + 0.25 * catchUp(t)) * dt
       )
         startCheck(chaser, o);
     }

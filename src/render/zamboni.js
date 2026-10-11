@@ -5,6 +5,7 @@ import { G } from '../game/world';
 import { view } from './canvas';
 import { R } from './pixels';
 import { settings } from '../settings';
+import { ZAM } from '../game/states/zamboni';
 
 export function drawZamboni() {
   const z = G.zam;
@@ -92,7 +93,8 @@ export function drawZamHud() {
   const z = G.zam;
   if (!z) return;
   if (z.phase === 'count') drawCountdown(z.cd, 0);
-  else if (z.phase === 'drive' && z.t > 25 - 0.7) drawCountdown(0, (25 - z.t) / 0.7);
+  // GO! for the first moment of driving (the run starts at its full length, ZAM.time)
+  else if (z.phase === 'drive' && z.t > ZAM.time - 0.7) drawCountdown(0, (ZAM.time - z.t) / 0.7);
   const pct = z.count / Math.max(1, z.total),
     w = Math.floor(view.CW * 0.5),
     x0 = (view.CW - w) >> 1,

@@ -50,6 +50,7 @@ export function startPractice(cfg) {
   G.ignoreRelease = false;
   G.brawlNext = false;
   G.aim = null;
+  G.post = null;
   screen('practice');
   resetRosterFlags();
   genRoster();

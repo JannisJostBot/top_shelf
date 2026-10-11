@@ -165,22 +165,23 @@ export function updDemoCam() {
  * pop in at the edges. Seats right beside the lens are left out and nobody grows past a set size, so turning the
  * camera never balloons a head. They jump and wave foam fingers when the crowd is loud. */
 const FRONT_ROWS = [
-    [6, 1.8], // distance in front of the camera (toward the rink), how far below the eye the heads are
-    [9, 2.4],
+    [6, 0.92], // distance in front of the camera (toward the rink), where the heads sit looking straight ahead
+    [9, 0.84], // (share of the screen height, so they line the bottom edge whatever the screen's shape)
   ],
   HEAD_R = 0.4, // head radius, world units
   NEAR_D = 4.5, // closer to the lens than this (straight ahead): left out
   // only the people near you along the row show: from this far along it they fade out, gone FADE later
   ROW_NEAR = 18,
   FADE = 5;
-function fanHeads(proj, C3) {
+function fanHeads(proj, C3, f, hor) {
   const g = view.ctx,
     toward = C3.x < 80 ? 1 : -1, // the rink side of the camera
-    maxR = view.CH * 0.1,
+    maxR = Math.min(view.CW, view.CH) * 0.1,
     list = [];
-  FRONT_ROWS.forEach(([dx, dz], row) => {
+  FRONT_ROWS.forEach(([dx, at], row) => {
     const x = C3.x + toward * dx,
-      z = C3.h - dz,
+      z = C3.h - (dx * (at * view.CH - hor)) / f, // the height that puts these heads at that screen row
+
       stagger = row ? SEAT_W / 2 : 0;
     for (let k = Math.ceil((C3.y - 120) / SEAT_W); k * SEAT_W <= C3.y + 120; k++) {
       const y = k * SEAT_W + stagger,
@@ -678,7 +679,7 @@ export function render3D(overlay = true) {
     view.ctx.fillRect(Math.round(q.x), Math.round(q.y - z * 2), z, z);
   }
   view.ctx.globalAlpha = 1;
-  if (C3.guest) fanHeads(proj, C3);
+  if (C3.guest) fanHeads(proj, C3, f, hor);
   cinema();
   if (overlay) replayOverlay();
 }

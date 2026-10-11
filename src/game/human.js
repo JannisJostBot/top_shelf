@@ -1,6 +1,6 @@
 import { ACC, BASE, GT } from '../config';
 import { clamp, dist, rnd } from '../core/math';
-import { nearest } from './ai/team';
+import { catchUp, nearest } from './ai/team';
 import { startCheck } from './hits';
 import { accelTo, burst, faceTo, maxSpd, reachFactor } from './physics/motion';
 import { GK, SK } from './players';
@@ -248,7 +248,7 @@ export function steals(dt) {
                 ? settings.diff.ourSteal
                 : settings.diff.ourSteal * 0.7;
       const reach = reachFactor(p, c),
-        rate = (base * (reach > 0 ? reach : 0.1) * p.st.hnd) / c.st.hnd;
+        rate = ((base * (reach > 0 ? reach : 0.1) * p.st.hnd) / c.st.hnd) * (1 + 0.15 * catchUp(p.team));
       if (p !== G.controlled || G.ai0) {
         // A computer skater pokes rather than pulling steadily: one try every so often, harder against a carrier
         // skating at speed, and a miss leaves its stick out of position for a moment. So keeping your feet moving

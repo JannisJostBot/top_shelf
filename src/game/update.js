@@ -13,6 +13,7 @@ import { coast, integrate, updatePuck } from './physics/step';
 import { GK, SKATERS, players } from './players';
 import { practiceReset } from './practice';
 import { introStep } from './states/intro';
+import { postStep } from './states/post';
 import { aimTick } from './aim';
 import { applyFrame, endReplay, recFrame, startReplay } from './replay';
 import { brawlStep, startBrawl } from './states/brawl';
@@ -130,6 +131,10 @@ export function update(dt) {
   if (st !== 'play' && st !== 'faceoff') {
     input.sp = input.pp = input.swp = false;
     if (!input.shootHeld) input.sr = false;
+  }
+  if (st === 'over' && G.post) {
+    postStep(dt);
+    return;
   }
   if (st === 'paused' || st === 'over') return;
   updCam(dt, false);

@@ -63,6 +63,8 @@ export const G = {
   aim: /** @type {any} */ (null),
   /** the arena intro before the opening face-off while it plays */
   intro: /** @type {any} */ (null),
+  /** after the final whistle: the winners' celebration behind the results card */
+  post: /** @type {any} */ (null),
   cam3: /** @type {any} */ (null),
   goalX: 80,
   goalFrame: 0,
