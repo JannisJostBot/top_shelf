@@ -95,6 +95,8 @@ export function banner(t, cls, sub, big) {
       : 'var(--led)';
   b.style.setProperty('--bc', team);
   b.classList.toggle('big', !!big);
+  // face-off messages sit low, on the empty ice below the circle, so they don't cover the draw
+  b.classList.toggle('low', (cls || '').includes('low'));
   b.classList.remove('out');
   $('bs').textContent = sub || '';
   b.hidden = false;

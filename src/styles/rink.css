@@ -452,3 +452,15 @@ h2 {
     opacity: 0;
   }
 }
+/* face-off messages: on the empty ice at the bottom of the view instead of over the face-off circle, above the
+   key hints (or the touch controls on phones) */
+#banner.low {
+  top: auto;
+  bottom: 52px;
+}
+#stage:has(> #pad:not([hidden])) #banner.low {
+  bottom: 164px;
+}
+body.wide #banner.low {
+  bottom: 24px;
+}

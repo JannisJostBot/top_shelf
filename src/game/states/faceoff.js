@@ -85,7 +85,7 @@ export function faceoff() {
     G.firstFO = false;
     banner(
       'FACE-OFF',
-      'small',
+      'small low',
       G.ai0 ? welcome : (welcome ? welcome + ' · ' : '') + 'Tap DRAW when the puck drops',
     );
     G.bannerT = G.ai0 ? 1.4 : 0;
@@ -99,19 +99,19 @@ export function foUpdate(dt) {
     if (fo.t >= fo.setT) {
       fo.phase = 'ready';
       fo.t = 0;
-      if (!G.ai0) banner('READY', 'small alert', 'Wait for the drop…');
+      if (!G.ai0) banner('READY', 'small alert low', 'Wait for the drop…');
     }
   } else if (fo.phase === 'ready') {
     if (!G.ai0 && input.sp && !fo.early) {
       fo.early = true;
-      banner('TOO EARLY', 'small away', 'CPU gets the draw');
+      banner('TOO EARLY', 'small away low', 'CPU gets the draw');
       S('lose');
     }
     if (fo.t >= fo.wait) {
       fo.phase = 'drop';
       fo.t = 0;
       S('drop');
-      if (!G.ai0 && !fo.early) banner('DROP!', 'alert', '');
+      if (!G.ai0 && !fo.early) banner('DROP!', 'alert low', '');
     }
   } else {
     puck.z = Math.max(0, 9 - fo.t * 70);
@@ -139,12 +139,12 @@ function foResolve(team, rt) {
   if (!G.ai0) {
     if (team === 0) {
       S('win');
-      banner('WON THE DRAW', 'small home', rt !== null ? rt.toFixed(2) + 's reaction' : '');
+      banner('WON THE DRAW', 'small home low', rt !== null ? rt.toFixed(2) + 's reaction' : '');
     } else {
       S('lose');
       banner(
         'LOST THE DRAW',
-        'small away',
+        'small away low',
         G.fo.early ? '' : 'Too slow. CPU took ' + G.fo.cpu.toFixed(2) + 's',
       );
     }
