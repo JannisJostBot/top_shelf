@@ -159,39 +159,62 @@ export function updDemoCam() {
   broadcastCam(DEMO_SHOTS[idx], snap);
 }
 
-/** Spectators in the seat rows in front of the fan cam: real spots in the stands (between the camera and the
- * boards), projected like everything else, so they stay put while the camera pans. They jump and wave foam
- * fingers when the crowd is loud. */
+/** Spectators in the two seat rows just in front of the fan cam: the heads you look over at the bottom of the
+ * frame. Their seats are on a fixed grid along the stand (every SEAT_W, all along the stretch in view, not just
+ * around the camera), projected like everything else, so they stay put while the camera pans and turns and none
+ * pop in at the edges. Seats right beside the lens are left out and nobody grows past a set size, so turning the
+ * camera never balloons a head. They jump and wave foam fingers when the crowd is loud. */
+const FRONT_ROWS = [
+    [6, 1.8], // distance in front of the camera (toward the rink), how far below the eye the heads are
+    [9, 2.4],
+  ],
+  HEAD_R = 0.4, // head radius, world units
+  NEAR_D = 4.5, // closer to the lens than this (straight ahead): left out
+  // only the people near you along the row show: from this far along it they fade out, gone FADE later
+  ROW_NEAR = 18,
+  FADE = 5;
 function fanHeads(proj, C3) {
   const g = view.ctx,
     toward = C3.x < 80 ? 1 : -1, // the rink side of the camera
+    maxR = view.CH * 0.1,
     list = [];
-  for (let row = 0; row < 2; row++)
-    for (let i = -10; i <= 10; i++) {
-      // seats on a fixed grid along the boards (not relative to the camera), with a little stagger
-      const seatY = Math.round(C3.y / 1.7) * 1.7 + i * 1.7 + (row ? 0.85 : 0),
-        id = Math.round(seatY / 1.7) * 2 + row,
-        x = C3.x + toward * (2.6 + row * 2.2),
-        q = proj(x, seatY, C3.h - 2.4 - row * 1.5);
-      if (q && q.d > 1) list.push({ q, id });
+  FRONT_ROWS.forEach(([dx, dz], row) => {
+    const x = C3.x + toward * dx,
+      z = C3.h - dz,
+      stagger = row ? SEAT_W / 2 : 0;
+    for (let k = Math.ceil((C3.y - 120) / SEAT_W); k * SEAT_W <= C3.y + 120; k++) {
+      const y = k * SEAT_W + stagger,
+        a = 1 - (Math.abs(y - C3.y) - ROW_NEAR) / FADE;
+      if (a <= 0) continue;
+      const q = proj(x, y, z);
+      if (q && q.d >= NEAR_D) list.push({ q, id: k * 2 + row, a: Math.min(1, a) });
     }
+  });
   list.sort((a, b) => b.q.d - a.q.d);
-  for (const { q, id } of list) {
-    const ph = ((id * 2654435761) >>> 0) / 4294967296,
+  for (const { q, id, a } of list) {
+    g.globalAlpha = a;
+    const ph = (((id * 2654435761) >>> 0) / 4294967296) % 1,
       cheer = G.hype > 0.1 || Math.sin(clock.now * 0.7 + ph * 12) > 0.92,
-      r = Math.round(q.s * 0.16),
+      r = Math.max(1, Math.min(maxR, Math.round(q.s * HEAD_R))),
       jump = cheer ? Math.round(Math.abs(Math.sin(clock.now * 9 + ph * 7)) * r * 0.5) : 0,
       cx = Math.round(q.x),
-      base = Math.round(q.y) - jump;
-    if (cx < -r * 3 || cx > view.CW + r * 3 || base - r * 2 > view.CH) continue;
+      base = Math.round(q.y) - jump + r; // the shoulders start just under the head
+    if (cx < -r * 3 || cx > view.CW + r * 3 || base - r * 3 > view.CH) continue;
+    const hy = base - r * 0.6;
     g.fillStyle = '#05070d';
-    g.fillRect(cx - r * 1.6, base, r * 3.2, view.CH - base + r); // shoulders
+    // rounded shoulders, and the back below them down out of the frame
     g.beginPath();
-    g.arc(cx, base - r * 0.6, r, 0, Math.PI * 2); // head
+    g.ellipse(cx, base + r * 1.1, r * 1.8, r * 0.9, 0, Math.PI, 0);
+    g.fill();
+    g.fillRect(cx - r * 1.8, base + r * 1.1, r * 3.6, view.CH - base);
+    g.beginPath();
+    g.arc(cx, hy, r, 0, Math.PI * 2); // head
     g.fill();
     const team = id & 1 ? 1 : 0;
     g.fillStyle = kit.TEAMS[(id >> 1) % 3 === 0 ? 1 - team : team].main;
-    g.fillRect(cx - r, base - r * 1.6, r * 2, Math.round(r * 0.6)); // beanie in the teams' colours
+    g.beginPath();
+    g.arc(cx, hy - r * 0.1, r * 1.02, Math.PI, 0); // beanie in the teams' colours
+    g.fill();
     if (cheer && ph < 0.35) {
       // a foam finger
       g.fillStyle = kit.TEAMS[team].main;
@@ -199,6 +222,7 @@ function fanHeads(proj, C3) {
       g.fillRect(cx + r * 1.35, base - r * 4.4, r * 0.4, r);
     }
   }
+  g.globalAlpha = 1;
 }
 export function upd3D(snap) {
   const A = G.rp && G.rp.angle;
