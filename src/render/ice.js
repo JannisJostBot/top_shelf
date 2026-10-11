@@ -8,11 +8,15 @@ export const ice = document.createElement('canvas');
 ice.width = IW;
 ice.height = IH;
 // fictional club crest, drawn small with hard edges and scaled up so it reads as pixel art on the ice
+// The shapes are laid out on a 24-unit grid but painted at RES times that resolution, so the hard-edged crest
+// has finer detail on the ice instead of big blocky steps.
+const RES = 2;
 function drawLogo(g, S, cx, cy, sc) {
-  const N = 24,
+  const N = 24 * RES,
     cvs = document.createElement('canvas');
   cvs.width = cvs.height = N;
   const x = cvs.getContext('2d');
+  x.scale(RES, RES);
   const [a, b, c] = S.lc;
   const circ = (X, Y, r, col) => {
     x.fillStyle = col;
@@ -210,7 +214,8 @@ function drawLogo(g, S, cx, cy, sc) {
   x.putImageData(id, 0, 0);
   g.imageSmoothingEnabled = false;
   g.globalAlpha = 0.92;
-  g.drawImage(cvs, Math.round(cx - (N * sc) / 2), Math.round(cy - (N * sc) / 2), N * sc, N * sc);
+  const size = (N * sc) / RES;
+  g.drawImage(cvs, Math.round(cx - size / 2), Math.round(cy - size / 2), size, size);
   g.globalAlpha = 1;
 }
 export function buildIce(key, target) {
@@ -227,8 +232,8 @@ export function buildIce(key, target) {
     ice2: hex(S.ice2),
     ice3: hex('#f8fbfd'),
     tint: hex(S.tint),
-    red: hex('#d8343f'),
-    blue: hex('#2f6bd8'),
+    red: hex(S.lines.red),
+    blue: hex(S.lines.blue),
     crease: hex('#a9d4f5'),
     creaseD: hex('#98c6ec'),
     creaseL: hex('#bcdff8'),

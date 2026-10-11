@@ -1,3 +1,5 @@
+// lines: the colours painted into the ice: `red` for the centre line, goal lines and face-off circles,
+// `blue` for the blue lines and the centre circle
 export const STADIUMS = {
   frost: {
     name: 'Frost Hollow Arena',
@@ -11,6 +13,7 @@ export const STADIUMS = {
     glass: '#1b2744',
     arena: '#0a0f1e',
     logo: 'flake',
+    lines: { red: '#d8343f', blue: '#2f6bd8' },
     lc: ['#2f6bd8', '#ffffff', '#132457'],
     song: 'snow',
   },
@@ -26,6 +29,7 @@ export const STADIUMS = {
     glass: '#0f2a33',
     arena: '#06141a',
     logo: 'kraken',
+    lines: { red: '#e0573c', blue: '#13897f' },
     lc: ['#13897f', '#f4f1e0', '#0b3b3a'],
     song: 'stomp',
   },
@@ -41,6 +45,7 @@ export const STADIUMS = {
     glass: '#13263a',
     arena: '#08121c',
     logo: 'penguin',
+    lines: { red: '#f08a12', blue: '#1b2333' },
     lc: ['#1b2333', '#ffffff', '#ff9f1c'],
     song: 'waddle',
   },
@@ -56,6 +61,7 @@ export const STADIUMS = {
     glass: '#1e1036',
     arena: '#0b0618',
     logo: 'comet',
+    lines: { red: '#ff3fb4', blue: '#22b8e6' },
     lc: ['#ff3fb4', '#3ff0ff', '#ffde59'],
     song: 'comet',
   },
@@ -71,6 +77,7 @@ export const STADIUMS = {
     glass: '#1d2a1f',
     arena: '#0b120c',
     logo: 'pine',
+    lines: { red: '#b5482a', blue: '#1f6b3a' },
     lc: ['#1f6b3a', '#ffffff', '#8a5a2b'],
     song: 'lumber',
   },
@@ -86,6 +93,7 @@ export const STADIUMS = {
     glass: '#22252b',
     arena: '#0e0f12',
     logo: 'anvil',
+    lines: { red: '#d1361b', blue: '#3a4250' },
     lc: ['#2b2f36', '#ffffff', '#ff5a1f'],
     song: 'forge',
   },

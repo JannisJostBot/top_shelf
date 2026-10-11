@@ -1,4 +1,6 @@
 import { GB, GT, H, K, W } from '../config';
+import { STADIUMS } from '../data/stadiums';
+import { settings } from '../settings';
 import { clamp, toS } from '../core/math';
 import { clock } from '../core/time';
 import { kit } from '../game/kit';
@@ -154,11 +156,12 @@ export function drawMini() {
   view.ctx.globalAlpha = 0.9;
   R(x0, y0, mw, mh, '#d6e3ee');
   view.ctx.globalAlpha = 1;
-  R(x0, y0 + Math.round(128 * m), mw, 1, '#d8343f');
-  R(x0, y0 + Math.round(96 * m), mw, 1, '#2f6bd8');
-  R(x0, y0 + Math.round(160 * m), mw, 1, '#2f6bd8');
-  R(x0 + Math.round(67 * m), y0 + Math.round(GT * m) - 1, Math.round(26 * m), 1, '#d8343f');
-  R(x0 + Math.round(67 * m), y0 + Math.round(GB * m) + 1, Math.round(26 * m), 1, '#d8343f');
+  const L = STADIUMS[settings.stadiumKey].lines; // the arena's own line colours
+  R(x0, y0 + Math.round(128 * m), mw, 1, L.red);
+  R(x0, y0 + Math.round(96 * m), mw, 1, L.blue);
+  R(x0, y0 + Math.round(160 * m), mw, 1, L.blue);
+  R(x0 + Math.round(67 * m), y0 + Math.round(GT * m) - 1, Math.round(26 * m), 1, L.red);
+  R(x0 + Math.round(67 * m), y0 + Math.round(GB * m) + 1, Math.round(26 * m), 1, L.red);
   const vis = vh - G.padWorld,
     rx = x0 + Math.round(Math.max(0, cam.x) * m),
     ry = y0 + Math.round(Math.max(0, cam.y) * m),
