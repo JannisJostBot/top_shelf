@@ -8,11 +8,12 @@ export const puck = {
   z: 0,
   vx: 0,
   vy: 0,
-  owner: null,
-  passTo: null,
+  /** the skater or goalie carrying the puck, the intended receiver of a pass, the goalie who last tried to stop it */
+  owner: /** @type {any} */ (null),
+  passTo: /** @type {any} */ (null),
   lastTeam: 0,
   hard: false,
-  gchk: null,
+  gchk: /** @type {any} */ (null),
   miss: new Set(),
   trail: [],
 };
