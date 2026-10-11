@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Crowd Lab</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap"
+    />
+    <style>
+      /* Design tool only: audition alternative crowd sounds for Top Shelf. Not used by the game.
+         Open through the dev server (it reuses the game's crowd synthesis for the originals): /design/crowd-lab.html */
+      :root {
+        --bg: #070a14;
+        --panel: #0e1428;
+        --line: #1b2744;
+        --ink: #eaf0ff;
+        --muted: #8f9cc0;
+        --home: #3d7bff;
+        --led: #ffc845;
+        --pick: #39d98a;
+        --display: 'Press Start 2P', monospace;
+        --pixel: 'Silkscreen', monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--pixel);
+        font-size: 13px;
+        padding: 28px 16px 150px;
+      }
+      header,
+      main,
+      .moments,
+      .engine {
+        max-width: 1180px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      h1 {
+        font-family: var(--display);
+        font-size: 16px;
+        color: var(--led);
+        margin: 0 0 10px;
+      }
+      header p {
+        color: var(--muted);
+        margin: 0 0 8px;
+        max-width: 780px;
+        line-height: 1.5;
+      }
+      .engine,
+      .moments {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 22px;
+        align-items: center;
+        margin-top: 16px;
+        margin-bottom: 18px;
+        padding: 12px 14px;
+        border: 2px solid var(--line);
+        background: var(--panel);
+      }
+      .moments h2 {
+        font-family: var(--display);
+        font-size: 11px;
+        margin: 0;
+        width: 100%;
+      }
+      .moments p {
+        color: var(--muted);
+        margin: 0;
+        width: 100%;
+      }
+      .engine label {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        cursor: pointer;
+      }
+      .engine small {
+        color: var(--muted);
+      }
+      main {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 18px;
+      }
+      section {
+        border: 2px solid var(--line);
+        background: var(--panel);
+        padding: 14px;
+      }
+      section h2 {
+        font-family: var(--display);
+        font-size: 11px;
+        margin: 0 0 6px;
+      }
+      section > p {
+        color: var(--muted);
+        margin: 0 0 12px;
+        line-height: 1.45;
+      }
+      .opt {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 8px;
+        border: 2px solid transparent;
+        margin-bottom: 6px;
+        background: #0a1020;
+      }
+      .opt.sel {
+        border-color: var(--pick);
+      }
+      .opt b {
+        display: block;
+        font-weight: 700;
+      }
+      .opt span {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+      .opt .cur {
+        color: var(--led);
+        font-size: 11px;
+      }
+      button {
+        font: inherit;
+        color: var(--ink);
+        background: #17213d;
+        border: 2px solid #2c3b66;
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--home);
+      }
+      button.play {
+        width: 40px;
+        height: 34px;
+        padding: 0;
+        font-size: 14px;
+      }
+      button.busy {
+        opacity: 0.5;
+      }
+      button.choose {
+        font-size: 11px;
+      }
+      .opt.sel button.choose {
+        background: var(--pick);
+        border-color: var(--pick);
+        color: #04120b;
+      }
+      footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #0b1124ee;
+        border-top: 2px solid var(--line);
+        padding: 10px 16px;
+      }
+      footer div {
+        max-width: 1180px;
+        margin: 0 auto;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      footer code {
+        flex: 1;
+        font-family: var(--pixel);
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+      @media (max-width: 520px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+        footer div {
+          flex-direction: column;
+          align-items: stretch;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>CROWD LAB</h1>
+      <p>
+        The whole crowd is synthesised from individual voices, claps and whistles. For each crowd sound, <b>▶</b> plays
+        a variant. The first play of a variant takes a moment to render, and every render is a new crowd, so
+        replays differ a little. <b>Pick</b> what you like; option A is what the game plays today. Then try your picks
+        together under <b>Hear it in context</b>.
+      </p>
+      <p>Everything goes through the game's arena reverb, as in the game.</p>
+    </header>
+    <div class="engine">
+      <label><input type="checkbox" id="lively" /> Livelier crowd during play <small>(engine upgrade: the background crowd is quite quiet today; this nearly doubles it)</small></label>
+    </div>
+    <div class="moments">
+      <h2>Hear it in context</h2>
+      <p>Your picked sounds in game situations, at game levels.</p>
+      <button data-moment="play">▶ During play (10 s)</button>
+      <button data-moment="goal">▶ Your team scores</button>
+      <button data-moment="against">▶ The other team scores</button>
+      <button data-moment="save">▶ Big save</button>
+      <button data-moment="start">▶ Puck drop (organ)</button>
+      <button data-moment="stop">■ Stop</button>
+    </div>
+    <main id="cards"></main>
+    <footer>
+      <div>
+        <code id="summary"></code>
+        <button id="copy">Copy picks</button>
+      </div>
+    </footer>
+
+    <script type="module">
+      import { arenaImpulse, crowdBedBuffer, shoutBuffer } from '/src/audio/crowd.js';
+
+      const rnd = (a, b) => a + Math.random() * (b - a),
+        pick = a => a[Math.floor(Math.random() * a.length)],
+        smooth = x => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+
+      /* ---------- engine: the game's crowd chain (crowd bus -> master + arena reverb) ---------- */
+      let AC, master, crowdBus, out;
+      function init() {
+        if (AC) {
+          if (AC.state === 'suspended') AC.resume();
+          return;
+        }
+        AC = new AudioContext();
+        const comp = AC.createDynamicsCompressor();
+        comp.threshold.value = -16;
+        comp.ratio.value = 4;
+        master = AC.createGain();
+        master.gain.value = 0.9;
+        master.connect(comp);
+        comp.connect(AC.destination);
+        // everything this page plays goes through `out`, so Stop can silence it all
+        out = AC.createGain();
+        out.connect(master);
+        crowdBus = AC.createGain();
+        crowdBus.connect(out);
+        const verb = AC.createConvolver(),
+          wet = AC.createGain();
+        verb.buffer = arenaImpulse(AC);
+        wet.gain.value = 0.55;
+        crowdBus.connect(verb);
+        verb.connect(wet);
+        wet.connect(out);
+      }
+      function stopAll() {
+        if (!out) return;
+        out.gain.setTargetAtTime(0, AC.currentTime, 0.05);
+        const old = out;
+        setTimeout(() => old.disconnect(), 400);
+        out = AC.createGain();
+        out.connect(master);
+        crowdBus.disconnect();
+        crowdBus = AC.createGain();
+        crowdBus.connect(out);
+        const verb = AC.createConvolver(),
+          wet = AC.createGain();
+        verb.buffer = arenaImpulse(AC);
+        wet.gain.value = 0.55;
+        crowdBus.connect(verb);
+        verb.connect(wet);
+        wet.connect(out);
+      }
+      /** Plays a buffer into the crowd bus; returns its gain node (for swells). */
+      function play(buf, vol, when = 0, loop = false, stopAt = 0) {
+        const s = AC.createBufferSource(),
+          g = AC.createGain();
+        s.buffer = buf;
+        s.loop = loop;
+        g.gain.value = vol;
+        s.connect(g);
+        g.connect(crowdBus);
+        s.start(AC.currentTime + when);
+        if (stopAt) s.stop(AC.currentTime + stopAt);
+        return { g, s };
+      }
+
+      /* ---------- voice synthesis (the same model as the game's crowd.js) ---------- */
+      const SR = 16000;
+      const VOWELS = {
+        a: [800, 1200],
+        e: [500, 1850],
+        i: [330, 2250],
+        o: [520, 880],
+        u: [360, 800],
+        ae: [680, 1650],
+      };
+      function resonator() {
+        let b0 = 0,
+          a1 = 0,
+          a2 = 0,
+          x1 = 0,
+          x2 = 0,
+          y1 = 0,
+          y2 = 0;
+        return {
+          tune(f, q) {
+            const w = (2 * Math.PI * f) / SR,
+              alpha = Math.sin(w) / (2 * q),
+              a0 = 1 + alpha;
+            b0 = alpha / a0;
+            a1 = (-2 * Math.cos(w)) / a0;
+            a2 = (1 - alpha) / a0;
+          },
+          run(x) {
+            const y = b0 * (x - x2) - a1 * y1 - a2 * y2;
+            x2 = x1;
+            x1 = x;
+            y2 = y1;
+            y1 = y;
+            return y;
+          },
+        };
+      }
+      function addVoice(L, R, o) {
+        const s0 = Math.floor(o.start * SR),
+          n = Math.min(L.length - s0, Math.floor(o.len * SR)),
+          f1 = resonator(),
+          f2 = resonator(),
+          gl = Math.cos(((o.pan + 1) * Math.PI) / 4),
+          gr = Math.sin(((o.pan + 1) * Math.PI) / 4),
+          drift = rnd(0, 6.28),
+          driftHz = rnd(0.3, 0.9);
+        let ph = Math.random(),
+          soft = 0,
+          vowel = null;
+        for (let i = 0; i < n; i++) {
+          const t = i / SR,
+            a = o.amp(t);
+          if (a <= 0) {
+            vowel = null;
+            continue;
+          }
+          const v = o.vowel(t);
+          if (v !== vowel) {
+            vowel = v;
+            const [F1, F2] = VOWELS[v];
+            f1.tune(F1 * rnd(0.92, 1.08), 5);
+            f2.tune(F2 * rnd(0.92, 1.08), 7);
+          }
+          const f = o.f0 * o.pitch(t) * (1 + 0.025 * Math.sin(drift + t * 2 * Math.PI * driftHz));
+          ph += f / SR;
+          if (ph >= 1) ph -= 1;
+          soft += 0.35 * (2 * ph - 1 - soft);
+          const src = soft * (1 - o.breath) + (Math.random() * 2 - 1) * o.breath,
+            y = (f1.run(src) * 1.2 + f2.run(src) * 0.7) * a;
+          L[s0 + i] += y * gl;
+          R[s0 + i] += y * gr;
+        }
+      }
+      function normalizeRms(chs, target) {
+        let s = 0,
+          n = 0;
+        for (const d of chs)
+          for (let i = 0; i < d.length; i++) {
+            s += d[i] * d[i];
+            n++;
+          }
+        const k = target / (Math.sqrt(s / n) || 1);
+        for (const d of chs) for (let i = 0; i < d.length; i++) d[i] *= k;
+      }
+      const stereo = sec => {
+        const n = Math.ceil(sec * SR);
+        return [new Float32Array(n), new Float32Array(n)];
+      };
+      function toBuffer(L, R) {
+        const b = AC.createBuffer(2, L.length, SR);
+        b.getChannelData(0).set(L);
+        b.getChannelData(1).set(R);
+        return b;
+      }
+      const voiceF0 = (female, lo, hi) => (female ? rnd(lo[1], hi[1]) : rnd(lo[0], hi[0]));
+      /** Distance: rolls off the top end (k: lower is further away) and adds a faint low room rumble. */
+      function distance(chs, k, rumble = 0.6) {
+        for (const d of chs) {
+          let a = 0,
+            b = 0,
+            r = 0;
+          for (let i = 0; i < d.length; i++) {
+            a += k * (d[i] - a);
+            b += k * (a - b);
+            r += 0.02 * (Math.random() * 2 - 1 - r);
+            d[i] = b + r * rumble;
+          }
+        }
+      }
+      /** `n` people clapping once around time t (each a little early or late). */
+      function claps(L, R, t, n, spread, level) {
+        const res = resonator();
+        for (let c = 0; c < n; c++) {
+          const j0 = Math.floor((t + rnd(-spread, spread)) * SR);
+          if (j0 < 0) continue;
+          const amp = level * rnd(0.4, 1),
+            pan = rnd(-1, 1);
+          res.tune(1400 * rnd(0.75, 1.3), 1.2);
+          for (let i = 0; i < SR * 0.012 && j0 + i < L.length; i++) {
+            const y = res.run((Math.random() * 2 - 1) * Math.exp(-i / (SR * 0.0025))) * amp;
+            L[j0 + i] += y * (1 - pan) * 0.5;
+            R[j0 + i] += y * (1 + pan) * 0.5;
+          }
+        }
+      }
+      /** Free applause between t0 and t1: `rate` claps per second, fading in over `fadeIn`. */
+      function applause(L, R, t0, t1, rate, level, fadeIn = 0.3) {
+        const res = resonator();
+        for (let c = 0; c < (t1 - t0) * rate; c++) {
+          const t = t0 + Math.random() * (t1 - t0),
+            j0 = Math.floor(t * SR),
+            amp = rnd(0.2, 0.6) * level * Math.min(1, (t - t0) / fadeIn) * Math.min(1, (t1 - t) / 0.6),
+            pan = rnd(-1, 1);
+          res.tune(1400 * rnd(0.8, 1.2), 1.2);
+          for (let i = 0; i < SR * 0.012 && j0 + i < L.length; i++) {
+            const y = res.run((Math.random() * 2 - 1) * Math.exp(-i / (SR * 0.0025))) * amp;
+            L[j0 + i] += y * (1 - pan) * 0.5;
+            R[j0 + i] += y * (1 + pan) * 0.5;
+          }
+        }
+      }
+      /** Two-finger whistles from fans in the stands. */
+      function whistles(L, R, count, t0, t1, level = 0.18) {
+        for (let w = 0; w < count; w++) {
+          const st = rnd(t0, t1),
+            ln = rnd(0.35, 0.7),
+            f = rnd(1900, 2800),
+            pan = rnd(-0.8, 0.8),
+            gl = Math.cos(((pan + 1) * Math.PI) / 4),
+            gr = Math.sin(((pan + 1) * Math.PI) / 4),
+            wolf = Math.random() < 0.3; // some go up and come down
+          let ph = 0;
+          for (let i = 0; i < ln * SR; i++) {
+            const t = i / SR,
+              k = t / ln,
+              fr = wolf
+                ? f * (0.8 + 0.4 * Math.sin(k * Math.PI))
+                : f * (1 + 0.12 * Math.sin(k * Math.PI)) * (k > 0.7 ? 1 - (k - 0.7) * 0.4 : 1);
+            ph += fr / SR;
+            const y = Math.sin(2 * Math.PI * ph) * level * smooth(k / 0.1) * smooth((1 - k) / 0.2),
+              j = Math.floor((st + t) * SR);
+            if (j < L.length) {
+              L[j] += y * gl;
+              R[j] += y * gr;
+            }
+          }
+        }
+      }
+      /** Many people shouting together. */
+      function group(L, R, o) {
+        for (let v = 0; v < o.voices; v++) {
+          const start = (o.t0 || 0) + rnd(0, o.spread),
+            len = rnd(o.len[0], o.len[1]),
+            atk = rnd(o.atk[0], o.atk[1]),
+            female = Math.random() < (o.female ?? 0.4),
+            f0 = voiceF0(female, o.lo, o.hi),
+            level = rnd(0.35, 1) * (o.level || 1),
+            vw = pick(o.vowels),
+            k = Math.random();
+          addVoice(L, R, {
+            f0,
+            pitch: t => o.pitch(t / len, k),
+            amp: t => (t > len ? 0 : level * smooth(t / atk) * Math.min(1, ((len - t) / len) * (o.fall || 2.2))),
+            vowel: o.vowelAt ? t => o.vowelAt(t / len, vw) : () => vw,
+            start,
+            len,
+            breath: o.breath ?? 0.45,
+            pan: rnd(-0.95, 0.95),
+          });
+        }
+      }
+      /** A chanted line: every voice says the same syllables on the beat, each a little early or late. */
+      function chant(L, R, syllables, voices, level = 1) {
+        for (let v = 0; v < voices; v++) {
+          const female = Math.random() < 0.35,
+            f0 = voiceF0(female, [125, 230], [190, 320]),
+            jit = syllables.map(() => rnd(-0.035, 0.035)),
+            lv = rnd(0.4, 1) * level;
+          const at = t => {
+            for (let i = syllables.length - 1; i >= 0; i--) if (t >= syllables[i][0] + jit[i]) return i;
+            return -1;
+          };
+          addVoice(L, R, {
+            f0,
+            pitch: t => {
+              const i = at(t);
+              return i < 0 ? 1 : syllables[i][3];
+            },
+            amp: t => {
+              const i = at(t);
+              if (i < 0) return 0;
+              const x = t - syllables[i][0] - jit[i],
+                d = syllables[i][1];
+              return x > d ? 0 : lv * Math.min(1, x / 0.025) * Math.min(1, (d - x) / 0.07);
+            },
+            vowel: t => {
+              const i = at(t);
+              return syllables[Math.max(0, i)][2];
+            },
+            start: 0,
+            len: L.length / SR,
+            breath: 0.4,
+            pan: rnd(-0.95, 0.95),
+          });
+        }
+      }
+      /** An arena bass drum hit. */
+      function drum(L, R, t, level) {
+        const j0 = Math.floor(t * SR);
+        let ph = 0,
+          lp = 0;
+        for (let i = 0; i < SR * 0.45 && j0 + i < L.length; i++) {
+          const x = i / SR,
+            f = 45 + 35 * Math.exp(-x * 25);
+          ph += f / SR;
+          lp += 0.2 * (Math.random() * 2 - 1 - lp);
+          const y = (Math.sin(2 * Math.PI * ph) * Math.exp(-x * 7) + lp * Math.exp(-x * 40) * 0.8) * level;
+          L[j0 + i] += y;
+          R[j0 + i] += y;
+        }
+      }
+
+      /* ---------- the background crowd ---------- */
+      /** Chatter like the game's bed, with more or fewer voices and a near-far balance; seamless loop. */
+      function renderBed({ voices, level, breath, far, extras, breathe }) {
+        const len = 8,
+          fade = 0.5,
+          [L, R] = stereo(len + fade);
+        for (let v = 0; v < voices; v++) {
+          const syl = [];
+          let t = rnd(0, 1.5);
+          while (t < len + fade) {
+            const words = Math.floor(rnd(3, 9));
+            for (let k = 0; k < words && t < len + fade; k++) {
+              const d = rnd(0.09, 0.24);
+              syl.push([t, d, pick(['a', 'e', 'i', 'o', 'u', 'ae'])]);
+              t += d + rnd(0.02, 0.12);
+            }
+            t += rnd(0.4, 2.2);
+          }
+          let cur = 0;
+          const at = t => {
+            while (cur < syl.length - 1 && syl[cur + 1][0] <= t) cur++;
+            return syl[cur];
+          };
+          const female = Math.random() < 0.4,
+            lv = rnd(level[0], level[1]);
+          addVoice(L, R, {
+            f0: female ? rnd(180, 250) : rnd(95, 150),
+            pitch: t => {
+              const s = at(t);
+              return 1 + 0.08 * Math.sin(((t - s[0]) / s[1]) * Math.PI);
+            },
+            amp: t => {
+              const s = at(t),
+                x = t - s[0];
+              if (x < 0 || x > s[1]) return 0;
+              return lv * Math.min(1, x / 0.02) * Math.min(1, (s[1] - x) / 0.04);
+            },
+            vowel: t => at(t)[2],
+            start: 0,
+            len: len + fade,
+            breath,
+            pan: rnd(-0.9, 0.9),
+          });
+        }
+        distance([L, R], far);
+        if (breathe)
+          // the room's level rises and falls a little (a 4 s cycle: whole cycles in the 8 s loop)
+          for (const d of [L, R]) for (let i = 0; i < d.length; i++) d[i] *= 0.86 + 0.14 * Math.sin((2 * Math.PI * i) / SR / 4);
+        if (extras) extras(L, R, len);
+        const n = len * SR,
+          f = fade * SR,
+          oL = L.slice(0, n),
+          oR = R.slice(0, n);
+        for (let i = 0; i < f; i++) {
+          const k = i / f,
+            a = Math.sin((k * Math.PI) / 2),
+            b = Math.cos((k * Math.PI) / 2);
+          oL[i] = L[i] * a + L[n + i] * b;
+          oR[i] = R[i] * a + R[n + i] * b;
+        }
+        normalizeRms([oL, oR], 0.3);
+        return toBuffer(oL, oR);
+      }
+      /** Individual fans close by: a "hey!", an "ohh", someone clapping, a whistle. Kept clear of the loop seam. */
+      function nearFans(L, R, len) {
+        for (let k = 0; k < 6; k++) {
+          const female = Math.random() < 0.35,
+            l = rnd(0.28, 0.45),
+            hey = Math.random() < 0.6,
+            lv = rnd(0.9, 1.4);
+          addVoice(L, R, {
+            f0: female ? rnd(230, 320) : rnd(120, 175),
+            pitch: t => 1 + 0.18 * Math.sin(Math.min(1, t / l) * Math.PI),
+            amp: t => (t > l ? 0 : lv * smooth(t / 0.03) * Math.min(1, ((l - t) / l) * 2)),
+            vowel: t => (hey ? (t < l * 0.35 ? 'e' : 'i') : 'o'),
+            start: rnd(0.6, len - 1),
+            len: l,
+            breath: 0.35,
+            pan: rnd(-0.85, 0.85),
+          });
+        }
+        for (let k = 0; k < 2; k++) {
+          const t0 = rnd(0.6, len - 3),
+            n = Math.floor(rnd(5, 9));
+          for (let c = 0; c < n; c++) claps(L, R, t0 + c * rnd(0.26, 0.3), 1, 0.005, 1.2);
+        }
+        whistles(L, R, 1, 1, len - 1.5, 0.12);
+      }
+
+      /* ---------- the variants ---------- */
+      const CHEER_VOL = 0.11 * 1.7; // the game's crowdVoices level for the goal cheer
+      const CARDS = [
+        {
+          id: 'bed',
+          title: 'Background crowd',
+          blurb: 'The crowd talking between plays. It loops under the whole match. Played louder here than in the game so you can hear the detail.',
+          opts: [
+            ['Chatter', '40 voices chattering. Close enough that single syllables poke out, which can sound like a room more than an arena.', () => crowdBedBuffer(AC), b => preview(b)],
+            ['Arena murmur', '110 voices further away: a dense, warm wash of an arena full of people, gently rising and falling.', () => renderBed({ voices: 110, level: [0.12, 0.6], breath: 0.4, far: 0.3, breathe: true }), b => preview(b)],
+            ['Murmur + fans', 'The arena murmur with individual fans close to you: a "hey!", an "ohh", someone clapping, a whistle.', () => renderBed({ voices: 75, level: [0.12, 0.6], breath: 0.4, far: 0.3, breathe: true, extras: nearFans }), b => preview(b)],
+          ],
+        },
+        {
+          id: 'cheer',
+          title: 'Goal cheer',
+          blurb: 'When your team scores (it plays together with the goal horn).',
+          opts: [
+            ['Shout', 'Voices rising on "aah" and "eeh", a few whistles, applause building in.', () => {
+              const a = shoutBuffer(AC, 'a', 2.6, 14),
+                e = shoutBuffer(AC, 'e', 2.2, 8);
+              return { a, e };
+            }, b => {
+              play(b.a, 0.11 * 1.7);
+              play(b.e, 0.06 * 1.7);
+            }],
+            ['Eruption', 'The whole arena jumps up at once: an instant roar, high yelling, lots of whistles, thunderous applause, long tail.', () => {
+              const [L, R] = stereo(4.6);
+              group(L, R, { voices: 70, spread: 0.08, len: [2.6, 3.8], atk: [0.03, 0.08], lo: [180, 300], hi: [300, 480], vowels: ['a', 'a', 'ae', 'o', 'e'], pitch: (x, k) => 1 + (0.1 + k * 0.2) * Math.sin(Math.min(1, x * 1.4) * Math.PI) , breath: 0.5 });
+              whistles(L, R, 7, 0.1, 2.4);
+              applause(L, R, 0.25, 4.4, 260, 1, 0.25);
+              normalizeRms([L, R], 0.3);
+              return toBuffer(L, R);
+            }, b => play(b, 0.21)],
+            ['Building roar', 'Starts with a gasp from the closest fans and swells into a roar with screams on top, then applause.', () => {
+              const [L, R] = stereo(4.2);
+              group(L, R, { voices: 55, spread: 0.6, len: [2.4, 3.4], atk: [0.2, 0.5], lo: [160, 260], hi: [280, 420], vowels: ['a', 'o', 'ae'], pitch: (x, k) => 1 + (0.06 + k * 0.15) * smooth(x * 2), breath: 0.5 });
+              group(L, R, { voices: 12, t0: 0.4, spread: 0.6, len: [0.6, 1.3], atk: [0.04, 0.1], female: 0.8, lo: [260, 420], hi: [420, 640], vowels: ['i', 'e'], pitch: x => 1 + 0.2 * Math.sin(x * Math.PI), breath: 0.35, level: 0.8 });
+              whistles(L, R, 4, 0.6, 2.4);
+              applause(L, R, 1, 4, 200, 1, 0.8);
+              normalizeRms([L, R], 0.3);
+              return toBuffer(L, R);
+            }, b => play(b, 0.21)],
+          ],
+        },
+        {
+          id: 'groan',
+          title: 'The other team scores',
+          blurb: 'The home crowd reacting to a goal against (with the game\'s buzzer, which stays as it is).',
+          opts: [
+            ['Groan', 'A falling "uuh" of disappointment.', () => shoutBuffer(AC, 'u', 1.5, 12, 0.72), b => play(b, 0.09 * 1.7)],
+            ['Awww', 'A deflated "awww" that sags all the way down, then a few scattered claps.', () => {
+              const [L, R] = stereo(2.6);
+              group(L, R, { voices: 40, spread: 0.12, len: [1.4, 2], atk: [0.04, 0.12], lo: [150, 240], hi: [260, 380], vowels: ['a', 'o', 'a'], vowelAt: (x, v) => (x < 0.5 ? v : 'o'), pitch: x => 1.15 - 0.55 * smooth(x), breath: 0.5, fall: 1.6 });
+              applause(L, R, 1.6, 2.6, 18, 0.8, 0.2);
+              normalizeRms([L, R], 0.3);
+              return toBuffer(L, R);
+            }, b => play(b, 0.16)],
+            ['Boos', 'The crowd boos: low, long "boooo" with a wobble. More hostile.', () => {
+              const [L, R] = stereo(3);
+              group(L, R, { voices: 48, spread: 0.3, len: [1.8, 2.5], atk: [0.15, 0.3], female: 0.25, lo: [95, 160], hi: [190, 260], vowels: ['u', 'u', 'o'], pitch: (x, k) => (1 + 0.04 * Math.sin(x * 9 + k * 6)) * (1 - 0.1 * x), breath: 0.35, fall: 1.8 });
+              normalizeRms([L, R], 0.3);
+              return toBuffer(L, R);
+            }, b => play(b, 0.15)],
+          ],
+        },
+        {
+          id: 'ooh',
+          title: 'Near miss / big hit "ooh"',
+          blurb: 'Shots off the post, hard saves and big hits. Big hits use the same reaction, a bit shorter.',
+          opts: [
+            ['Ooh', 'A rounded "oooh".', () => shoutBuffer(AC, 'o', 1.2, 10), b => play(b, 0.08 * 1.7)],
+            ['Gasp + ooh', 'A sharp intake of breath, then an "oOOoh" that rises and falls.', () => {
+              const [L, R] = stereo(1.9);
+              // the gasp: many quick, breathy inhales
+              group(L, R, { voices: 30, spread: 0.05, len: [0.16, 0.26], atk: [0.02, 0.05], lo: [140, 220], hi: [240, 340], vowels: ['a', 'ae'], pitch: () => 1, breath: 0.92, level: 0.7 });
+              group(L, R, { voices: 34, t0: 0.18, spread: 0.12, len: [0.9, 1.4], atk: [0.08, 0.2], lo: [140, 230], hi: [250, 380], vowels: ['o', 'o', 'u'], pitch: x => 1 + 0.25 * Math.sin(x * Math.PI), breath: 0.45 });
+              normalizeRms([L, R], 0.3);
+              return toBuffer(L, R);
+            }, b => play(b, 0.15)],
+            ['Ooh + applause', 'An "oooh", then the crowd applauds the effort.', () => {
+              const [L, R] = stereo(2.6);
+              group(L, R, { voices: 30, spread: 0.12, len: [0.9, 1.2], atk: [0.08, 0.18], lo: [140, 230], hi: [250, 380], vowels: ['o', 'o', 'u'], pitch: x => 1 + 0.12 * Math.sin(x * Math.PI), breath: 0.45 });
+              applause(L, R, 0.7, 2.5, 110, 0.9, 0.4);
+              normalizeRms([L, R], 0.3);
+              return toBuffer(L, R);
+            }, b => play(b, 0.15)],
+          ],
+        },
+        {
+          id: 'organ',
+          title: 'Arena organ',
+          blurb: 'Plays at the puck drop and when you win.',
+          opts: [
+            ['Sine organ', 'The "Charge!" call on a soft, pure organ tone.', null, () => organSine()],
+            ['Hammond', 'The same call on a real rink organ: a Hammond with a spinning Leslie speaker and a bit of grit, and the crowd shouting "CHARGE!" back.', null, () => organHammond(true)],
+            ['Let\'s go riff', 'A different call: the organ plays "da-da da-da-da", the crowd claps it back twice.', () => {
+              const beat = 0.42,
+                [L, R] = stereo(8 * beat + 1);
+              for (const bar of [4, 8])
+                for (const b of [0, 1, 2, 2.5, 3]) claps(L, R, (bar - 0.5 + b) * beat, 45, 0.025, 0.55);
+              normalizeRms([L, R], 0.3);
+              return toBuffer(L, R);
+            }, b => {
+              organRiff();
+              play(b, 0.07, 0.05); // the claps start right after the riff
+            }],
+          ],
+        },
+        {
+          id: 'chant',
+          title: 'Chants (new)',
+          blurb: 'Not in the game yet: now and then during play, the crowd starts a chant on its own.',
+          opts: [
+            ['None', 'No chants, as today.', null, () => {}],
+            ['Let\'s go!', '"Let\'s go Blue!" (clap clap clap-clap-clap), twice.', () => {
+              const beat = 0.45,
+                bar = 8 * beat,
+                [L, R] = stereo(2 * bar + 1);
+              const syl = [];
+              for (const b0 of [0, bar]) {
+                syl.push([b0, 0.22, 'e', 1], [b0 + beat, 0.28, 'o', 1.12], [b0 + 2 * beat, 0.45, 'u', 1]);
+                for (const b of [4, 5, 6, 6.5, 7]) claps(L, R, b0 + b * beat, 40, 0.025, 0.5);
+              }
+              chant(L, R, syl, 40);
+              normalizeRms([L, R], 0.3);
+              return toBuffer(L, R);
+            }, b => play(b, 0.14)],
+            ['Drum + clap', 'The arena drum goes "boom boom boom-boom-boom", the crowd claps it back, and everyone shouts "HEY!" at the end.', () => {
+              const beat = 0.45,
+                bar = 8 * beat,
+                [L, R] = stereo(2 * bar + 1.2);
+              for (const b0 of [0, bar]) {
+                for (const b of [0, 1, 2, 2.5, 3]) drum(L, R, b0 + b * beat, 0.9);
+                for (const b of [4, 5, 6, 6.5, 7]) claps(L, R, b0 + b * beat, 40, 0.025, 0.5);
+              }
+              group(L, R, { voices: 40, t0: 2 * bar - 0.1, spread: 0.04, len: [0.35, 0.5], atk: [0.02, 0.04], lo: [150, 240], hi: [260, 380], vowels: ['e'], vowelAt: x => (x < 0.35 ? 'e' : 'i'), pitch: x => 1 + 0.1 * Math.sin(x * Math.PI), breath: 0.4 });
+              normalizeRms([L, R], 0.3);
+              return toBuffer(L, R);
+            }, b => play(b, 0.14)],
+          ],
+        },
+      ];
+
+      /* ---------- organs (played live, dry, like the game's) ---------- */
+      const CHARGE = [
+        [392, 0, 0.14],
+        [523, 0.16, 0.14],
+        [659, 0.32, 0.14],
+        [784, 0.48, 0.3],
+        [659, 0.84, 0.14],
+        [784, 1.0, 0.55],
+      ];
+      function organSine() {
+        const t = AC.currentTime + 0.05;
+        for (const [f, s, d] of CHARGE)
+          for (const [m, v] of [
+            [1, 0.07],
+            [2, 0.035],
+            [4, 0.014],
+          ]) {
+            const o = AC.createOscillator(),
+              g = AC.createGain();
+            o.frequency.value = f * m;
+            g.gain.setValueAtTime(0.0001, t + s);
+            g.gain.linearRampToValueAtTime(v, t + s + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + s + d + 0.08);
+            o.connect(g);
+            g.connect(out);
+            o.start(t + s);
+            o.stop(t + s + d + 0.15);
+          }
+      }
+      /** A tonewheel organ: drawbar harmonics, a percussion click, and a Leslie (tremolo + slight vibrato). */
+      function hammond(notes, t, vol = 1) {
+        const bus = AC.createGain(),
+          lp = AC.createBiquadFilter(),
+          ws = AC.createWaveShaper(),
+          les = AC.createOscillator(),
+          lesG = AC.createGain(),
+          trem = AC.createGain(),
+          curve = new Float32Array(1024);
+        for (let i = 0; i < 1024; i++) curve[i] = Math.tanh((i / 512 - 1) * 1.6);
+        ws.curve = curve;
+        lp.type = 'lowpass';
+        lp.frequency.value = 3800;
+        les.frequency.value = 6.4;
+        lesG.gain.value = 0.22;
+        trem.gain.value = 0.78;
+        les.connect(lesG);
+        lesG.connect(trem.gain);
+        bus.connect(ws);
+        ws.connect(lp);
+        lp.connect(trem);
+        trem.connect(out);
+        const end = Math.max(...notes.map(([, s, d]) => s + d)) + 0.3;
+        les.start(t);
+        les.stop(t + end);
+        for (const [f, s, d] of notes) {
+          for (const [m, v] of [
+            [0.5, 0.05],
+            [1, 0.09],
+            [1.5, 0.03],
+            [2, 0.06],
+            [3, 0.025],
+            [4, 0.02],
+          ]) {
+            const o = AC.createOscillator(),
+              g = AC.createGain(),
+              vib = AC.createGain();
+            o.frequency.value = f * m;
+            vib.gain.value = f * m * 0.004;
+            lesG.connect(vib);
+            vib.connect(o.frequency);
+            g.gain.setValueAtTime(0.0001, t + s);
+            g.gain.linearRampToValueAtTime(v * vol, t + s + 0.008);
+            g.gain.setValueAtTime(v * vol, t + s + d);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + s + d + 0.07);
+            o.connect(g);
+            g.connect(bus);
+            o.start(t + s);
+            o.stop(t + s + d + 0.12);
+          }
+          // percussion: the third harmonic clicks in and dies away at the start of each note
+          const p = AC.createOscillator(),
+            pg = AC.createGain();
+          p.frequency.value = f * 3;
+          pg.gain.setValueAtTime(0.0001, t + s);
+          pg.gain.linearRampToValueAtTime(0.05 * vol, t + s + 0.004);
+          pg.gain.exponentialRampToValueAtTime(0.0001, t + s + 0.2);
+          p.connect(pg);
+          pg.connect(bus);
+          p.start(t + s);
+          p.stop(t + s + 0.25);
+        }
+      }
+      let chargeShout = null;
+      function organHammond(shout) {
+        const t = AC.currentTime + 0.05;
+        hammond(CHARGE, t);
+        if (shout) {
+          chargeShout = chargeShout || shoutBuffer(AC, 'a', 0.9, 14);
+          play(chargeShout, 0.16, 1.62);
+        }
+      }
+      function organRiff() {
+        const beat = 0.42,
+          t = AC.currentTime + 0.05;
+        hammond(
+          [
+            [523, 0, 0.3],
+            [523, beat, 0.3],
+            [659, 2 * beat, 0.18],
+            [659, 2.5 * beat, 0.18],
+            [784, 3 * beat, 0.4],
+          ],
+          t,
+        );
+      }
+
+      /* ---------- preview and moments ---------- */
+      let bedPreview = null;
+      function preview(buf) {
+        if (bedPreview) bedPreview.s.stop();
+        const p = play(buf, 0.0001, 0, true, 7);
+        const t = AC.currentTime;
+        p.g.gain.linearRampToValueAtTime(0.32, t + 0.6);
+        p.g.gain.setValueAtTime(0.32, t + 6.2);
+        p.g.gain.linearRampToValueAtTime(0.0001, t + 7);
+        bedPreview = p;
+      }
+      const cache = {};
+      /** The rendered sound of an option (rendered once, on first use). */
+      function rendered(card, L) {
+        const c = CARDS.find(c => c.id === card),
+          o = c.opts[LETTERS.indexOf(L)];
+        const key = card + L;
+        if (!(key in cache)) cache[key] = o[2] ? o[2]() : null;
+        return cache[key];
+      }
+      function playOpt(card, L) {
+        const c = CARDS.find(c => c.id === card),
+          o = c.opts[LETTERS.indexOf(L)];
+        o[3](rendered(card, L));
+      }
+      /** The background crowd at game level, both copies as the game plays them; returns their gains. */
+      function bedAtGameLevel(dur) {
+        const b = rendered('bed', picks.bed),
+          lvl = document.getElementById('lively').checked ? 0.09 : 0.05,
+          gs = [];
+        for (const [rate, off] of [
+          [1, 0],
+          [0.97, 3.7],
+        ]) {
+          const s = AC.createBufferSource(),
+            g = AC.createGain();
+          s.buffer = b;
+          s.loop = true;
+          s.playbackRate.value = rate;
+          g.gain.value = lvl;
+          s.connect(g);
+          g.connect(crowdBus);
+          s.start(AC.currentTime, off);
+          s.stop(AC.currentTime + dur);
+          g.gain.setValueAtTime(lvl, AC.currentTime + dur - 0.6);
+          g.gain.linearRampToValueAtTime(0.0001, AC.currentTime + dur);
+          gs.push(g);
+        }
+        return { gs, lvl };
+      }
+      /** The game's crowd swell: the background rises to `peak` and settles back. */
+      function swell({ gs, lvl }, peak, up, hold, down, at = 0) {
+        const t = AC.currentTime + at;
+        for (const g of gs) {
+          g.gain.setValueAtTime(lvl, t);
+          g.gain.linearRampToValueAtTime(peak, t + up);
+          g.gain.setValueAtTime(peak, t + up + hold);
+          g.gain.linearRampToValueAtTime(lvl, t + up + hold + down);
+        }
+      }
+      function horn() {
+        const t = AC.currentTime,
+          lp = AC.createBiquadFilter(),
+          g = AC.createGain();
+        lp.type = 'lowpass';
+        lp.frequency.value = 1100;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.15, t + 0.06);
+        g.gain.setValueAtTime(0.15, t + 1.9);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+        lp.connect(g);
+        g.connect(out);
+        for (const f of [138.6, 174.6, 207.7, 277.2]) {
+          const o = AC.createOscillator();
+          o.type = 'sawtooth';
+          o.frequency.value = f;
+          o.detune.value = rnd(-8, 8);
+          o.connect(lp);
+          o.start(t);
+          o.stop(t + 2.45);
+        }
+      }
+      function buzzer() {
+        const t = AC.currentTime;
+        for (const f of [196, 199]) {
+          const o = AC.createOscillator(),
+            g = AC.createGain();
+          o.type = 'square';
+          o.frequency.value = f;
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.linearRampToValueAtTime(0.055, t + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+          o.connect(g);
+          g.connect(out);
+          o.start(t);
+          o.stop(t + 1.15);
+        }
+      }
+      const MOMENTS = {
+        play() {
+          bedAtGameLevel(10);
+          if (picks.chant !== 'A') setTimeout(() => playOpt('chant', picks.chant), 2000);
+        },
+        goal() {
+          const bed = bedAtGameLevel(7);
+          setTimeout(() => {
+            horn();
+            playOpt('cheer', picks.cheer);
+            swell(bed, 0.22, 0.25, 1.6, 2);
+          }, 900);
+        },
+        against() {
+          const bed = bedAtGameLevel(5);
+          setTimeout(() => {
+            playOpt('groan', picks.groan);
+            buzzer();
+            swell(bed, bed.lvl + 0.06, 0.2, 0.4, 1);
+          }, 900);
+        },
+        save() {
+          const bed = bedAtGameLevel(5);
+          setTimeout(() => {
+            playOpt('ooh', picks.ooh);
+            swell(bed, bed.lvl + 0.08, 0.25, 0.3, 1);
+          }, 900);
+        },
+        start() {
+          const bed = bedAtGameLevel(6);
+          setTimeout(() => playOpt('organ', picks.organ), 600);
+        },
+      };
+      for (const b of document.querySelectorAll('[data-moment]'))
+        b.onclick = () => {
+          init();
+          if (b.dataset.moment === 'stop') return stopAll();
+          busy(b, () => MOMENTS[b.dataset.moment]());
+        };
+      /** Runs `fn` after the button has had a chance to show that it is working (renders can take a moment). */
+      function busy(btn, fn) {
+        btn.classList.add('busy');
+        setTimeout(() => {
+          try {
+            fn();
+          } finally {
+            btn.classList.remove('busy');
+          }
+        }, 30);
+      }
+
+      /* ---------- page ---------- */
+      const LETTERS = 'ABCD';
+      const picks = {};
+      let saved = {};
+      try {
+        saved = JSON.parse(localStorage.getItem('crowdlab-picks') || '{}');
+      } catch (_) {}
+      const root = document.getElementById('cards');
+      for (const c of CARDS) {
+        picks[c.id] = saved[c.id] && LETTERS.indexOf(saved[c.id]) < c.opts.length ? saved[c.id] : 'A';
+        const sec = document.createElement('section');
+        sec.innerHTML = `<h2>${c.title}</h2><p>${c.blurb}</p>`;
+        c.opts.forEach(([name, desc], i) => {
+          const L = LETTERS[i],
+            row = document.createElement('div');
+          row.className = 'opt';
+          row.dataset.card = c.id;
+          row.dataset.opt = L;
+          row.innerHTML = `<button class="play" title="Play">▶</button>
+            <div><b>${L} · ${name}${i === 0 ? ' <i class="cur">(now in the game)</i>' : ''}</b><span>${desc}</span></div>
+            <button class="choose">Pick</button>`;
+          const pb = row.querySelector('.play');
+          pb.onclick = () => {
+            init();
+            busy(pb, () => playOpt(c.id, L));
+          };
+          row.querySelector('.choose').onclick = () => {
+            picks[c.id] = L;
+            refresh();
+          };
+          sec.appendChild(row);
+        });
+        root.appendChild(sec);
+      }
+      function refresh() {
+        for (const row of document.querySelectorAll('.opt'))
+          row.classList.toggle('sel', picks[row.dataset.card] === row.dataset.opt);
+        const text =
+          CARDS.map(c => `${c.title}: ${picks[c.id]} ${c.opts[LETTERS.indexOf(picks[c.id])][0]}`).join(' · ') +
+          ` · Livelier crowd: ${document.getElementById('lively').checked ? 'yes' : 'no'}`;
+        document.getElementById('summary').textContent = text;
+        try {
+          localStorage.setItem('crowdlab-picks', JSON.stringify(picks));
+        } catch (_) {}
+        return text;
+      }
+      document.getElementById('lively').addEventListener('change', refresh);
+      document.getElementById('copy').onclick = async () => {
+        const text = refresh();
+        try {
+          await navigator.clipboard.writeText(text);
+          document.getElementById('copy').textContent = 'Copied';
+          setTimeout(() => (document.getElementById('copy').textContent = 'Copy picks'), 1200);
+        } catch (_) {}
+      };
+      refresh();
+    </script>
+  </body>
+</html>
