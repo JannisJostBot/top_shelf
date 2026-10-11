@@ -11,6 +11,7 @@ import { endReplay, nextAngle } from '../game/replay';
 import { endCelebration } from '../game/states/celebrate';
 import { G } from '../game/world';
 import { input } from './state';
+import { toggleWatchCam } from '../ui/menu';
 
 // standard mapping button indices
 const A = 0,
@@ -167,7 +168,8 @@ function gameInput(gp, down, now) {
   }
   shootHeld = shoot;
   if (down(B) || down(RB)) input.pp = true;
-  if (down(X) || down(LB)) input.swp = true;
+  if (down(X) && G.watch) toggleWatchCam();
+  else if (down(X) || down(LB)) input.swp = true;
   if (down(Y) && G.state === 'replay') nextAngle();
   else if (down(Y) && G.watch) nextShot();
   if (down(VIEW)) {

@@ -220,6 +220,8 @@ export function upd3D(snap) {
   const dyaw = ((yaw - C.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
   C.yaw += dyaw * (snap ? 1 : 0.08);
 }
+/** Halfway between two opaque packed colours. */
+const avg32 = (a, b) => ((((a >>> 1) & 0x7f7f7f7f) + ((b >>> 1) & 0x7f7f7f7f)) | 0xff000000) >>> 0;
 function glassTint(c) {
   const r = c & 255,
     g = (c >> 8) & 255,
@@ -339,9 +341,17 @@ export function render3D(overlay = true) {
             const top = rowY[r + 1],
               bh = rowY[r] - top,
               fan = fanTab[seat * FAN_ROWS + (r % FAN_ROWS)];
-            if (bh < 2 || tiny)
-              col = r & 1 ? crowd.dark : crowd.mid; // too far for detail: an even crowd tone
-            else {
+            if (bh < 2 || tiny) {
+              // too far for whole fans: each pixel still shows one fan's colours (softened toward the crowd
+              // tone), so the far stands read as a packed crowd instead of flat bands; loud fans pop up
+              const shade = r & 1 ? crowd.dark : crowd.mid;
+              if (fan.empty) col = shade;
+              else {
+                const up = hype > 0.05 && Math.sin(clock.now * 11 + fan.ph) > 0.4,
+                  head = bh >= 1.5 && (y - top) / bh < 0.32;
+                col = avg32(head || up ? fan.head : xin > 0.6 ? fan.bodyD : fan.body, shade);
+              }
+            } else {
               const bob = hype > 0.05 ? Math.sin(clock.now * 11 + fan.ph) * hype * 0.18 : 0,
                 w = (y - top) / bh + bob;
               col = w >= 0.84 ? SEAT : STAND;

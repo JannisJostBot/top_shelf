@@ -6,6 +6,8 @@ import { startGame, toMenu, togglePause } from '../game/match';
 import { pcfg, startPractice } from '../game/practice';
 import { G } from '../game/world';
 import { fit } from '../render/camera';
+import { view } from '../render/canvas';
+import { camToast, resetDirector } from '../render/director';
 import { arenaThumbs } from '../render/ice';
 import { settings } from '../settings';
 import { clockText, hudClock, showRec } from './hud';
@@ -54,6 +56,23 @@ export function setCpuStyle(v) {
   document
     .querySelectorAll('.styleSeg button')
     .forEach(x => x.setAttribute('aria-checked', String(x.dataset.v === settings.cpuStyle)));
+}
+/** Watch mode camera: 'cine' (directed shots) or 'classic' (the normal top-down view). */
+export function setWatchCam(v) {
+  settings.watchCam = v === 'classic' ? 'classic' : 'cine';
+  document
+    .querySelectorAll('#wcamSeg button')
+    .forEach(x => x.setAttribute('aria-checked', String(x.dataset.v === settings.watchCam)));
+  $('camBtn').setAttribute('aria-pressed', String(settings.watchCam === 'cine'));
+  if (settings.watchCam === 'cine') resetDirector();
+  else view.camZ = 1;
+}
+/** In-game toggle (camera button, C, or X on a controller), with a short caption naming the new camera. */
+export function toggleWatchCam() {
+  if (!G.watch) return;
+  setWatchCam(settings.watchCam === 'cine' ? 'classic' : 'cine');
+  savePrefs();
+  camToast(settings.watchCam === 'cine' ? 'CINEMATIC CAMERA' : 'CLASSIC CAMERA');
 }
 export function setView(v) {
   settings.viewMode = v;
@@ -138,6 +157,13 @@ export function initMenu() {
       savePrefs();
     }),
   );
+  document.querySelectorAll('#wcamSeg button').forEach(b =>
+    b.addEventListener('click', () => {
+      setWatchCam(b.dataset.v);
+      savePrefs();
+    }),
+  );
+  $('camBtn').addEventListener('click', toggleWatchCam);
   document.querySelectorAll('#camSeg button').forEach(b =>
     b.addEventListener('click', () => {
       setView(b.dataset.v);

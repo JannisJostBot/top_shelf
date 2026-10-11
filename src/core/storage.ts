@@ -41,6 +41,7 @@ export function savePrefs() {
         style: settings.cpuStyle,
         stk0: settings.sticks[0],
         stk1: settings.sticks[1],
+        wcam: settings.watchCam,
       }),
     );
   } catch (e) {}

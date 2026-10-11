@@ -13,7 +13,13 @@ const SHOTS = [
   { kind: 'boards', name: 'RINKSIDE' },
 ];
 const SHOT_LEN = 6;
-const dir = { i: 0, t0: 0, fresh: true };
+const dir = { i: 0, t0: 0, fresh: true, toast: '', toastUntil: 0 };
+/** Shows `text` in place of the shot caption for a moment (after switching cameras). */
+export function camToast(text) {
+  dir.toast = text;
+  dir.toastUntil = clock.now + 1.8;
+}
+export const camToastOn = () => clock.now < dir.toastUntil;
 
 /** The current shot; `fresh` is true on the first frame after a cut. */
 export function directorShot() {
@@ -38,7 +44,7 @@ export function liveLabel(name) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.font = '7px "Press Start 2P", monospace';
   g.textBaseline = 'middle';
-  const label = 'LIVE · ' + name,
+  const label = camToastOn() ? dir.toast : 'LIVE · ' + name,
     w = Math.ceil(g.measureText(label).width) + 18,
     y = view.CH - 16;
   g.globalAlpha = 0.75;

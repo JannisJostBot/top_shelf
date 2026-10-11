@@ -48,6 +48,7 @@ import {
   initMenu,
   setCel,
   setCpuStyle,
+  setWatchCam,
   setDiff,
   setFights,
   setPeriodLen,
@@ -86,6 +87,7 @@ genRoster();
 setDiff(settings.diffKey);
 setPeriodLen(PERIOD_LENGTHS.includes(pr.len) ? pr.len : 60);
 setCpuStyle(pr.style);
+setWatchCam(pr.wcam);
 setStick(0, STICKS[pr.stk0] ? pr.stk0 : 'wood');
 setStick(1, STICKS[pr.stk1] ? pr.stk1 : 'wood');
 setView(settings.viewMode);

@@ -132,3 +132,12 @@
 #fsBtn[aria-pressed='true'] .fs-off {
   display: block;
 }
+/* Watch mode camera switch: lit while the cinematic camera is on */
+#camBtn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+#camBtn[aria-pressed='true'] {
+  color: #ffc845;
+}

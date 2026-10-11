@@ -32,6 +32,7 @@ export function startPractice(cfg) {
   G.practice = Object.assign({}, cfg);
   G.demo = false;
   G.watch = false;
+  $('camBtn').hidden = true;
   G.ai0 = false;
   G.controlled = null;
   G.mom = null;

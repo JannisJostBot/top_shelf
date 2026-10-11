@@ -1,6 +1,7 @@
 import { IH, IW, K, NETS } from '../config';
 import { drawPyro } from './pyro';
-import { directorShot, liveLabel } from './director';
+import { camToastOn, directorShot, liveLabel } from './director';
+import { settings } from '../settings';
 import { drawGoalFx } from './goalFx';
 import { rnd, toS } from '../core/math';
 import { clock } from '../core/time';
@@ -37,7 +38,7 @@ export function render() {
   }
   // Watch mode is directed: cuts between top-down and 3D shots (goal replays keep their own angles)
   let liveName = null;
-  if (G.watch && G.state !== 'replay') {
+  if (G.watch && settings.watchCam === 'cine' && G.state !== 'replay') {
     const shot = directorShot();
     liveName = shot.name;
     if (shot.kind !== '2d') {
@@ -190,5 +191,5 @@ export function render() {
   else if (G.state === 'brawl') drawFightHud();
   else if (G.state === 'zamboni') drawZamHud();
   else drawMini();
-  if (liveName) liveLabel(liveName);
+  if (liveName || camToastOn()) liveLabel(liveName);
 }

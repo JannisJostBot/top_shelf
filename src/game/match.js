@@ -241,6 +241,7 @@ export function startGame(watch) {
   setCrowd(0.05);
   S('organ');
   showPad(!G.watch);
+  $('camBtn').hidden = !G.watch;
   hud();
   faceoff();
 }
@@ -268,6 +269,7 @@ export function toMenu() {
   $('pauseOv').hidden = true;
   $('menu').hidden = false;
   $('pauseBtn').disabled = true;
+  $('camBtn').hidden = true;
   showPad(false);
   showRec();
   hud();

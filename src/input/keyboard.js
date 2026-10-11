@@ -5,7 +5,7 @@ import { endReplay, nextAngle } from '../game/replay';
 import { endCelebration } from '../game/states/celebrate';
 import { G } from '../game/world';
 import { input } from './state';
-import { showTab } from '../ui/menu';
+import { showTab, toggleWatchCam } from '../ui/menu';
 
 export function initKeyboard() {
   addEventListener('keydown', e => {
@@ -24,6 +24,10 @@ export function initKeyboard() {
     }
     if (e.code === 'KeyV' && G.watch) {
       nextShot();
+      return;
+    }
+    if (e.code === 'KeyC' && G.watch) {
+      toggleWatchCam();
       return;
     }
     if (e.code === 'Enter' && G.state === 'replay') {

@@ -19,6 +19,8 @@ export const settings: {
   cpuStyle: 'classic' | 'realistic';
   /** stick style per team (keys of STICKS) */
   sticks: [string, string];
+  /** Watch mode camera: the directed 'cine' shots or the 'classic' top-down view */
+  watchCam: 'cine' | 'classic';
 } = {
   puckKey: 'classic',
   diffKey: 'pro',
@@ -35,6 +37,7 @@ export const settings: {
   periodLen: 60,
   cpuStyle: 'classic',
   sticks: ['wood', 'wood'],
+  watchCam: 'cine',
 };
 
 export const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
