@@ -130,9 +130,7 @@ function drawLogo(g, S, cx, cy, sc) {
     );
   }
   if (S.logo === 'pine') {
-    // three-tier pine with a timber trunk and crossed axes behind it
-    ln(5.4, 18.6, 18.6, 7.4, 1.5, c);
-    ln(18.6, 18.6, 5.4, 7.4, 1.5, c);
+    // three-tier pine with a timber trunk
     poly(
       [
         [12, 3.4],
