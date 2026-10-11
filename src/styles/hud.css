@@ -132,13 +132,32 @@
 #fsBtn[aria-pressed='true'] .fs-off {
   display: block;
 }
-/* Watch mode camera switch: lit while the cinematic camera is on */
+/* Watch mode camera switch: a labelled pill in the bottom-right corner (free in Watch mode: no pad, no key
+   hints), lit while the cinematic camera is on */
+#camBtn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 2px solid rgba(233, 238, 244, 0.45);
+  background: rgba(5, 7, 13, 0.75);
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
 #camBtn svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   fill: currentColor;
 }
-#camBtn[aria-pressed='true'] {
+#camBtn[aria-pressed='true'] svg {
   color: #ffc845;
 }
 /* team buff: a lightning badge; the ring is the time left */

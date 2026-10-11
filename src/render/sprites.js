@@ -55,6 +55,13 @@ const SIDE_LEGS_A = ['..OLLOLLO...', '..OLLOLLO...', '..OKKOKKO...', '.OKKKKKKKO
 const SIDE_LEGS_B = ['..OLLO.OLLO.', '.OLLO...OLLO', '.OKKO...OKKO', 'OKKKO..OKKKO', 'BBBB....BBBB'];
 // side view hockey stop: skates out in front, leaning back against the edges
 const SIDE_LEGS_STOP = ['...OLLOLLO..', '...OLLOLLO..', '....OKKOKKO.', '...OKKKKKKKO', '...BBBBBBBBB'];
+// the raised arm of a sprawled skater: [row, column, pixels] written over the rotated sprite
+const FLUNG_ARM = [
+  [0, 15, 'OGGO'],
+  [1, 13, 'OJJGGO'],
+  [2, 11, 'OJJJOO'],
+  [3, 11, 'JJJO'],
+];
 // face styles: plain eyes, tinted visor, or a full metal cage
 function faceSet(f) {
   const ft = FRONT_TOP.slice(),
@@ -85,16 +92,19 @@ function faceSet(f) {
     sideB: [...st, ...SIDE_LEGS_B],
     sideStop: [...st, ...SIDE_LEGS_STOP],
   };
-  // a sprawled skater: the side view rotated a quarter turn, head to the right
-  const s = set.sideA,
+  // a sprawled skater: the striding side view rotated a quarter turn (head to the right, legs apart), with
+  // one arm flung up over the helmet; two blank rows on top make room for the arm
+  const s = set.sideB,
     h = s.length,
-    w = s[0].length;
-  set.fallen = [];
+    w = s[0].length,
+    rows = ['.'.repeat(h), '.'.repeat(h)];
   for (let c = 0; c < w; c++) {
     let row = '';
     for (let r = h - 1; r >= 0; r--) row += s[r][c];
-    set.fallen.push(row);
+    rows.push(row);
   }
+  for (const [r, c, px] of FLUNG_ARM) rows[r] = rows[r].slice(0, c) + px + rows[r].slice(c + px.length);
+  set.fallen = rows;
   return set;
 }
 // 3x3 pixel digits for jersey numbers on the back of the skater sprites (rows 8-10 of the back view).
@@ -168,6 +178,29 @@ SPR.goalieB = [
   '......OWWWWO......',
   ...G_BODY,
 ];
+// Goalie shuffling sideways: the pads push apart (a T-push, low and wide) and come back together, so the
+// goalie steps across the crease instead of sliding. Replaces the pad rows of the stance sprite.
+const G_PADS_OPEN = [
+  '.OWWWWWO..OWWWWWO.',
+  '.OWJJWWO..OWWJJWO.',
+  '.OWWWWWO..OWWWWWO.',
+  '.OWJJWWO..OWWJJWO.',
+  'OWWWWWO....OWWWWWO',
+  'OWWWWWO....OWWWWWO',
+  'OKKKKKO....OKKKKKO',
+  'BBBBBB......BBBBBB',
+];
+const PAD_ROW = 12; // first pad row of the goalie sprites (5 mask rows + 7 body rows)
+for (const k of ['goalieF', 'goalieB']) SPR[k + 'Open'] = [...SPR[k].slice(0, PAD_ROW), ...G_PADS_OPEN];
+const goalieLeans = new Map();
+/** Goalie sprite with mask and shoulders shifted one pixel toward `dir` (-1 or 1), leaning into a push. */
+export function goalieLean(map, dir) {
+  let pair = goalieLeans.get(map);
+  if (!pair) goalieLeans.set(map, (pair = {}));
+  return (pair[dir] ||= map.map((row, r) =>
+    r > 6 ? row : dir > 0 ? '.' + row.slice(0, -1) : row.slice(1) + '.',
+  ));
+}
 const stripe = m =>
   m.map(row => [...row].map((ch, c) => ('JjN'.includes(ch) ? (c % 2 ? 'J' : 'j') : ch)).join(''));
 export const REFSET = {};

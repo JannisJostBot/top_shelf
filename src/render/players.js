@@ -10,7 +10,7 @@ import { view } from './canvas';
 import { AMB, SH } from './colors';
 import { drawFighter } from './fight';
 import { R, blit, line } from './pixels';
-import { FACES, REFPAL, REFSET, SPR, crouched, leaned, withNumber } from './sprites';
+import { FACES, REFPAL, REFSET, SPR, crouched, goalieLean, leaned, withNumber } from './sprites';
 
 /** A stick line in the team's style: pixel by pixel, so patterned and animated sticks work. */
 function stickLine(p, x0, y0, x1, y1, part) {
@@ -59,14 +59,52 @@ export function drawSkater(p) {
     sx = toS(p.x),
     sy = toS(p.y);
   if (p.down > 0) {
-    // sprawled on the ice, stick dropped beside them
+    // a fall in three beats: a stumble toward the fall, the sprawl (with a little bounce on landing, sliding
+    // with scrape marks while still moving) and, at the end, a crouch back up. `downAge` lets the Guide demos
+    // pose it without a clock.
+    if (!p._downAt) {
+      p._downAt = clock.now;
+      p._down0 = p.down;
+    }
+    const age = p.downAge ?? clock.now - p._downAt,
+      dir = p.fallDir < 0 ? -1 : 1,
+      // short knockdowns get a shorter crouch so the sprawl still shows
+      rise = Math.min(0.3, (p._down0 - 0.14) * 0.35);
+    if (age < 0.14) {
+      const k = age / 0.14;
+      R(sx - 8, sy, 16, 2, SH);
+      blit(leaned(set.sideStop), pal, sx - 6 + Math.round(dir * k * 4), sy - 19 + Math.round(k * 4), dir < 0);
+      return;
+    }
+    if (p.down < rise && p.downAge === undefined) {
+      R(sx - 6, sy, 12, 2, SH);
+      blit(crouched(crouched(set.sideA)), pal, sx - 6, sy - 17, dir < 0);
+      drawStick(p, sx, sy);
+      return;
+    }
+    const bounce = age < 0.24 ? 1 : 0,
+      sp = Math.hypot(p.vx, p.vy);
     R(sx - 11, sy, 22, 3, SH);
+    if (sp > 6 && !view.sil) {
+      // scraping along the ice
+      const ux = -p.vx / sp,
+        uy = -p.vy / sp;
+      for (let i = 0; i < 4; i++)
+        R(
+          Math.round(sx + ux * (12 + i * 3)),
+          Math.round(sy + 1 + uy * (12 + i * 3) + (i & 1)),
+          2,
+          1,
+          '#ffffff',
+        );
+    }
     stickLine(p, sx - 9, sy + 3, sx + 7, sy + 1, 'shaft');
     R(sx + 7, sy, 3, 2, bladeTape(p));
-    blit(set.fallen, pal, sx - 10, sy - 10, p.fallDir < 0);
-    stars(p.fallDir < 0 ? sx - 8 : sx + 8, sy - 9);
+    blit(set.fallen, pal, sx - 10, sy - 12 - bounce, dir < 0);
+    stars(dir < 0 ? sx - 8 : sx + 8, sy - 9);
     return;
   }
+  p._downAt = 0;
   const sp = Math.hypot(p.vx, p.vy),
     mv = sp > 8,
     jy = Math.round(p.jump || 0);
@@ -117,7 +155,22 @@ export function drawGoalie(g) {
   R(sx - 8, sy, 16, 2, SH);
   R(sx - 6, sy + 2, 12, 1, SH);
   const lean = g.saveT > 0 ? g.saveDir * 2 : 0;
-  blit(front ? SPR.goalieF : SPR.goalieB, pal, sx - 9 + lean, sy - 19, !front);
+  // shuffling across the crease: the pads open and close every couple of units travelled (held open on a
+  // fast push), and the upper body leans into the movement
+  // (from the speed, not the position: the 3D view draws sprites at a stand-in position)
+  const sp = Math.hypot(g.vx, g.vy),
+    dt = Math.min(0.1, clock.now - (g._gt || clock.now));
+  g._gt = clock.now;
+  g._gd = (g._gd || 0) + sp * dt;
+  const moving = sp > 6 && Math.abs(g.vx) > 3 && g.saveT <= 0 && puck.owner !== g;
+  let map = front ? SPR.goalieF : SPR.goalieB;
+  if (moving) {
+    const open = sp > 32 || Math.floor(g._gd / 1.6) & 1;
+    if (open) map = front ? SPR.goalieFOpen : SPR.goalieBOpen;
+    // the back view is drawn mirrored, so its lean is mirrored too
+    map = goalieLean(map, (g.vx > 0 ? 1 : -1) * (front ? 1 : -1));
+  }
+  blit(map, pal, sx - 9 + lean, sy - 19, !front);
   if (g.saveT > 0) {
     const ex = sx + g.saveDir * 11;
     R(ex - 3, sy - 8, 6, 4, '#0b0f1a');

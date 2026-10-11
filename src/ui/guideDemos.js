@@ -118,6 +118,7 @@ const SCENES = {
     const c = skater(1, 1, t < hit ? cx : cx + ease((t - hit) / 0.3) * 8, 19, {
       fx: 1,
       down: t > hit && t < 2.2 ? 1 : 0,
+      downAge: t - hit,
       fallDir: 1,
       ...skating(t),
     });

@@ -5,7 +5,7 @@ import { DIFF } from '../data/difficulty';
 import { startGame, toMenu, togglePause } from '../game/match';
 import { pcfg, startPractice } from '../game/practice';
 import { G } from '../game/world';
-import { fit } from '../render/camera';
+import { fit, updCam } from '../render/camera';
 import { view } from '../render/canvas';
 import { camToast, resetDirector } from '../render/director';
 import { arenaThumbs } from '../render/ice';
@@ -64,8 +64,17 @@ export function setWatchCam(v) {
     .querySelectorAll('#wcamSeg button')
     .forEach(x => x.setAttribute('aria-checked', String(x.dataset.v === settings.watchCam)));
   $('camBtn').setAttribute('aria-pressed', String(settings.watchCam === 'cine'));
+  $('camLbl').textContent = settings.watchCam === 'cine' ? 'CINEMATIC' : 'CLASSIC';
+  $('camBtn').setAttribute(
+    'aria-label',
+    'Camera: ' + $('camLbl').textContent.toLowerCase() + '. Switch camera',
+  );
   if (settings.watchCam === 'cine') resetDirector();
-  else view.camZ = 1;
+  else {
+    // cut straight to the normal view instead of gliding out of a zoomed shot
+    view.camZ = 1;
+    updCam(0, true);
+  }
 }
 /** In-game toggle (camera button, C, or X on a controller), with a short caption naming the new camera. */
 export function toggleWatchCam() {

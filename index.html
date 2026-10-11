@@ -78,22 +78,6 @@
                 <rect x="4" y="10" width="2" height="4" />
                 <rect x="10" y="10" width="4" height="2" />
                 <rect x="10" y="10" width="2" height="4" />
-              </svg></button
-            ><button
-              class="ibtn"
-              id="camBtn"
-              hidden
-              aria-pressed="true"
-              aria-label="Switch camera"
-              title="Camera: cinematic or classic (C)"
-            >
-              <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
-                <rect x="1" y="5" width="10" height="7" />
-                <rect x="11" y="6" width="1" height="5" />
-                <rect x="12" y="5" width="1" height="7" />
-                <rect x="13" y="4" width="2" height="9" />
-                <rect x="2" y="2" width="3" height="3" />
-                <rect x="6" y="2" width="3" height="3" />
               </svg>
             </button>
           </div>
@@ -108,6 +92,16 @@
           </div>
           <button class="ibtn" id="pauseBtn" aria-label="Pause" disabled>II</button>
         </header>
+        <button id="camBtn" hidden aria-pressed="true" title="Switch camera (C)">
+          <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+            <rect x="1" y="5" width="10" height="7" />
+            <rect x="11" y="6" width="1" height="5" />
+            <rect x="12" y="5" width="1" height="7" />
+            <rect x="13" y="4" width="2" height="9" />
+            <rect x="2" y="2" width="3" height="3" />
+            <rect x="6" y="2" width="3" height="3" /></svg
+          ><span id="camLbl">CINEMATIC</span>
+        </button>
         <div id="banner" hidden>
           <div class="bbar top"></div>
           <div id="bt"></div>
