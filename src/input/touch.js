@@ -51,7 +51,10 @@ function moveStick(e) {
   }
 }
 function endStick(e) {
-  if (e.pointerId !== touchState.stickId) return;
+  if (e.pointerId === touchState.stickId) releaseStick();
+}
+/** Lets go of the stick: centred knob, no steering. */
+function releaseStick() {
   touchState.stickId = null;
   input.touch = false;
   input.tx = input.ty = 0;
@@ -60,6 +63,8 @@ function endStick(e) {
   base.style.top = '50%';
 }
 
+// release handlers of the held buttons, so a lost release can be made up for when no finger is left
+const releasers = [];
 function holdBtn(el, down, up) {
   el.addEventListener('pointerdown', e => {
     e.preventDefault();
@@ -75,6 +80,7 @@ function holdBtn(el, down, up) {
     el.classList.remove('down');
     up();
   };
+  releasers.push(u);
   el.addEventListener('pointerup', u);
   el.addEventListener('pointercancel', u);
   el.addEventListener('lostpointercapture', u);
@@ -94,8 +100,14 @@ export function initTouch() {
   zone.addEventListener('pointerdown', e => {
     e.preventDefault();
     audio();
-    if (touchState.stickId !== null) return;
+    // A new touch on the stick always takes it over. If the previous finger's release got lost (a gesture the
+    // browser took over, the app going to the background), the stick would otherwise stay stuck to it.
+    const old = touchState.stickId;
     touchState.stickId = e.pointerId;
+    if (old !== null && old !== e.pointerId)
+      try {
+        zone.releasePointerCapture(old);
+      } catch (_) {}
     try {
       zone.setPointerCapture(e.pointerId);
     } catch (_) {}
@@ -114,6 +126,21 @@ export function initTouch() {
   zone.addEventListener('pointerup', endStick);
   zone.addEventListener('pointercancel', endStick);
   zone.addEventListener('lostpointercapture', endStick);
+  // safety nets for releases the stick area itself never hears about
+  addEventListener('pointerup', endStick, true);
+  addEventListener('pointercancel', endStick, true);
+  // no finger left on the screen: nothing can still be held
+  const noFingers = e => {
+    if (e.touches.length) return;
+    if (touchState.stickId !== null) releaseStick();
+    for (const u of releasers) u();
+  };
+  addEventListener('touchend', noFingers, true);
+  addEventListener('touchcancel', noFingers, true);
+  addEventListener('blur', () => touchState.stickId !== null && releaseStick());
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && touchState.stickId !== null) releaseStick();
+  });
   holdBtn(
     $('shootBtn'),
     () => {

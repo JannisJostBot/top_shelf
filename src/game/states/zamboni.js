@@ -26,6 +26,10 @@ const ZCELL = 4,
   ZW = W / ZCELL,
   ZH = H / ZCELL;
 const COUNTDOWN = 3; // seconds of 3, 2, 1 before driving starts
+// collision size: a little tighter than the drawn machine (about 15 units wide), so it fits through the gap
+// between the back of a goal and the end boards (15 units) and can polish the ice behind the nets
+const BODY_R = 6, // against the boards
+  NET_R = 5; // around the goal frames
 const polished = []; // spots the conditioner wiped this step, [x, y, …]
 export function startZamboni() {
   clearFx();
@@ -113,8 +117,8 @@ export function zamStep(dt) {
   const hx = Math.sin(z.a),
     hy = -Math.cos(z.a);
   const o = { x: z.x + hx * z.v * dt, y: z.y + hy * z.v * dt, vx: hx * z.v, vy: hy * z.v };
-  const hitWall = rinkPush(o, 8, 0) > 0;
-  netPushBody(o, 8);
+  const hitWall = rinkPush(o, BODY_R, 0) > 0;
+  netPushBody(o, NET_R);
   z.x = o.x;
   z.y = o.y;
   // The boards (and nets) guide it rather than stop it: the push took away the motion into the obstacle, so
