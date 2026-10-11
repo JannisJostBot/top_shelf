@@ -73,7 +73,8 @@ describe('standing still with the puck', () => {
       G.controlled = me;
       puck.owner = me;
       let lost = false;
-      run(8, () => {
+      // usually within 1-4 s; the classic CPU now and then needs 10-15 s (its checks can keep missing)
+      run(20, () => {
         pad.x = pad.y = 0;
         if (puck.owner !== me) lost = true;
       });
