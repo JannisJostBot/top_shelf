@@ -264,7 +264,13 @@ h2 {
 #bt.small {
   font-size: 10px;
 }
+#bt {
+  max-width: 100%;
+  text-wrap: balance;
+}
 #bs {
+  max-width: 92%;
+  text-wrap: balance;
   font-size: 12px;
   color: var(--led-warm);
   background: var(--lcd);
@@ -364,6 +370,18 @@ h2 {
     --p: 4px;
     font-size: 32px;
   }
+}
+/* words stay whole; the lines break only between them, evened out */
+#bt.big .wd {
+  display: inline-block;
+  white-space: nowrap;
+}
+#banner.big #bt {
+  line-height: 1.25;
+}
+#banner.big #bt.tight {
+  --p: 2px;
+  font-size: 16px;
 }
 #bt.big .ch {
   display: inline-block;

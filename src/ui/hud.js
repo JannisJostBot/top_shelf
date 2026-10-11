@@ -79,13 +79,22 @@ export function banner(t, cls, sub, big) {
   clearTimeout(hideTimer);
   bt.className = (cls || '') + (big ? ' big' : '');
   if (big) {
+    // one span per letter (each flies in on its own), grouped per word so lines only break between words
     bt.innerHTML = '';
-    [...t].forEach((ch, i) => {
-      const s = document.createElement('span');
-      s.className = 'ch';
-      s.style.setProperty('--i', String(i));
-      s.textContent = ch === ' ' ? '\u00a0' : ch;
-      bt.appendChild(s);
+    let i = 0;
+    t.split(' ').forEach((word, w) => {
+      if (w) bt.appendChild(document.createTextNode(' '));
+      const ws = document.createElement('span');
+      ws.className = 'wd';
+      for (const ch of word) {
+        const s = document.createElement('span');
+        s.className = 'ch';
+        s.style.setProperty('--i', String(i++));
+        s.textContent = ch;
+        ws.appendChild(s);
+      }
+      bt.appendChild(ws);
+      i++; // the space between words keeps its beat in the fly-in
     });
   } else bt.textContent = t;
   const team = (cls || '').includes('home')
@@ -100,6 +109,9 @@ export function banner(t, cls, sub, big) {
   b.classList.remove('out');
   $('bs').textContent = sub || '';
   b.hidden = false;
+  // a word too long for the screen (narrow phones): step down to the next smaller LED size
+  bt.classList.remove('tight');
+  if (big && [...bt.querySelectorAll('.wd')].some(w => w.offsetWidth > bt.clientWidth - 16)) bt.classList.add('tight');
   // restart the entrance animations
   for (const el of [b, bt, $('bs'), ...b.querySelectorAll('.bbar')]) {
     el.style.animation = 'none';
