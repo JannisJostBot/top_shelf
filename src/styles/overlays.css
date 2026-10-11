@@ -72,15 +72,16 @@
   display: flex;
   gap: 6px;
 }
-.rpb {
-  font-family: var(--display);
-  font-size: 8px;
-  padding: 8px 9px;
-  background: rgba(10, 15, 30, 0.86);
-  color: var(--ink);
-  border: 2px solid var(--rec);
-  cursor: pointer;
-  white-space: nowrap;
+/* the replay's camera-angle and skip buttons: steel icon buttons like the ones on the scoreboard, a touch larger
+   for thumbs */
+.rpb.ibtn {
+  width: 34px;
+  height: 34px;
+}
+.rpb svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
 }
 .sw button[aria-disabled='true'] {
   opacity: 0.22;
