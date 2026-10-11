@@ -1,0 +1,1208 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Menu Screens</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap"
+    />
+    <style>
+      /* Design mockups only: the screens behind menu direction H (cover + rink) and how they connect. */
+      :root {
+        --bg: #070a14;
+        --muted: #8f9cc0;
+        --led: #ffc845;
+        --display: 'Press Start 2P', monospace;
+        --pixel: 'Silkscreen', monospace;
+        --p1: #2f6bd8;
+        --p2: #e0414a;
+        --paper: #eef3f7;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: #eaf0ff;
+        font-family: var(--pixel);
+        font-size: 13px;
+        padding: 28px 16px 80px;
+      }
+      header.page,
+      section.block {
+        max-width: 1240px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-family: var(--display);
+        font-size: 16px;
+        color: var(--led);
+        margin: 0 0 10px;
+      }
+      h2 {
+        font-family: var(--display);
+        font-size: 12px;
+        margin: 0 0 8px;
+      }
+      p.lead,
+      .block > p {
+        color: var(--muted);
+        max-width: 880px;
+        line-height: 1.55;
+        margin: 0 0 10px;
+      }
+      section.block {
+        border-top: 2px solid #1b2744;
+        padding-top: 22px;
+        margin-top: 30px;
+      }
+      .row {
+        display: flex;
+        gap: 22px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+      .shot {
+        display: grid;
+        gap: 8px;
+        width: 290px;
+      }
+      .shot .cap {
+        font-size: 10px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .shot .cap b {
+        color: #eaf0ff;
+        font-family: var(--display);
+        font-size: 9px;
+        display: block;
+        margin-bottom: 3px;
+      }
+      .phone {
+        width: 290px;
+        height: 600px;
+        border-radius: 30px;
+        border: 7px solid #1d2233;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+      }
+      table.steps {
+        border-collapse: collapse;
+        font-size: 11px;
+        color: #c9d3ef;
+        max-width: 900px;
+        margin-top: 10px;
+      }
+      table.steps td {
+        border-top: 1px solid #1b2744;
+        padding: 7px 10px 7px 0;
+        vertical-align: top;
+        line-height: 1.5;
+      }
+      table.steps td:first-child {
+        color: var(--led);
+        white-space: nowrap;
+        font-family: var(--display);
+        font-size: 8px;
+        padding-top: 9px;
+      }
+
+      /* ---------- print look ---------- */
+      .print {
+        background: var(--paper);
+        color: var(--p1);
+        font-family: var(--pixel);
+      }
+      .grain {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(rgba(0, 0, 0, 0.07) 0.6px, transparent 0.8px) 0 0 / 3px 3px,
+          radial-gradient(rgba(0, 0, 0, 0.05) 0.6px, transparent 0.8px) 1px 2px / 5px 5px;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 20;
+      }
+      .mast {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        top: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 8px;
+        border-bottom: 3px solid var(--p1);
+        padding-bottom: 5px;
+        z-index: 4;
+      }
+      .mast .back {
+        font-family: var(--display);
+        font-size: 7px;
+        color: var(--p2);
+      }
+      .pg {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        top: 38px;
+        z-index: 3;
+      }
+      .pg .no {
+        font-family: var(--display);
+        font-size: 9px;
+        color: var(--p2);
+      }
+      .pg h3 {
+        margin: 6px 0 10px;
+        font-family: var(--display);
+        font-size: 22px;
+        line-height: 1;
+        color: var(--p1);
+        text-shadow: 2px 2px 0 var(--p2);
+      }
+      .pg .intro {
+        font-size: 9px;
+        line-height: 1.5;
+        margin: 0 0 10px;
+        color: #3d5a96;
+      }
+      .opt {
+        display: grid;
+        gap: 6px;
+        margin: 0 0 12px;
+      }
+      .opt > span {
+        font-family: var(--display);
+        font-size: 7px;
+        color: var(--p2);
+      }
+      .chips {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        gap: 6px;
+      }
+      .chips i {
+        font-style: normal;
+        border: 2px solid var(--p1);
+        padding: 7px 2px;
+        text-align: center;
+        font-size: 9px;
+      }
+      .chips i.on {
+        background: var(--p1);
+        color: var(--paper);
+      }
+      .stub {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        bottom: 38px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        border: 2px solid var(--p2);
+        color: var(--p2);
+        background: var(--paper);
+        z-index: 5;
+      }
+      .stub div {
+        padding: 7px 9px;
+        font-size: 8px;
+        line-height: 1.5;
+      }
+      .stub b {
+        display: block;
+        font-family: var(--display);
+        font-size: 8px;
+        margin-bottom: 2px;
+      }
+      .stub .go {
+        border-left: 2px dashed var(--p2);
+        background: var(--p2);
+        color: var(--paper);
+        font-family: var(--display);
+        font-size: 9px;
+        display: grid;
+        place-items: center;
+        padding: 0 12px;
+      }
+      .ai {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        bottom: 12px;
+        font-size: 7px;
+        z-index: 5;
+      }
+      .ai b {
+        color: var(--p2);
+      }
+      .cover {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        top: 34px;
+        aspect-ratio: 168 / 76;
+        border: 3px solid var(--p1);
+        overflow: hidden;
+        z-index: 2;
+      }
+      .cover canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        image-rendering: pixelated;
+      }
+      .cover .screen {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle, rgba(238, 243, 247, 0.55) 0 0.9px, transparent 1.2px) 0 0 / 4px 4px;
+        mix-blend-mode: screen;
+        box-shadow: inset 2px 1px 0 rgba(224, 65, 74, 0.5);
+      }
+
+      /* the rink */
+      .rink {
+        position: absolute;
+        left: 22px;
+        right: 22px;
+        top: 172px;
+        bottom: 96px;
+        border: 3px solid var(--p1);
+        border-radius: 32px;
+        background: var(--paper);
+        z-index: 2;
+        transform-origin: 27% 81%;
+      }
+      .rink .bl {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: var(--p1);
+      }
+      .rink .cl {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 3px;
+        background: repeating-linear-gradient(90deg, var(--p2) 0 8px, transparent 8px 12px);
+      }
+      .rink .c {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        border: 3px solid var(--p2);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        display: grid;
+        place-items: center;
+        font-family: var(--display);
+        font-size: 7px;
+        color: var(--p1);
+        text-align: center;
+        line-height: 1.6;
+      }
+      .rink .c.mid {
+        width: 80px;
+        height: 80px;
+        border-color: var(--p1);
+      }
+      .rink .c small {
+        display: block;
+        font-family: var(--pixel);
+        font-size: 7px;
+      }
+      .rink .bench {
+        position: absolute;
+        width: 20px;
+        border: 2px solid var(--p1);
+        background: var(--paper);
+        writing-mode: vertical-rl;
+        font-family: var(--display);
+        font-size: 6px;
+        display: grid;
+        place-items: center;
+      }
+      .puck {
+        position: absolute;
+        width: 14px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--p1);
+        box-shadow: 0 2px 0 #16306b;
+        z-index: 3;
+        transform: translate(-50%, -50%);
+      }
+
+      /* ---------- page contents ---------- */
+      .jerseys {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+      }
+      .jersey {
+        aspect-ratio: 1;
+        background: var(--c);
+        clip-path: polygon(22% 0, 38% 0, 50% 12%, 62% 0, 78% 0, 100% 20%, 88% 36%, 80% 30%, 80% 100%, 20% 100%, 20% 30%, 12% 36%, 0 20%);
+      }
+      .jersey.on {
+        outline: 3px solid var(--p2);
+        outline-offset: 2px;
+      }
+      .teamtabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        margin-bottom: 10px;
+      }
+      .teamtabs span {
+        text-align: center;
+        padding: 7px;
+        font-family: var(--display);
+        font-size: 8px;
+        border: 2px solid var(--p1);
+      }
+      .teamtabs span.on {
+        background: var(--p1);
+        color: var(--paper);
+      }
+      .previewband {
+        height: 54px;
+        border: 2px solid var(--p1);
+        margin-bottom: 10px;
+        background:
+          repeating-linear-gradient(90deg, transparent 0 34px, rgba(47, 107, 216, 0.15) 34px 36px),
+          linear-gradient(180deg, transparent 70%, rgba(47, 107, 216, 0.15) 70%);
+        display: flex;
+        align-items: end;
+        justify-content: space-around;
+        padding-bottom: 6px;
+      }
+      .previewband i {
+        width: 16px;
+        height: 30px;
+        background: var(--c);
+        box-shadow: 0 -8px 0 -2px #16306b;
+      }
+      .sheet {
+        border: 2px solid var(--p1);
+        font-size: 9px;
+      }
+      .sheet .r {
+        display: grid;
+        grid-template-columns: 28px 1fr 74px;
+        border-bottom: 1px solid rgba(47, 107, 216, 0.4);
+        align-items: center;
+      }
+      .sheet .r > * {
+        padding: 6px 5px;
+      }
+      .sheet .r:last-child {
+        border-bottom: 0;
+      }
+      .sheet .num {
+        font-family: var(--display);
+        font-size: 8px;
+        color: var(--p2);
+      }
+      .sheet .pos {
+        display: flex;
+        gap: 3px;
+      }
+      .sheet .pos i {
+        font-style: normal;
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--p1);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-family: var(--display);
+        font-size: 7px;
+      }
+      .sheet .pos i.on {
+        background: var(--p1);
+        color: var(--paper);
+      }
+      .sheet .tally {
+        display: block;
+        font-size: 7px;
+        opacity: 0.75;
+        margin-top: 2px;
+      }
+      .tickets {
+        display: grid;
+        gap: 7px;
+      }
+      .tk {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        border: 2px solid var(--b);
+        color: var(--a);
+        background: var(--paper);
+        font-size: 8px;
+      }
+      .tk div {
+        padding: 6px 8px;
+        line-height: 1.5;
+      }
+      .tk b {
+        display: block;
+        font-family: var(--display);
+        font-size: 7px;
+        color: var(--a);
+      }
+      .tk .sw {
+        border-left: 2px dashed var(--b);
+        background: linear-gradient(90deg, var(--a) 50%, var(--b) 50%);
+        width: 34px;
+        padding: 0;
+      }
+      .tk.on {
+        outline: 3px solid var(--a);
+        outline-offset: 2px;
+      }
+      .drills {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .drill {
+        border: 2px solid var(--p1);
+        padding: 6px;
+        font-size: 8px;
+        line-height: 1.4;
+      }
+      .drill b {
+        display: block;
+        font-family: var(--display);
+        font-size: 7px;
+        margin-bottom: 4px;
+      }
+      .drill .mini {
+        height: 46px;
+        border: 2px solid var(--p1);
+        border-radius: 10px;
+        margin-bottom: 5px;
+        position: relative;
+        background: linear-gradient(180deg, transparent 49%, var(--p2) 49% 52%, transparent 52%);
+      }
+      .drill .mini svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .boxes {
+        display: grid;
+        gap: 7px;
+        font-size: 9px;
+      }
+      .boxes label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px dashed rgba(47, 107, 216, 0.5);
+        padding-bottom: 6px;
+      }
+      .boxes label i {
+        width: 15px;
+        height: 15px;
+        border: 2px solid var(--p1);
+        display: grid;
+        place-items: center;
+        font-style: normal;
+        font-family: var(--display);
+        font-size: 9px;
+        color: var(--p2);
+      }
+      .boxes label small {
+        margin-left: auto;
+        opacity: 0.65;
+        font-size: 8px;
+      }
+      .rules {
+        columns: 2;
+        column-gap: 12px;
+        font-size: 8px;
+        line-height: 1.5;
+        column-rule: 1px solid rgba(47, 107, 216, 0.4);
+      }
+      .rules b {
+        font-family: var(--display);
+        font-size: 7px;
+        color: var(--p2);
+        display: block;
+        margin: 6px 0 2px;
+      }
+      .keys {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 6px 10px;
+        font-size: 9px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .keys kbd {
+        font-family: var(--display);
+        font-size: 7px;
+        border: 2px solid var(--p1);
+        border-bottom-width: 4px;
+        padding: 3px 5px;
+        text-align: center;
+      }
+      /* dark pages: in-game (pause and results are inserts into the program, printed on the game's dark stock) */
+      .night {
+        --paper: #0f1730;
+        background: #0f1730;
+        color: #e8f0f7;
+      }
+      .night .grain {
+        background:
+          radial-gradient(rgba(255, 255, 255, 0.05) 0.6px, transparent 0.8px) 0 0 / 3px 3px,
+          radial-gradient(rgba(255, 255, 255, 0.035) 0.6px, transparent 0.8px) 1px 2px / 5px 5px;
+        mix-blend-mode: screen;
+      }
+      .night .mast {
+        border-color: #e8f0f7;
+      }
+      .night .pg h3 {
+        color: #e8f0f7;
+      }
+      .night .pg .intro {
+        color: #a9b8da;
+      }
+      .night .stub {
+        background: #0f1730;
+      }
+      .box {
+        border: 2px solid #e8f0f7;
+        font-size: 9px;
+      }
+      .box .r {
+        display: grid;
+        grid-template-columns: 1fr 34px 34px 34px 40px;
+        border-bottom: 1px solid rgba(232, 240, 247, 0.4);
+      }
+      .box .r > * {
+        padding: 6px 5px;
+        text-align: center;
+      }
+      .box .r > *:first-child {
+        text-align: left;
+      }
+      .box .r.hd {
+        font-family: var(--display);
+        font-size: 7px;
+        background: #e8f0f7;
+        color: #0f1730;
+      }
+      .box .r:last-child {
+        border-bottom: 0;
+      }
+      .menulist {
+        display: grid;
+        gap: 6px;
+        font-size: 11px;
+      }
+      .menulist span {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px dashed rgba(232, 240, 247, 0.4);
+        padding: 6px 0;
+      }
+      .menulist span.on {
+        color: var(--led);
+      }
+
+      /* ---------- the transition demos (each loops) ---------- */
+      .demo {
+        position: relative;
+      }
+      /* 1: open a section: the puck slides from centre ice to the circle, the circle fills with ink, the camera
+         dives into that circle (like the game's zoom), and the section's page is underneath */
+      .d1 .puck {
+        animation: d1puck 4.8s infinite;
+      }
+      @keyframes d1puck {
+        0%,
+        8% {
+          left: 50%;
+          top: 50%;
+        }
+        26%,
+        100% {
+          left: 27%;
+          top: 81%;
+        }
+      }
+      .d1 .target {
+        animation: d1fill 4.8s infinite;
+      }
+      @keyframes d1fill {
+        0%,
+        26% {
+          background: transparent;
+          color: var(--p1);
+        }
+        32%,
+        100% {
+          background: var(--p1);
+          color: var(--paper);
+        }
+      }
+      .d1 .rink {
+        animation: d1dive 4.8s infinite;
+      }
+      @keyframes d1dive {
+        0%,
+        36% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        52% {
+          transform: scale(5);
+          opacity: 1;
+        }
+        58%,
+        92% {
+          transform: scale(5);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 0;
+        }
+      }
+      .d1 .cover {
+        animation: d1cover 4.8s infinite;
+      }
+      @keyframes d1cover {
+        0%,
+        36% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+        50%,
+        92% {
+          transform: translateY(-120%);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0);
+          opacity: 0;
+        }
+      }
+      .d1 .under {
+        animation: d1page 4.8s infinite;
+      }
+      @keyframes d1page {
+        0%,
+        46% {
+          opacity: 0;
+          transform: scale(0.92);
+        }
+        56%,
+        92% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+      /* 2: going back: the page shrinks back into its circle, the rink settles in, the puck slides to centre ice */
+      .d2 .under {
+        animation: d2page 4s infinite;
+        transform-origin: 27% 72%;
+      }
+      @keyframes d2page {
+        0%,
+        25% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        45%,
+        100% {
+          opacity: 0;
+          transform: scale(0.18);
+        }
+      }
+      .d2 .rink,
+      .d2 .cover {
+        animation: d2rink 4s infinite;
+      }
+      @keyframes d2rink {
+        0%,
+        30% {
+          opacity: 0;
+        }
+        50%,
+        100% {
+          opacity: 1;
+        }
+      }
+      .d2 .puck {
+        animation: d2puck 4s infinite;
+      }
+      @keyframes d2puck {
+        0%,
+        55% {
+          left: 27%;
+          top: 81%;
+        }
+        75%,
+        100% {
+          left: 50%;
+          top: 50%;
+        }
+      }
+      /* 3: drop the puck: the ticket stub tears along its perforation and flutters away, the program slides down
+         like a page turned over, and the arena intro begins underneath */
+      .d3 .go {
+        animation: d3tear 4.6s infinite;
+        transform-origin: 0% 100%;
+      }
+      @keyframes d3tear {
+        0%,
+        12% {
+          transform: none;
+          opacity: 1;
+        }
+        30% {
+          transform: translate(30px, 70px) rotate(38deg);
+          opacity: 1;
+        }
+        40%,
+        100% {
+          transform: translate(60px, 200px) rotate(70deg);
+          opacity: 0;
+        }
+      }
+      .d3 .sheet3 {
+        position: absolute;
+        inset: 0;
+        animation: d3turn 4.6s infinite;
+        transform-origin: 50% 100%;
+      }
+      @keyframes d3turn {
+        0%,
+        32% {
+          transform: none;
+        }
+        52%,
+        92% {
+          transform: translateY(105%) rotate(-4deg);
+        }
+        100% {
+          transform: none;
+        }
+      }
+      .d3 .arena {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, #0b1020 0 18%, transparent 18%),
+          repeating-linear-gradient(90deg, #2a4a9a 0 3px, #d8dde8 3px 5px, #142a66 5px 8px, #e0573c 8px 10px, #2f6bd8 10px 13px) 0 18% / 100% 22% no-repeat,
+          linear-gradient(180deg, #121a33 0 40%, #f2b632 40% 42%, #f3f5f8 42% 47%, #e8f0f7 47% 100%);
+      }
+      .d3 .arena::after {
+        content: 'FROST HOLLOW ARENA';
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 30%;
+        text-align: center;
+        font-family: var(--display);
+        font-size: 10px;
+        color: #ffd25e;
+        background: #06080d;
+        padding: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page">
+      <h1>MENU · THE SCREENS BEHIND H</h1>
+      <p class="lead">
+        Direction H is a printed matchday program: the game's title art as the cover, the rink as the menu, the
+        ticket stub to play. Below: how its sections open and close (animated), and every page behind it, plus the
+        two in-game pages (pause and the result), so the whole menu is one consistent thing. Mock-ups only.
+      </p>
+      <p class="lead">
+        <b style="color: #eaf0ff">The rules every page follows:</b> a page is a page of the program (paper, the
+        arena's two inks, its number and title printed big); "‹ RINK" in the masthead goes back; the ticket stub stays
+        at the bottom on every menu page, so Play is always one tap away; and the in-game pages are inserts printed on
+        the game's dark stock.
+      </p>
+    </header>
+
+    <!-- ============ transitions ============ -->
+    <section class="block">
+      <h2>1 · HOW IT MOVES</h2>
+      <p>Each phone loops its transition. Every move is short (a quarter to half a second) and stepped, in keeping with the pixel art.</p>
+      <div class="row">
+        <!-- open a section -->
+        <div class="shot">
+          <div class="phone print demo d1">
+            <div class="under" style="position: absolute; inset: 0">
+              <div class="mast"><span class="back">‹ RINK</span><span>KEYS · GUIDE ?</span></div>
+              <div class="pg">
+                <span class="no">04</span>
+                <h3>TEAMS</h3>
+                <div class="teamtabs"><span class="on">YOU · BLUE</span><span>CPU · NAVY</span></div>
+                <div class="previewband" style="--c: #3d7bff"><i></i><i></i><i></i><i></i></div>
+                <div class="opt"><span>JERSEY</span>
+                  <div class="jerseys">
+                    <i class="jersey on" style="--c: #3d7bff"></i><i class="jersey" style="--c: #e0414a"></i><i class="jersey" style="--c: #1f8a4c"></i><i class="jersey" style="--c: #f2b632"></i><i class="jersey" style="--c: #7a3fd1"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="mast" style="background: var(--paper)"><span>MATCHDAY PROGRAM</span><span>KEYS · GUIDE ?</span></div>
+            <div class="cover"><canvas class="art" width="336" height="152"></canvas><div class="screen"></div></div>
+            <div class="rink">
+              <div class="c" style="left: 27%; top: 19%">TRAIN</div>
+              <div class="c" style="left: 73%; top: 19%">WATCH</div>
+              <div class="bl" style="top: 33%"></div>
+              <div class="cl"></div>
+              <div class="c mid" style="left: 50%; top: 50%">MATCH<small>Pro · 3×1:00</small></div>
+              <div class="bl" style="top: 67%"></div>
+              <div class="c target" style="left: 27%; top: 81%">TEAMS</div>
+              <div class="c" style="left: 73%; top: 81%">ARENA</div>
+              <div class="bench" style="left: -14px; top: 38%; height: 24%">LINE-UP</div>
+              <div class="bench" style="right: -14px; top: 41%; height: 18%">SETUP</div>
+              <div class="puck"></div>
+            </div>
+            <div class="stub"><div><b>BLUE vs NAVY</b>Pro · 3 × 1:00</div><div class="go">PLAY</div></div>
+            <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+          <div class="cap"><b>OPEN A SECTION</b>Tap Teams: the puck slides to that face-off dot, the circle fills with ink, and the view dives into the circle the way the game zooms; the cover slides up and the Teams page is underneath.</div>
+        </div>
+
+        <!-- back -->
+        <div class="shot">
+          <div class="phone print demo d2">
+            <div class="mast" style="background: var(--paper)"><span>MATCHDAY PROGRAM</span><span>KEYS · GUIDE ?</span></div>
+            <div class="cover"><canvas class="art" width="336" height="152"></canvas><div class="screen"></div></div>
+            <div class="rink" style="transform: none">
+              <div class="c" style="left: 27%; top: 19%">TRAIN</div>
+              <div class="c" style="left: 73%; top: 19%">WATCH</div>
+              <div class="bl" style="top: 33%"></div>
+              <div class="cl"></div>
+              <div class="c mid" style="left: 50%; top: 50%">MATCH<small>Pro · 3×1:00</small></div>
+              <div class="bl" style="top: 67%"></div>
+              <div class="c" style="left: 27%; top: 81%">TEAMS</div>
+              <div class="c" style="left: 73%; top: 81%">ARENA</div>
+              <div class="bench" style="left: -14px; top: 38%; height: 24%">LINE-UP</div>
+              <div class="bench" style="right: -14px; top: 41%; height: 18%">SETUP</div>
+              <div class="puck"></div>
+            </div>
+            <div class="under" style="position: absolute; inset: 0; background: var(--paper); z-index: 6">
+              <div class="mast"><span class="back">‹ RINK</span><span>KEYS · GUIDE ?</span></div>
+              <div class="pg">
+                <span class="no">04</span>
+                <h3>TEAMS</h3>
+                <div class="teamtabs"><span class="on">YOU · BLUE</span><span>CPU · NAVY</span></div>
+                <div class="previewband" style="--c: #3d7bff"><i></i><i></i><i></i><i></i></div>
+              </div>
+            </div>
+            <div class="stub"><div><b>BLUE vs NAVY</b>Pro · 3 × 1:00</div><div class="go">PLAY</div></div>
+            <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+          <div class="cap"><b>BACK TO THE RINK</b>"‹ Rink" (or Esc, or the controller's B): the page shrinks back into its circle, the rink and cover settle in, and the puck slides home to centre ice.</div>
+        </div>
+
+        <!-- play -->
+        <div class="shot">
+          <div class="phone demo d3">
+            <div class="arena"></div>
+            <div class="sheet3 print">
+              <div class="mast"><span>MATCHDAY PROGRAM</span><span>KEYS · GUIDE ?</span></div>
+              <div class="cover"><canvas class="art" width="336" height="152"></canvas><div class="screen"></div></div>
+              <div class="rink" style="transform: none">
+                <div class="c" style="left: 27%; top: 19%">TRAIN</div>
+                <div class="c" style="left: 73%; top: 19%">WATCH</div>
+                <div class="bl" style="top: 33%"></div>
+                <div class="cl"></div>
+                <div class="c mid" style="left: 50%; top: 50%">MATCH<small>Pro · 3×1:00</small></div>
+                <div class="bl" style="top: 67%"></div>
+                <div class="c" style="left: 27%; top: 81%">TEAMS</div>
+                <div class="c" style="left: 73%; top: 81%">ARENA</div>
+              </div>
+              <div class="stub" style="grid-template-columns: 1fr 60px"><div><b>BLUE vs NAVY</b>Pro · 3 × 1:00</div><div></div></div>
+              <div class="stub" style="grid-template-columns: 1fr 60px; border-color: transparent; background: transparent"><div></div><div class="go">PLAY</div></div>
+              <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+              <div class="grain"></div>
+            </div>
+          </div>
+          <div class="cap"><b>DROP THE PUCK</b>The stub tears along its perforation and flutters off, the program turns away downward like a page, and the arena intro is already playing beneath it, straight into the opening face-off.</div>
+        </div>
+      </div>
+      <table class="steps">
+        <tr><td>MENU OPENS</td><td>The program falls onto the screen from above over the live 3D arena, settles with a small bounce; the cover art starts its slap shot.</td></tr>
+        <tr><td>ARENA</td><td>Picking another arena reprints the whole program in its two inks: a quick wipe of the new ink across the page, like a second pass through the printer.</td></tr>
+        <tr><td>MATCH ENDS</td><td>The result slides in as a dark insert over the b-roll; Rematch tears a fresh stub; Menu brings the program back down.</td></tr>
+        <tr><td>CONTROLLER</td><td>On the rink, the stick moves the puck between circles (the puck is the cursor); A opens, B goes back, Start plays.</td></tr>
+      </table>
+    </section>
+
+    <!-- ============ pages ============ -->
+    <section class="block">
+      <h2>2 · THE PAGES</h2>
+      <p>Each section of the rink opens one page. The ticket stub stays at the bottom of every menu page.</p>
+      <div class="row">
+        <!-- MATCH -->
+        <div class="shot">
+          <div class="phone print">
+            <div class="mast"><span class="back">‹ RINK</span><span>KEYS · GUIDE ?</span></div>
+            <div class="pg">
+              <span class="no">01 · CENTRE ICE</span>
+              <h3>MATCH</h3>
+              <p class="intro">Tonight's game. Watch mode uses these too.</p>
+              <div class="opt"><span>CPU LEVEL</span><div class="chips"><i>Rookie</i><i class="on">Pro</i><i>All-Star</i></div></div>
+              <div class="opt"><span>CPU STYLE</span><div class="chips"><i>Classic</i><i class="on">Realistic</i></div></div>
+              <div class="opt"><span>PERIODS</span><div class="chips"><i>0:30</i><i class="on">1:00</i><i>2:00</i><i>3:00</i><i>5:00</i></div></div>
+              <div class="opt"><span>RECORD VS PRO</span><span style="font-family: var(--pixel); font-size: 10px; color: var(--p1)">4 wins · 2 losses</span></div>
+            </div>
+            <div class="stub"><div><b>BLUE vs NAVY</b>Pro · 3 × 1:00</div><div class="go">PLAY</div></div>
+            <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+          <div class="cap"><b>MATCH (centre circle)</b>CPU level, style and period length, and your record against this level.</div>
+        </div>
+
+        <!-- WATCH -->
+        <div class="shot">
+          <div class="phone print">
+            <div class="mast"><span class="back">‹ RINK</span><span>KEYS · GUIDE ?</span></div>
+            <div class="pg">
+              <span class="no">02 · END ZONE</span>
+              <h3>WATCH</h3>
+              <p class="intro">CPU vs CPU, broadcast from the arena. Sit back.</p>
+              <div class="opt"><span>CAMERA</span><div class="chips"><i class="on">Cinematic</i><i>Classic</i></div></div>
+              <div class="opt"><span>TONIGHT ON AIR</span>
+                <div class="sheet"><div class="r" style="grid-template-columns: 1fr"><span>BLUE vs NAVY · Frost Hollow · 3 × 1:00</span></div></div>
+              </div>
+            </div>
+            <div class="stub"><div><b>BLUE vs NAVY</b>Exhibition</div><div class="go">WATCH</div></div>
+            <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+          <div class="cap"><b>WATCH</b>The camera style, and on this page the stub reads WATCH instead of PLAY.</div>
+        </div>
+
+        <!-- TRAIN -->
+        <div class="shot">
+          <div class="phone print">
+            <div class="mast"><span class="back">‹ RINK</span><span>KEYS · GUIDE ?</span></div>
+            <div class="pg">
+              <span class="no">03 · END ZONE</span>
+              <h3>TRAIN</h3>
+              <p class="intro">The practice plan. Each drill drawn like on the coach's board.</p>
+              <div class="drills">
+                <div class="drill"><div class="mini"><svg viewBox="0 0 100 46"><path d="M15 36 C 35 10, 60 40, 85 12" stroke="#2f6bd8" stroke-width="2" fill="none" stroke-dasharray="4 3" /></svg></div><b>FREE SKATE</b>No clock.</div>
+                <div class="drill"><div class="mini"><svg viewBox="0 0 100 46"><rect x="38" y="4" width="24" height="5" fill="#2f6bd8" /><rect x="47" y="4" width="6" height="5" fill="#eef3f7" /><path d="M50 40 L 50 12" stroke="#e0414a" stroke-width="2" /></svg></div><b>AIM</b>Best: 11 goals.</div>
+                <div class="drill"><div class="mini"><svg viewBox="0 0 100 46"><path d="M35 23 l 10 0 m 10 0 l 10 0" stroke="#e0414a" stroke-width="3" /><circle cx="30" cy="23" r="6" fill="#2f6bd8" /><circle cx="70" cy="23" r="6" fill="#e0414a" /></svg></div><b>FIGHT</b>One bout.</div>
+                <div class="drill"><div class="mini"><svg viewBox="0 0 100 46"><path d="M12 10 h 76 v 8 h -76 v 8 h 76 v 8 h -76" stroke="#2f6bd8" stroke-width="2" fill="none" /></svg></div><b>RESURFACE</b>Best: 58%.</div>
+              </div>
+            </div>
+            <div class="stub"><div><b>AIM TRAINER</b>1 minute · Still gap</div><div class="go">GO</div></div>
+            <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+          <div class="cap"><b>TRAIN</b>Four drill cards with chalk-talk diagrams; tapping one shows its options and the stub becomes "GO".</div>
+        </div>
+
+        <!-- TEAMS -->
+        <div class="shot">
+          <div class="phone print">
+            <div class="mast"><span class="back">‹ RINK</span><span>KEYS · GUIDE ?</span></div>
+            <div class="pg">
+              <span class="no">04 · END ZONE</span>
+              <h3>TEAMS</h3>
+              <div class="teamtabs"><span class="on">YOU · BLUE</span><span>CPU · NAVY</span></div>
+              <div class="previewband" style="--c: #3d7bff"><i></i><i></i><i></i><i></i></div>
+              <div class="opt"><span>JERSEY</span>
+                <div class="jerseys">
+                  <i class="jersey on" style="--c: #3d7bff"></i><i class="jersey" style="--c: #e0414a"></i><i class="jersey" style="--c: #1f8a4c"></i><i class="jersey" style="--c: #f2b632"></i><i class="jersey" style="--c: #7a3fd1"></i>
+                </div>
+              </div>
+              <div class="opt"><span>STICKS</span><div class="chips"><i class="on">Wood</i><i>Carbon</i><i>Retro</i></div></div>
+              <div class="opt"><span>PUCK</span><div class="chips"><i class="on">Classic</i><i>Snowball</i><i>Fire</i></div></div>
+            </div>
+            <div class="stub"><div><b>BLUE vs NAVY</b>Pro · 3 × 1:00</div><div class="go">PLAY</div></div>
+            <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+          <div class="cap"><b>TEAMS</b>Your team or the CPU's: the skaters line up in the preview band, jerseys as swatches cut out like shirts, sticks and puck below.</div>
+        </div>
+
+        <!-- LINE-UP -->
+        <div class="shot">
+          <div class="phone print">
+            <div class="mast"><span class="back">‹ RINK</span><span>KEYS · GUIDE ?</span></div>
+            <div class="pg">
+              <span class="no">05 · THE BENCH</span>
+              <h3>LINE-UP</h3>
+              <p class="intro">Who starts tonight. Circle a position for each skater.</p>
+              <div class="sheet">
+                <div class="r"><span class="num">20</span><span>Brandt<span class="tally">SHT ||| HND |||| CHK ||</span></span><span class="pos"><i class="on">C</i><i>W</i><i>D</i></span></div>
+                <div class="r"><span class="num">26</span><span>Lindqvist<span class="tally">SHT |||| HND ||| CHK |</span></span><span class="pos"><i>C</i><i class="on">W</i><i>D</i></span></div>
+                <div class="r"><span class="num">55</span><span>Quinn<span class="tally">SHT || HND || CHK ||||</span></span><span class="pos"><i>C</i><i>W</i><i class="on">D</i></span></div>
+                <div class="r" style="grid-template-columns: 28px 1fr auto"><span class="num">31</span><span>Duval</span><span style="font-family: var(--display); font-size: 7px">GOALIE</span></div>
+              </div>
+              <div class="chips" style="margin-top: 10px"><i>Auto</i><i>New roster</i></div>
+            </div>
+            <div class="stub"><div><b>BLUE vs NAVY</b>Pro · 3 × 1:00</div><div class="go">PLAY</div></div>
+            <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+          <div class="cap"><b>LINE-UP (the bench)</b>The game sheet: numbers, names, ratings as tally marks, positions circled.</div>
+        </div>
+
+        <!-- ARENA -->
+        <div class="shot">
+          <div class="phone print">
+            <div class="mast"><span class="back">‹ RINK</span><span>KEYS · GUIDE ?</span></div>
+            <div class="pg">
+              <span class="no">06 · END ZONE</span>
+              <h3>ARENA</h3>
+              <p class="intro">Pick a ticket. The program reprints in its inks.</p>
+              <div class="tickets">
+                <div class="tk on" style="--a: #2f6bd8; --b: #e0414a"><div><b>FROST HOLLOW ARENA</b>Wolves · Snowstorm</div><div class="sw"></div></div>
+                <div class="tk" style="--a: #13897f; --b: #e0573c"><div><b>HARBOR DOME</b>Krakens · Harbor Stomp</div><div class="sw"></div></div>
+                <div class="tk" style="--a: #1b2333; --b: #f08a12"><div><b>PACK ICE PAVILION</b>Penguins · Waddle</div><div class="sw"></div></div>
+                <div class="tk" style="--a: #22b8e6; --b: #ff3fb4"><div><b>NEON COLISEUM</b>Comets · Comet Run</div><div class="sw"></div></div>
+                <div class="tk" style="--a: #1f6b3a; --b: #b5482a"><div><b>TIMBERLINE LODGE</b>Lumberjacks · Reel</div><div class="sw"></div></div>
+                <div class="tk" style="--a: #3a4250; --b: #d1361b"><div><b>IRONWORKS GARDEN</b>Smelters · Hammer</div><div class="sw"></div></div>
+              </div>
+            </div>
+            <div class="grain"></div>
+          </div>
+          <div class="cap"><b>ARENA</b>Every arena is a ticket in its own two inks; picking one reprints the program. (The page is full, so no stub here.)</div>
+        </div>
+
+        <!-- SETUP -->
+        <div class="shot">
+          <div class="phone print">
+            <div class="mast"><span class="back">‹ RINK</span><span>KEYS · GUIDE ?</span></div>
+            <div class="pg">
+              <span class="no">07 · PENALTY BOX</span>
+              <h3>SETUP</h3>
+              <div class="boxes">
+                <label><i>✓</i>Celebrations<small>after a goal</small></label>
+                <label><i>✓</i>Fights<small>once a match</small></label>
+                <label><i>✓</i>Ice resurfacing<small>between periods</small></label>
+                <label><i>✓</i>Sound</label>
+                <label><i></i>FPS counter</label>
+                <label><i>✓</i>Vibration<small>Android</small></label>
+              </div>
+              <div class="opt" style="margin-top: 12px"><span>CAMERA</span><div class="chips"><i class="on">Close</i><i>Wide</i><i>Arena</i></div></div>
+            </div>
+            <div class="stub"><div><b>BLUE vs NAVY</b>Pro · 3 × 1:00</div><div class="go">PLAY</div></div>
+            <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+          <div class="cap"><b>SETUP (the penalty box)</b>Settings as tick boxes on a form, ticked in the second ink.</div>
+        </div>
+
+        <!-- KEYS + GUIDE -->
+        <div class="shot">
+          <div class="phone print">
+            <div class="mast"><span class="back">‹ RINK</span><span>08 · RULES</span></div>
+            <div class="pg">
+              <span class="no">08 · RULEBOOK</span>
+              <h3>KEYS &amp; GUIDE</h3>
+              <div class="keys">
+                <kbd>↑↓←→</kbd><span>Skate</span>
+                <kbd>SPACE</kbd><span>Shoot (hold) · Poke</span>
+                <kbd>SHIFT</kbd><span>Pass · Check</span>
+                <kbd>L</kbd><span>Switch skater</span>
+              </div>
+              <div class="rules">
+                <b>THE BASICS</b>Three skaters and a goalie a side; most goals after three periods wins.
+                <b>SHOOTING</b>Hold to wind up, release to fire; a full wind-up shoots almost twice as hard.
+                <b>DEFENCE</b>Poke from the front or side; check a carrier off the puck.
+                <b>MOMENTUM</b>Win a fight or polish half the ice for a speed boost.
+              </div>
+            </div>
+            <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+          <div class="cap"><b>KEYS &amp; GUIDE (rulebook)</b>Controls as key caps, the guide in two columns like a rulebook; long text scrolls.</div>
+        </div>
+
+        <!-- PAUSE -->
+        <div class="shot">
+          <div class="phone print night">
+            <div class="mast"><span>INTERMISSION</span><span>2ND · 0:41</span></div>
+            <div class="pg">
+              <span class="no">INSERT</span>
+              <h3>PAUSED</h3>
+              <p class="intro">Blue 2 – 1 Navy</p>
+              <div class="menulist"><span class="on">Resume <b>▸</b></span><span>Restart</span><span>Keys &amp; guide</span><span>Setup</span><span>Quit to program</span></div>
+            </div>
+            <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+          <div class="cap"><b>PAUSE (in game)</b>A dark insert over the frozen game: score and clock at the top, a short list.</div>
+        </div>
+
+        <!-- RESULT -->
+        <div class="shot">
+          <div class="phone print night">
+            <div class="mast"><span>FINAL · PRO</span><span>FROST HOLLOW</span></div>
+            <div class="pg">
+              <span class="no">BOX SCORE</span>
+              <h3>YOU WIN</h3>
+              <p class="intro">Blue 4 – 2 Navy · Record vs Pro 5 W – 2 L</p>
+              <div class="box">
+                <div class="r hd"><span>TEAM</span><span>1</span><span>2</span><span>3</span><span>T</span></div>
+                <div class="r"><span>BLUE</span><span>1</span><span>2</span><span>1</span><span>4</span></div>
+                <div class="r"><span>NAVY</span><span>0</span><span>1</span><span>1</span><span>2</span></div>
+              </div>
+              <div class="box" style="margin-top: 8px">
+                <div class="r hd" style="grid-template-columns: 1fr 50px 50px"><span></span><span>BLU</span><span>NAV</span></div>
+                <div class="r" style="grid-template-columns: 1fr 50px 50px"><span>Shots</span><span>14</span><span>9</span></div>
+                <div class="r" style="grid-template-columns: 1fr 50px 50px"><span>Save %</span><span>.778</span><span>.714</span></div>
+              </div>
+            </div>
+            <div class="stub" style="border-color: var(--p2)"><div><b>REMATCH</b>Same teams, fresh roster</div><div class="go">AGAIN</div></div>
+            <div class="ai" style="color: #a9b8da"><span style="color: #ffc845">‹ PROGRAM</span> &nbsp; back to the menu</div>
+            <div class="grain"></div>
+          </div>
+          <div class="cap"><b>RESULT (after the final whistle)</b>A box score by period over the b-roll; the stub becomes the rematch ticket.</div>
+        </div>
+      </div>
+    </section>
+
+    <canvas id="logo" width="168" height="76" hidden></canvas>
+    <script type="module">
+      import { drawLogo } from '/src/ui/logo.js';
+      import { clock } from '/src/core/time.ts';
+      const arts = [...document.querySelectorAll('canvas.art')],
+        src = document.getElementById('logo');
+      function frame(t) {
+        clock.now = t / 1000;
+        drawLogo();
+        for (const c of arts) {
+          const g = c.getContext('2d');
+          g.imageSmoothingEnabled = false;
+          g.drawImage(src, 0, 0, c.width, c.height);
+        }
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>
