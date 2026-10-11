@@ -113,10 +113,30 @@ export function zamStep(dt) {
   const hx = Math.sin(z.a),
     hy = -Math.cos(z.a);
   const o = { x: z.x + hx * z.v * dt, y: z.y + hy * z.v * dt, vx: hx * z.v, vy: hy * z.v };
-  if (rinkPush(o, 8, 0) > 0) z.v *= 0.6;
+  const hitWall = rinkPush(o, 8, 0) > 0;
   netPushBody(o, 8);
   z.x = o.x;
   z.y = o.y;
+  // The boards (and nets) guide it rather than stop it: the push took away the motion into the obstacle, so
+  // the nose turns toward the way it can still go (along the boards) faster than steering can turn it back,
+  // and it scrapes along with a little drag instead of stalling.
+  const lostX = hx * z.v - o.vx,
+    lostY = hy * z.v - o.vy;
+  if (hitWall || lostX * lostX + lostY * lostY > 1e-6) {
+    // along the obstacle: perpendicular to the lost motion, on the side the nose already leans to
+    let tx = -lostY,
+      ty = lostX;
+    if (tx * hx + ty * hy < 0) {
+      tx = -tx;
+      ty = -ty;
+    }
+    if (tx || ty) {
+      const along = Math.atan2(tx, -ty),
+        da = ((along - z.a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+      z.a += clamp(da, -4 * dt, 4 * dt);
+    }
+    z.v *= 1 - 1.2 * dt;
+  }
   // conditioner at the back: lay down fresh ice across a 10-unit strip
   const bx = z.x - hx * 4.5,
     by = z.y - hy * 4.5,
