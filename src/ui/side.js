@@ -166,7 +166,8 @@ export function initSide() {
 export function updSide() {
   if (!WIDE.matches) return;
   const match = !G.demo;
-  document.body.classList.toggle('inmatch', match);
+  // the side bars slide in for a game and out for the menu (CSS transitions on this class)
+  if (document.body.classList.contains('inmatch') !== match) document.body.classList.toggle('inmatch', match);
   const ch = $('sdShot');
   const k = G.charging && !G.ai0 ? Math.min(1, G.charge / 0.7) : 0;
   ch.style.setProperty('--k', String(k));

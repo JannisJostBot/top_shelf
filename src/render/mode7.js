@@ -157,27 +157,42 @@ export function updDemoCam() {
   broadcastCam(DEMO_SHOTS[idx], snap);
 }
 
-/** Spectators' heads in the foreground of the fan cam; they jump and wave foam fingers when the crowd is loud. */
-function fanHeads() {
+/** Spectators in the seat rows in front of the fan cam: real spots in the stands (between the camera and the
+ * boards), projected like everything else, so they stay put while the camera pans. They jump and wave foam
+ * fingers when the crowd is loud. */
+function fanHeads(proj, C3) {
   const g = view.ctx,
-    n = 6,
-    w = view.CW / n;
-  for (let i = 0; i < n; i++) {
-    const cx = Math.round(w * (i + 0.5) + Math.sin(i * 2.3) * w * 0.2),
-      cheer = G.hype > 0.1 || (Math.sin(clock.now * 0.7 + i * 1.9) > 0.92 ? 1 : 0),
-      jump = cheer ? Math.round(Math.abs(Math.sin(clock.now * 9 + i)) * w * 0.12) : 0,
-      r = Math.round(w * 0.4),
-      base = view.CH - Math.round(w * 0.15) - jump;
+    toward = C3.x < 80 ? 1 : -1, // the rink side of the camera
+    list = [];
+  for (let row = 0; row < 2; row++)
+    for (let i = -10; i <= 10; i++) {
+      // seats on a fixed grid along the boards (not relative to the camera), with a little stagger
+      const seatY = Math.round(C3.y / 1.7) * 1.7 + i * 1.7 + (row ? 0.85 : 0),
+        id = Math.round(seatY / 1.7) * 2 + row,
+        x = C3.x + toward * (2.6 + row * 2.2),
+        q = proj(x, seatY, C3.h - 2.4 - row * 1.5);
+      if (q && q.d > 1) list.push({ q, id });
+    }
+  list.sort((a, b) => b.q.d - a.q.d);
+  for (const { q, id } of list) {
+    const ph = ((id * 2654435761) >>> 0) / 4294967296,
+      cheer = G.hype > 0.1 || Math.sin(clock.now * 0.7 + ph * 12) > 0.92,
+      r = Math.round(q.s * 0.16),
+      jump = cheer ? Math.round(Math.abs(Math.sin(clock.now * 9 + ph * 7)) * r * 0.5) : 0,
+      cx = Math.round(q.x),
+      base = Math.round(q.y) - jump;
+    if (cx < -r * 3 || cx > view.CW + r * 3 || base - r * 2 > view.CH) continue;
     g.fillStyle = '#05070d';
-    g.fillRect(cx - r * 1.6, base, r * 3.2, view.CH - base); // shoulders
+    g.fillRect(cx - r * 1.6, base, r * 3.2, view.CH - base + r); // shoulders
     g.beginPath();
     g.arc(cx, base - r * 0.6, r, 0, Math.PI * 2); // head
     g.fill();
-    g.fillStyle = kit.TEAMS[i % 2].main;
+    const team = id & 1 ? 1 : 0;
+    g.fillStyle = kit.TEAMS[(id >> 1) % 3 === 0 ? 1 - team : team].main;
     g.fillRect(cx - r, base - r * 1.6, r * 2, Math.round(r * 0.6)); // beanie in the teams' colours
-    if (cheer && i % 2 === 0) {
+    if (cheer && ph < 0.35) {
       // a foam finger
-      g.fillStyle = kit.TEAMS[0].main;
+      g.fillStyle = kit.TEAMS[team].main;
       g.fillRect(cx + r * 1.2, base - r * 3.4, r * 0.8, r * 2.6);
       g.fillRect(cx + r * 1.35, base - r * 4.4, r * 0.4, r);
     }
@@ -491,7 +506,7 @@ export function render3D(overlay = true) {
     view.ctx.fillRect(Math.round(q.x), Math.round(q.y - z * 2), z, z);
   }
   view.ctx.globalAlpha = 1;
-  if (C3.guest) fanHeads();
+  if (C3.guest) fanHeads(proj, C3);
   cinema();
   if (overlay) replayOverlay();
 }

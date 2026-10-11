@@ -9,16 +9,63 @@ body.wide {
     radial-gradient(circle at 9px 9px, #0d1324 6px, transparent 7px) 0 calc(100% - 44px) / 22px 30px repeat-x,
     linear-gradient(#070a14, var(--arena) 45%, #0c1226);
 }
+/* In the menu the stage (with the 3D demo behind the menu card) fills the whole window. When a game starts it
+   narrows to the rink column and the side bars slide in beside it; back in the menu they slide out again. */
 body.wide #app {
-  max-width: 1500px;
-  display: grid;
+  max-width: none;
+  display: block;
+  position: relative;
+  padding: 0;
   /* the rink column is as wide as a tall portrait cabinet allows, the panels share what is left */
   --stage-w: min(calc((100dvh - 16px) * 0.78), 50vw, 820px);
-  grid-template-columns: minmax(230px, 1fr) var(--stage-w) minmax(230px, 1fr);
-  gap: 18px;
+  --side-w: clamp(230px, calc((100vw - var(--stage-w)) / 2 - 34px), 400px);
+  --slide: 0.6s cubic-bezier(0.22, 0.8, 0.25, 1);
+  transition: padding var(--slide);
+}
+body.wide.inmatch #app {
+  padding: 8px 16px;
 }
 body.wide #stage {
   height: 100%;
+  width: 100%;
+  margin: 0 auto;
+  transition: width var(--slide);
+}
+body.wide.inmatch #stage {
+  width: var(--stage-w);
+}
+body.wide .side {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  width: var(--side-w);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--slide),
+    opacity 0.4s;
+}
+body.wide #sideL {
+  right: calc(50% + var(--stage-w) / 2 + 18px);
+  transform: translateX(-60vw);
+}
+body.wide #sideR {
+  left: calc(50% + var(--stage-w) / 2 + 18px);
+  transform: translateX(60vw);
+}
+body.wide.inmatch #sideL,
+body.wide.inmatch #sideR {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  transition-delay: 0.12s;
+}
+@media (prefers-reduced-motion: reduce) {
+  body.wide #app,
+  body.wide #stage,
+  body.wide .side {
+    transition: none;
+  }
 }
 /* the rink corner extras move out of the way: hints and the player card live in the right panel now */
 body.wide #keyhint {
@@ -30,9 +77,6 @@ body.wide #keyhint {
   gap: 12px;
   min-height: 0;
   min-width: 0;
-}
-body:not(.inmatch) .inmatchOnly {
-  display: none;
 }
 /* a team banner hanging from the rafters */
 .pennant {
@@ -314,9 +358,6 @@ body.wide #rpBar {
 .pslot .score {
   font-size: 34px;
   line-height: 1;
-}
-body:not(.inmatch) .pslot {
-  display: none;
 }
 /* period and clock: the solid centre piece of the old scoreboard */
 .sclock {
