@@ -59,7 +59,7 @@ let lastClock = '';
 export const clockText = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
 export function hudClock() {
   let t;
-  if (G.practice) t = 'FREE';
+  if (G.practice) t = G.aim ? clockText(Math.max(0, Math.ceil(G.aim.t))) : 'FREE';
   else if (G.demo) t = clockText(settings.periodLen);
   else if (G.period > 3) t = 'SD';
   else {

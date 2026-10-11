@@ -3,7 +3,8 @@ import { clamp, rnd } from '../../core/math';
 import { goalScored } from '../match';
 import { GK } from '../players';
 import { grab } from '../puck';
-import { puck } from '../world';
+import { G, puck } from '../world';
+import { AIM_GAP } from '../aim';
 import { netHit, S } from '../fx';
 
 /* ---------- physics helpers ---------- */
@@ -130,6 +131,16 @@ export function netPuck(px, py) {
     else if (py >= ey1) side = 'B';
     else side = 'I';
     const front = n.top ? 'B' : 'T';
+    // aim trainer: a board covers the goal mouth except for a small gap
+    if (side === front && G.aim && n.top && Math.abs(puck.x - G.aim.gap) > AIM_GAP / 2) {
+      if (!puck.owner) {
+        S('board', Math.hypot(puck.vx, puck.vy) / 220);
+        puck.vy = Math.abs(puck.vy) * 0.45;
+        puck.vx += rnd(-12, 12);
+      }
+      puck.y = ey1 + 0.01;
+      return false;
+    }
     if (side === front) {
       if (puck.x > n.x0 + 1.5 && puck.x < n.x1 - 1.5) {
         if (ownGoalAllowed(n)) {

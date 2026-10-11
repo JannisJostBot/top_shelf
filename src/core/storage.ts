@@ -28,6 +28,19 @@ export function saveBest(pct: number) {
     localStorage.setItem('blb-zam', String(pct));
   } catch (e) {}
 }
+/** Best number of goals in one round of the aim trainer. */
+export function loadAimBest(): number {
+  try {
+    return +(localStorage.getItem('blb-aim') || 0) || 0;
+  } catch (e) {
+    return 0;
+  }
+}
+export function saveAimBest(n: number) {
+  try {
+    localStorage.setItem('blb-aim', String(n));
+  } catch (e) {}
+}
 export function loadPrefs(): Record<string, any> {
   try {
     return JSON.parse(localStorage.getItem('blb-prefs') || '{}') || {};

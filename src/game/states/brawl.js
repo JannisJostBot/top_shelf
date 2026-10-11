@@ -25,6 +25,7 @@ export function startBrawl() {
     b = nearest(SK[1], a);
   const m = { x: clamp((a.x + b.x) / 2, 32, 128), y: clamp((a.y + b.y) / 2, 52, 204) };
   G.state = 'brawl';
+  if (!G.practice) G.fought = true;
   G.br = {
     a,
     b,

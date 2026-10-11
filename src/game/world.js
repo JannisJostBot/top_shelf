@@ -57,6 +57,10 @@ export const G = {
   zam: /** @type {any} */ (null),
   hype: 0,
   fightP: 0.15,
+  /** whether this match has had its fight (there is at most one per match) */
+  fought: false,
+  /** the aim trainer while it runs: seconds left, where the gap in the board is, the shooting spot */
+  aim: /** @type {any} */ (null),
   cam3: /** @type {any} */ (null),
   goalX: 80,
   goalFrame: 0,

@@ -2,6 +2,8 @@ import { K, NETS } from '../config';
 import { clamp, rnd, toS } from '../core/math';
 import { clock } from '../core/time';
 import { view } from './canvas';
+import { G } from '../game/world';
+import { AIM_GAP } from '../game/aim';
 import { SH } from './colors';
 import { R, disc, line, pixelAligned } from './pixels';
 
@@ -170,6 +172,25 @@ function meshImage(n, x0, y0, x1, y1) {
   }
   return { img: cl.img, oy };
 }
+/** The aim trainer's board across the goal mouth: white panels standing on the goal line, a gap between them
+ * framed in red. */
+function aimBoard(n, x0, x1, y1) {
+  const g0 = Math.round((G.aim.gap - AIM_GAP / 2) * K),
+    g1 = Math.round((G.aim.gap + AIM_GAP / 2) * K),
+    top = y1 - 7;
+  for (const [a, b] of [
+    [x0, g0],
+    [g1, x1],
+  ]) {
+    if (b - a <= 0) continue;
+    R(a, top + 2, b - a, 7, '#3a3f4c'); // outline
+    R(a + 1, top, b - a - 2, 7, '#f1efe8'); // the panel's face
+    R(a + 1, top + 5, b - a - 2, 2, '#c9c5b8'); // its lower edge in shade
+  }
+  // red edges around the gap
+  R(g0 - 2, top - 1, 2, 9, '#d8343f');
+  R(g1, top - 1, 2, 9, '#d8343f');
+}
 export function drawNet(n) {
   const x0 = n.x0 * K,
     x1 = n.x1 * K,
@@ -192,6 +213,7 @@ export function drawNet(n) {
     R(x0, y0, 3, 2, redD);
     R(x1 - 3, y0, 3, 2, redD);
   }
+  if (G.aim && n.top) aimBoard(n, x0, x1, y1);
   // goal lamp behind the net
   const cx = (x0 + x1) >> 1,
     ly = n.top ? y0 - 9 : y1 + 5,

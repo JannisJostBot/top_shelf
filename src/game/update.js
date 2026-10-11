@@ -12,6 +12,7 @@ import { endPeriod } from './match';
 import { coast, integrate, updatePuck } from './physics/step';
 import { GK, SKATERS, players } from './players';
 import { practiceReset } from './practice';
+import { aimTick } from './aim';
 import { applyFrame, endReplay, recFrame, startReplay } from './replay';
 import { brawlStep, startBrawl } from './states/brawl';
 import { celebrateStep, endCelebration, startCelebration } from './states/celebrate';
@@ -127,6 +128,7 @@ export function update(dt) {
   }
   if (st === 'paused' || st === 'over') return;
   updCam(dt, false);
+  if (G.aim && (st === 'play' || st === 'goal') && aimTick(dt)) return;
   if (st === 'faceoff') {
     foUpdate(dt);
     return;

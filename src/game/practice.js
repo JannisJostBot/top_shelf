@@ -23,6 +23,7 @@ import { startBrawl } from './states/brawl';
 import { faceoff } from './states/faceoff';
 import { startZamboni, stopEngine } from './states/zamboni';
 import { G, puck, ref } from './world';
+import { aimBanner, aimGoal, aimSpot, startAim } from './aim';
 
 /* ---------- practice modes ---------- */
 export let pcfg = { opp: 'dummy', mates: false, goalie: 'cpu' };
@@ -46,6 +47,7 @@ export function startPractice(cfg) {
   G.clock = PERIOD_LEN;
   G.ignoreRelease = false;
   G.brawlNext = false;
+  G.aim = null;
   screen('practice');
   resetRosterFlags();
   genRoster();
@@ -75,6 +77,11 @@ export function startPractice(cfg) {
     startZamboni();
     hud();
     return;
+  }
+  if (cfg.mode === 'aim') {
+    // alone on the ice against the board: no teammates, no opponents, no goalie
+    Object.assign(G.practice, { mates: false, opp: 'none', goalie: 'none' });
+    startAim();
   }
   const c = G.practice;
   SK[0][1].benched = SK[0][2].benched = !c.mates;
@@ -130,13 +137,21 @@ export function practiceReset(first) {
   Object.assign(puck, { z: 0, vx: 0, vy: 0, passTo: null, gchk: null, hard: false });
   puck.miss.clear();
   puck.trail.length = 0;
+  if (G.aim) {
+    // the aim trainer's shooting spot, facing the goal
+    const me = SK[0][0],
+      s = aimSpot(),
+      d = Math.hypot(80 - s.x, GT - s.y);
+    Object.assign(me, { x: s.x, y: s.y, fx: (80 - s.x) / d, fy: (GT - s.y) / d });
+  }
   G.state = 'play';
   G.controlled = SK[0][0];
   take(SK[0][0]);
   G.stillT = 0;
   Object.assign(ref, { x: 132, y: 128, vx: 0, vy: 0, fx: -1, fy: 0 });
   updCam(0, true);
-  if (first) {
+  if (first && G.aim) aimBanner();
+  else if (first) {
     banner('FREE SKATE', 'alert', 'No clock, no pressure. Pause to quit.');
     G.bannerT = 2;
   }
@@ -146,6 +161,7 @@ export function practiceGoal(team, n) {
   G.timer = 1.3;
   G.goalRec = 0;
   if (team === 0) G.score[0]++;
+  if (team === 0 && G.aim) aimGoal();
   hud();
   pop(80, n.top ? GT + 12 : GB - 12, team === 0 ? 'GOAL!' : 'OWN GOAL', team === 0 ? AMB : '#ff8a80', true);
   chime();

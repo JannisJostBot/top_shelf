@@ -1,6 +1,6 @@
 import { AC, audio, master } from '../audio/engine';
 import { $ } from '../core/dom';
-import { savePrefs } from '../core/storage';
+import { savePrefs, loadAimBest } from '../core/storage';
 import { DIFF } from '../data/difficulty';
 import { startGame, toMenu, togglePause } from '../game/match';
 import { pcfg, startPractice } from '../game/practice';
@@ -31,6 +31,8 @@ export function showTab(name) {
       b = +localStorage.getItem('blb-zam') || 0;
     } catch (e) {}
     $('zamBest').textContent = b ? 'Your best: ' + b + '%.' : '';
+    const a = loadAimBest();
+    $('aimBest').textContent = a ? 'Your best: ' + a + (a === 1 ? ' goal.' : ' goals.') : '';
   }
   if (name === 'arena') arenaThumbs();
 }
@@ -218,6 +220,7 @@ export function initMenu() {
   $('pFree').addEventListener('click', () => startPractice(Object.assign({ mode: 'free' }, pcfg)));
   $('pFight').addEventListener('click', () => startPractice({ mode: 'fight' }));
   $('pZam').addEventListener('click', () => startPractice({ mode: 'zam' }));
+  $('pAim').addEventListener('click', () => startPractice({ mode: 'aim' }));
   $('menuBtn').addEventListener('click', toMenu);
   $('resumeBtn').addEventListener('click', togglePause);
   $('quitBtn').addEventListener('click', toMenu);

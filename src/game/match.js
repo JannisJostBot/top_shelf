@@ -92,9 +92,9 @@ export function goalScored(team, n) {
     bubble(l[0], null, rnd(0.2, 0.6));
     if (Math.random() < 0.35) bubble(l[1], null, rnd(0.9, 1.4));
   }
-  // fights get likelier with every goal that passes without one, so they turn up about once a game
+  // fights get likelier with every goal that passes without one, so they turn up about once a game (and never twice)
   G.brawlNext = false;
-  if (!G.ai0 && team === 0 && settings.fightsOn) {
+  if (!G.ai0 && team === 0 && settings.fightsOn && !G.fought) {
     if (Math.random() < G.fightP) {
       G.brawlNext = true;
       G.fightP = 0.1;
@@ -200,6 +200,8 @@ export function endGame() {
 }
 export function startGame(watch) {
   G.practice = null;
+  G.aim = null;
+  G.fought = false;
   resetRosterFlags();
   audio();
   G.demo = false;
@@ -234,6 +236,7 @@ export function toMenu() {
   stopEngine();
   showTab('play');
   G.practice = null;
+  G.aim = null;
   resetRosterFlags();
   G.zam = null;
   clearIceWear();
