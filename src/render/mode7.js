@@ -66,8 +66,12 @@ const FOCUS_K = 0.035, // how quickly the focus point glides after the puck (per
 const cine = { fx: 80, fy: 128, net: null, side: 1, t0: 0 };
 /** Spot for the fan cam: up in the side stands behind the glass, level with the play. */
 function fanSpot(side, fy) {
-  return { tx: side < 0 ? -18 : 178, ty: clamp(fy * 0.6 + 128 * 0.4, 50, 206), h: 17 };
+  return { tx: side < 0 ? -12 : 172, ty: clamp(fy * 0.6 + 128 * 0.4, 50, 206), h: 15 };
 }
+// The fan cam looks across the whole rink at the far stands, about twice as far as the other shots look: with
+// the same lens the crowd there shrinks to slivers a few pixels wide. A longer lens (like a fan zooming in)
+// shows the fans at the size they have in the other shots.
+const GUEST_ZOOM = 1.6;
 /** Moves G.cam3 for a shot of the given kind; `snap` starts a new shot (a cut). */
 export function broadcastCam(kind, snap) {
   const C = G.cam3 || (G.cam3 = { x: 80, y: 128, yaw: 0, h: 8.5 });
@@ -283,7 +287,7 @@ function glassTint(c) {
 /** Draws the 3D view from G.cam3. `overlay` adds the REPLAY label and letterbox bars. */
 export function render3D(overlay = true) {
   const C3 = G.cam3 || { x: 80, y: 128, yaw: 0, h: 8.5 },
-    f = view.CW * 0.65,
+    f = view.CW * 0.65 * (C3.guest ? GUEST_ZOOM : 1),
     cxs = view.CW / 2,
     hor = Math.round(view.CH * 0.4),
     h = C3.h;
