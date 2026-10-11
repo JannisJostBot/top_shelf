@@ -49,6 +49,74 @@ export function easingOff(ch, o, dt) {
   }
   return false;
 }
+// Getting open for a pass. A skater supporting the carrier checks now and then whether a defender stands in the
+// passing lane between the carrier and its spot and, if so, slides to the side where the lane is clearest. It is
+// a skater's read, not a calculation: it only looks again after a while (and the defenders move meanwhile), it
+// judges the spot roughly, and now and then it does not notice at all.
+const LANE_OPEN = 9, // a defender this far from the line still leaves it open
+  LANE_TRIES = [-20, -13, -7, 7, 13, 20]; // sideways moves it considers
+/** How close the nearest defender of team 1 - t is to the passing line from (ax, ay) to (bx, by). */
+function laneClearance(ax, ay, bx, by, t) {
+  const vx = bx - ax,
+    vy = by - ay,
+    l2 = vx * vx + vy * vy || 1;
+  let c = 99;
+  for (const q of SK[1 - t]) {
+    if (!live(q) || q.down > 0) continue;
+    const u = ((q.x - ax) * vx + (q.y - ay) * vy) / l2;
+    if (u < 0.08 || u > 1.05) continue; // behind the passer or past the receiver
+    c = Math.min(c, Math.hypot(q.x - (ax + vx * u), q.y - (ay + vy * u)));
+  }
+  return c;
+}
+/** The sideways move from spot s that best opens the lane from carrier o (none when it is open already). */
+function laneShift(s, o, t) {
+  let bs = laneClearance(o.x, o.y, s.x, s.y, t);
+  if (bs >= LANE_OPEN) return { x: 0, y: 0 };
+  const vx = s.x - o.x,
+    vy = s.y - o.y,
+    l = Math.hypot(vx, vy) || 1,
+    px = -vy / l,
+    py = vx / l;
+  let best = { x: 0, y: 0 };
+  for (const k of LANE_TRIES) {
+    const x = clamp(s.x + px * k, 14, 146),
+      y = clamp(s.y + py * k, 16, 240),
+      c = laneClearance(o.x, o.y, x, y, t) - Math.abs(k) * 0.12; // rather a short move
+    if (c > bs) {
+      bs = c;
+      best = { x: x - s.x, y: y - s.y };
+    }
+  }
+  return best;
+}
+/**
+ * Where supporting skater p heads (its role spot is s) to be open for a pass from carrier o. When the lane to
+ * where it is now is blocked, it steps sideways into the open from right there; otherwise it goes on to its spot,
+ * moved if the lane to that spot is blocked. Re-read only every half second or so, roughly, and not always.
+ */
+export function openLane(p, s, o, t, dt) {
+  let m = p.lane;
+  if (!m || m.of !== o) m = p.lane = { of: o, t: rnd(0.1, 0.5), x: 0, y: 0, here: null };
+  m.t -= dt;
+  if (m.t <= 0) {
+    m.t = rnd(0.45, 0.9);
+    if (Math.random() < 0.8) {
+      m.here = null;
+      m.x = m.y = 0;
+      if (laneClearance(o.x, o.y, p.x, p.y, t) < LANE_OPEN) {
+        const d = laneShift(p, o, t);
+        if (d.x || d.y) m.here = { x: p.x + d.x + rnd(-3, 3), y: p.y + d.y + rnd(-3, 3) };
+      }
+      if (!m.here) {
+        const d = laneShift(s, o, t);
+        m.x = d.x ? d.x + rnd(-3, 3) : 0;
+        m.y = d.y ? d.y + rnd(-3, 3) : 0;
+      }
+    }
+  }
+  return m.here || { x: s.x + m.x, y: s.y + m.y };
+}
 export function teamMul(t) {
   if (G.practice && t === 1 && G.practice.opp === 'easy') return 0.55;
   return t === 1 ? settings.diff.spd : G.demo ? 0.94 : 0.95;
@@ -65,12 +133,13 @@ export function nearest(list, tg) {
   }
   return b;
 }
-function assign(list, spots, mul, dt) {
+function assign(list, spots, mul, dt, adjust) {
   const left = list.slice();
-  for (const s of spots) {
+  for (let s of spots) {
     if (!left.length) break;
     const p = nearest(left, s);
     left.splice(left.indexOf(p), 1);
+    if (adjust) s = adjust(p, s);
     steer(p, clamp(s.x, 12, 148), clamp(s.y, 14, 242), dt, mul, true);
     if (dist(p, puck) < 45) faceTo(p, puck.x, puck.y, 0.25);
     else if (Math.hypot(p.vx, p.vy) > 8) faceTo(p, p.x + p.vx, p.y + p.vy, 0.2);
@@ -169,7 +238,8 @@ export function teamAI(t, dt) {
         { x: 80 + (o.x < 80 ? 14 : -14), y: o.y - dir * 34 },
         { x: 80, y: 128 },
       ];
-    assign(avail, spots, mul, dt);
+    // supporting skaters look for an open passing lane to the carrier
+    assign(avail, spots, mul, dt, o.role === 'S' ? (p, sp) => openLane(p, sp, o, t, dt) : null);
   } else if (o) {
     let rest = avail,
       spots;

@@ -19,7 +19,7 @@ import { GK, SK, live } from '../players';
 import { bestMate, passTo, shoot } from '../puck';
 import { G, puck } from '../world';
 import { settings } from '../../settings';
-import { DOUBLE_AFTER, PRESS_AFTER, easingOff, nearest, readCarrier, teamMul } from './team';
+import { DOUBLE_AFTER, PRESS_AFTER, easingOff, nearest, openLane, readCarrier, teamMul } from './team';
 
 const wrap = a => ((a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
 
@@ -243,7 +243,7 @@ export function teamAIRealistic(t, dt) {
       else if (o.slot === 'C' || p.slot === 'C')
         s = { x: 80 + side * (p.slot === 'C' ? 10 : 42), y: lerp(o.y + dir * 22, aG - dir * 34, 0.5) };
       else s = { x: 80 + side * 40, y: o.y + dir * 14 };
-      roleSpot(p, space(s, t), 0.85);
+      roleSpot(p, openLane(p, space(s, t), o, t, dt), 0.85);
     }
   } else if (o && o.team === t) {
     // our goalie has it: spread out for the outlet
