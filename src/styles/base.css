@@ -21,6 +21,12 @@
   --away-ui: #ff6b71;
   --display: 'Press Start 2P', ui-monospace, monospace;
   --pixel: 'Silkscreen', ui-monospace, monospace;
+  /* Safe areas: as an installed app on a phone the page runs under the status bar (clock, notch) and above the
+     home indicator, so the layout keeps its content inside these insets (0 everywhere else). */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
   color-scheme: dark;
 }
 html {
@@ -55,8 +61,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-inline: 16px;
-  padding-block: 8px;
+  padding: max(8px, var(--sat)) max(16px, var(--sar)) max(8px, var(--sab)) max(16px, var(--sal));
   touch-action: none;
 }
 button {

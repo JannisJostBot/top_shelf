@@ -15,15 +15,15 @@ body.wide #app {
   max-width: none;
   display: block;
   position: relative;
-  padding: 0;
+  padding: var(--sat) var(--sar) var(--sab) var(--sal);
   /* the rink column is as wide as a tall portrait cabinet allows, the panels share what is left */
-  --stage-w: min(calc((100dvh - 16px) * 0.78), 50vw, 820px);
+  --stage-w: min(calc((100dvh - 16px - var(--sat) - var(--sab)) * 0.78), 50vw, 820px);
   --side-w: clamp(230px, calc((100vw - var(--stage-w)) / 2 - 34px), 400px);
   --slide: 0.6s cubic-bezier(0.22, 0.8, 0.25, 1);
   transition: padding var(--slide);
 }
 body.wide.inmatch #app {
-  padding: 8px 16px;
+  padding: max(8px, var(--sat)) max(16px, var(--sar)) max(8px, var(--sab)) max(16px, var(--sal));
 }
 body.wide #stage {
   height: 100%;
@@ -36,8 +36,8 @@ body.wide.inmatch #stage {
 }
 body.wide .side {
   position: absolute;
-  top: 8px;
-  bottom: 8px;
+  top: max(8px, var(--sat));
+  bottom: max(8px, var(--sab));
   width: var(--side-w);
   opacity: 0;
   pointer-events: none;
