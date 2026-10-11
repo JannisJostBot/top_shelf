@@ -31,7 +31,7 @@ import {
   offscreenPuck,
   replayOverlay,
 } from './overlays';
-import { R, ellipsePx } from './pixels';
+import { R } from './pixels';
 import { drawGoalie, drawRef, drawSkater } from './players';
 import { drawPuck, puckGround } from './puck';
 import { drawStands } from './stands';
@@ -181,29 +181,32 @@ export function render() {
     !G.ai0 &&
     (G.state === 'play' || G.state === 'faceoff' || G.state === 'zamboni');
   if (aim) {
-    // the steering ring: the knob shows where the mouse has pushed the aim, the tick on the rim the direction
+    // the aim pointer: a small triangle where the mouse has pushed the aim, pointing in the steering direction
     const me = G.state === 'zamboni' && G.zam ? G.zam : G.controlled;
     if (me) {
       const z = view.camZ,
-        cx = Math.round(toS(me.x) * z + ox),
-        cy = Math.round((toS(me.y) - 8) * z + oy),
-        r = Math.round(18 * z),
+        cx = toS(me.x) * z + ox,
+        cy = (toS(me.y) - 8) * z + oy,
+        r = 18 * z,
         m = Math.hypot(mouse.vx, mouse.vy) || 1,
         ax = mouse.vx / m,
-        ay = mouse.vy / m;
-      view.ctx.globalAlpha = 0.55;
-      ellipsePx(cx, cy, r + 1, r + 1, '#0b0f1a');
-      ellipsePx(cx, cy, r, r, '#ffffff');
-      view.ctx.globalAlpha = 1;
-      for (let i = 0; i < 4; i++)
-        R(Math.round(cx + ax * (r - 1 + i)) - 1, Math.round(cy + ay * (r - 1 + i)) - 1, 3, 3, '#0b0f1a');
-      for (let i = 0; i < 4; i++)
-        R(Math.round(cx + ax * (r - 1 + i)), Math.round(cy + ay * (r - 1 + i)), 1, 1, AMB);
-      const kx = Math.round(cx + mouse.vx * r),
-        ky = Math.round(cy + mouse.vy * r);
-      R(kx - 3, ky - 3, 6, 6, '#0b0f1a');
-      R(kx - 2, ky - 2, 4, 4, AMB);
-      R(kx - 2, ky - 2, 2, 2, '#ffffff');
+        ay = mouse.vy / m,
+        kx = cx + mouse.vx * r,
+        ky = cy + mouse.vy * r,
+        g = view.ctx,
+        tri = s => {
+          // tip ahead in the aim direction, the two back corners to either side
+          g.beginPath();
+          g.moveTo(kx + ax * 5 * s, ky + ay * 5 * s);
+          g.lineTo(kx - ax * 3 * s - ay * 4 * s, ky - ay * 3 * s + ax * 4 * s);
+          g.lineTo(kx - ax * 3 * s + ay * 4 * s, ky - ay * 3 * s - ax * 4 * s);
+          g.closePath();
+          g.fill();
+        };
+      g.fillStyle = '#0b0f1a';
+      tri(1.45);
+      g.fillStyle = AMB;
+      tri(1);
     }
   }
   const cur = aim ? 'none' : '';
