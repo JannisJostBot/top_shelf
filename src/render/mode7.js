@@ -19,6 +19,7 @@ import { puckPixels } from './puck';
 import { FAN_ROWS, FAN_SEATS, U32, fanTab } from './stands';
 import { ROOF_H, roofLamps, roofPainter } from './roofs';
 import { drawScoreboard } from './scoreboard';
+import { columnBuffer, drawGL, gl3dReady } from './gl3d';
 import { settings } from '../settings';
 
 /* ---------- 2.5D replay renderer (Mode 7 floor + raycast boards + billboard sprites) ---------- */
@@ -423,6 +424,9 @@ export function render3D(overlay = true) {
       }
       return fanWave[i];
     };
+    // on the GPU when it can: this loop then only works out the per-column data, and a shader colours the pixels
+    const useGL = gl3dReady(),
+      colData = useGL ? columnBuffer(CW) : null;
     let prevSeat = NaN;
     for (let x = 0; x < CW; x++) {
       const k = (x - cxs) / f,
@@ -495,6 +499,13 @@ export function render3D(overlay = true) {
       const tW = t + ROW_D0 + ROWS * ROW_DD,
         wallTop = hor + ((h - ROOF_H) * f) / tW;
       roofEdge[x] = wallTop;
+      if (useGL) {
+        colData[x * 4] = t;
+        colData[x * 4 + 1] = tIn;
+        colData[x * 4 + 2] = seatF;
+        colData[x * 4 + 3] = u + (tiny ? 1000 : 0);
+        continue;
+      }
       for (let r = 0; r <= ROWS; r++)
         rowY[r] = hor + ((h - (ROW_Z0 + r * ROW_DZ)) * f) / (t + ROW_D0 + r * ROW_DD);
       let r = 0;
@@ -557,7 +568,43 @@ export function render3D(overlay = true) {
         buf3[y * CW + x] = col;
       }
     }
-    view.ctx.putImageData(img3, 0, 0);
+    const glc = useGL
+      ? drawGL({
+          W: CW,
+          H: view.CH,
+          camX,
+          camY,
+          h,
+          Fx,
+          Fy,
+          Rx,
+          Ry,
+          f,
+          hor,
+          cxs,
+          now,
+          hype,
+          outside,
+          iceBuf: ib,
+          fanTab,
+          roof: S.roof,
+          colors: {
+            uKick: KICK,
+            uBoard: BOARD,
+            uStand: STAND,
+            uSeat: SEAT,
+            uNear1: NEARSEAT,
+            uNear2: NEARSEAT2,
+            uArena: ARENA,
+            uRibbon: RIBBON,
+            uSuite: SUITE,
+            uMid: crowd.mid,
+            uDark: crowd.dark,
+          },
+        })
+      : null;
+    if (glc) view.ctx.drawImage(glc, 0, 0);
+    else if (!useGL) view.ctx.putImageData(img3, 0, 0);
     const fog = view.ctx.createLinearGradient(0, hor, 0, hor + view.CH * 0.25);
     if (fog) {
       fog.addColorStop(0, 'rgba(10,15,30,.35)');
