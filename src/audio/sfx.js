@@ -1,5 +1,6 @@
 import { AC, crowdG, glideG, master, mixer, nz, osc, playBuf, stopBufs, strideBufs } from './engine';
-import { clatter, crowdVoices, grunt, stickClatter, swell } from './voices';
+import { RIFF_BEAT, clatter, crowdPlay, crowdVoices, grunt, stickClatter, swell } from './voices';
+import { awwBuffer, chantBuffer, eruptionBuffer, oohApplauseBuffer, riffClapsBuffer } from './crowd';
 import { BASE, K } from '../config';
 import { clamp, pick, rnd } from '../core/math';
 import { clock } from '../core/time';
@@ -24,6 +25,70 @@ function tock(k) {
     p = vary(0.08);
   nz(t, 0.03, 0.45 * k, 'bandpass', 1250 * p, null, 4, 0.001);
   osc('sine', 620 * p, t, 0.05, 0.12 * k, 400);
+}
+
+/** A rink organ: tonewheel drawbar harmonics, a percussion click on each note, and a Leslie speaker's tremolo
+ * and vibrato, slightly overdriven. Notes are [frequency, start, length] from time t. */
+function hammond(notes, t) {
+  const bus = AC.createGain(),
+    lp = AC.createBiquadFilter(),
+    ws = AC.createWaveShaper(),
+    les = AC.createOscillator(),
+    lesG = AC.createGain(),
+    trem = AC.createGain(),
+    curve = new Float32Array(1024);
+  for (let i = 0; i < 1024; i++) curve[i] = Math.tanh((i / 512 - 1) * 1.6);
+  ws.curve = curve;
+  lp.type = 'lowpass';
+  lp.frequency.value = 3800;
+  les.frequency.value = 6.4;
+  lesG.gain.value = 0.22;
+  trem.gain.value = 0.78;
+  les.connect(lesG);
+  lesG.connect(trem.gain);
+  bus.connect(ws);
+  ws.connect(lp);
+  lp.connect(trem);
+  trem.connect(master);
+  const end = Math.max(...notes.map(([, s, d]) => s + d)) + 0.3;
+  les.start(t);
+  les.stop(t + end);
+  for (const [f, s, d] of notes) {
+    for (const [m, v] of [
+      [0.5, 0.05],
+      [1, 0.09],
+      [1.5, 0.03],
+      [2, 0.06],
+      [3, 0.025],
+      [4, 0.02],
+    ]) {
+      const o = AC.createOscillator(),
+        g = AC.createGain(),
+        vib = AC.createGain();
+      o.frequency.value = f * m;
+      vib.gain.value = f * m * 0.004;
+      lesG.connect(vib);
+      vib.connect(o.frequency);
+      g.gain.setValueAtTime(0.0001, t + s);
+      g.gain.linearRampToValueAtTime(v, t + s + 0.008);
+      g.gain.setValueAtTime(v, t + s + d);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + s + d + 0.07);
+      o.connect(g);
+      g.connect(bus);
+      o.start(t + s);
+      o.stop(t + s + d + 0.12);
+    }
+    const p = AC.createOscillator(),
+      pg = AC.createGain();
+    p.frequency.value = f * 3;
+    pg.gain.setValueAtTime(0.0001, t + s);
+    pg.gain.linearRampToValueAtTime(0.05, t + s + 0.004);
+    pg.gain.exponentialRampToValueAtTime(0.0001, t + s + 0.2);
+    p.connect(pg);
+    pg.connect(bus);
+    p.start(t + s);
+    p.stop(t + s + 0.25);
+  }
 }
 
 export const SFX = {
@@ -126,7 +191,7 @@ export const SFX = {
       nz(t + 0.01, 0.4, 0.22, 'bandpass', 1500, 900, 3);
       nz(t + 0.02, 0.3, 0.1, 'highpass', 4000, 2500, 1);
     }
-    crowdVoices(9, 'o', 1.1, 0.07);
+    crowdPlay(oohApplauseBuffer(AC, true), 0.13);
     swell(mixer.crowdBase + 0.1, 0.1, 0.3, 0.9);
   },
   // body contact family: every outcome gets its own clearly different sound
@@ -158,7 +223,7 @@ export const SFX = {
     osc('sine', 48, t + 0.2, 0.3, 0.7, 28, 0.003);
     nz(t + 0.2, 0.18, 0.45, 'lowpass', 320, 140, 1, 0.003);
     stickClatter(t + 0.26);
-    crowdVoices(12, 'o', 1.3, 0.09);
+    crowdPlay(oohApplauseBuffer(AC, true), 0.15);
     swell(mixer.crowdBase + 0.14, 0.08, 0.35, 1);
   },
   hitMed(a) {
@@ -176,7 +241,7 @@ export const SFX = {
     setTimeout(() => {
       if (AC && !settings.muted) playBuf(pick(strideBufs), 0.3, 1.25);
     }, 260);
-    crowdVoices(7, 'o', 0.8, 0.05);
+    crowdPlay(oohApplauseBuffer(AC, true), 0.09);
   },
   hitSoft(a) {
     const t = AC.currentTime,
@@ -323,17 +388,19 @@ export const SFX = {
     }
     SFX.cheer();
   },
+  // the whole arena jumps up at once
   cheer() {
-    crowdVoices(14, 'a', 2.6, 0.11);
-    crowdVoices(8, 'e', 2.2, 0.06);
+    crowdPlay(eruptionBuffer(AC), 0.21);
     swell(0.22, 0.25, 1.6, 2);
   },
+  // a deflated "awww" and a few claps
   groan() {
-    crowdVoices(12, 'u', 1.5, 0.09, 0.72);
+    crowdPlay(awwBuffer(AC), 0.16);
     swell(mixer.crowdBase + 0.06, 0.2, 0.4, 1);
   },
+  // an "oooh", then applause for the effort
   ooh() {
-    crowdVoices(10, 'o', 1.2, 0.08);
+    crowdPlay(oohApplauseBuffer(AC, false), 0.15);
     swell(mixer.crowdBase + 0.08, 0.25, 0.3, 1);
   },
   buzzer() {
@@ -355,23 +422,21 @@ export const SFX = {
     osc('square', 330, t, 0.08, 0.045);
     osc('square', 220, t + 0.08, 0.16, 0.045);
   },
+  // the rink organ plays "da-da da-da-da" and the crowd claps it back twice
   organ() {
     const t = AC.currentTime + 0.05,
-      N = [
-        [392, 0, 0.14],
-        [523, 0.16, 0.14],
-        [659, 0.32, 0.14],
-        [784, 0.48, 0.3],
-        [659, 0.84, 0.14],
-        [784, 1.0, 0.55],
-      ];
-    for (const [f, s, d] of N)
-      for (const [m, v] of [
-        [1, 0.07],
-        [2, 0.035],
-        [4, 0.014],
-      ])
-        osc('sine', f * m, t + s, d + 0.08, v, null, 0.01);
+      b = RIFF_BEAT;
+    hammond(
+      [
+        [523, 0, 0.3],
+        [523, b, 0.3],
+        [659, 2 * b, 0.18],
+        [659, 2.5 * b, 0.18],
+        [784, 3 * b, 0.4],
+      ],
+      t,
+    );
+    crowdPlay(riffClapsBuffer(AC, b), 0.07, 0.05);
   },
 };
 export function S(n, a) {
@@ -382,6 +447,7 @@ export function S(n, a) {
 }
 export function audioTick() {
   glideTick();
+  chantTick();
   if (!AC || !crowdG || settings.muted || mixer.crowdBase <= 0) return;
   const t = AC.currentTime;
   if (t > mixer.swellEnd && clock.now > mixer.wobT) {
@@ -442,4 +508,15 @@ function glideTick() {
     glideLevel = target;
     glideG.gain.setTargetAtTime(target, AC.currentTime, 0.12);
   }
+}
+
+// Now and then during play the crowd starts a "Let's go!" chant by itself (never over a goal or other big swell).
+let chantAt = 0;
+function chantTick() {
+  if (!AC || G.demo || settings.muted || G.state !== 'play') return;
+  if (!chantAt) chantAt = clock.now + rnd(25, 45);
+  if (clock.now < chantAt) return;
+  chantAt = clock.now + rnd(45, 80);
+  if (AC.currentTime < mixer.swellEnd) return;
+  crowdPlay(chantBuffer(AC), 0.14);
 }

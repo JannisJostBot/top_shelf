@@ -1,5 +1,5 @@
 import { AC, crowdBus, crowdG, master, mixer, noiseBuf, nz, osc } from './engine';
-import { shoutBuffer } from './crowd';
+import { awwBuffer, chantBuffer, eruptionBuffer, oohApplauseBuffer, riffClapsBuffer, shoutBuffer } from './crowd';
 import { pick, rnd } from '../core/math';
 
 // voices: a buzzy source shaped by three vowel formants
@@ -57,24 +57,34 @@ export function crowdVoices(n, v, dur, vol, drop) {
   g.connect(crowdBus);
   s.start();
 }
+/** Plays a pre-rendered crowd sound through the crowd bus (and so the arena reverb). */
+export function crowdPlay(buf, vol, delay = 0) {
+  const s = AC.createBufferSource(),
+    g = AC.createGain();
+  s.buffer = buf;
+  g.gain.value = vol;
+  s.connect(g);
+  g.connect(crowdBus);
+  s.start(AC.currentTime + delay);
+}
+// the organ riff's tempo (seconds per beat), shared by the organ and the crowd clapping it back
+export const RIFF_BEAT = 0.42;
 // The reactions the game uses (see SFX), pre-rendered one at a time in the background after audio starts.
 const REACTIONS = [
-  [14, 'a', 2.6],
-  [8, 'e', 2.2],
-  [12, 'u', 1.5, 0.72],
-  [10, 'o', 1.2],
-  [9, 'o', 1.1],
-  [12, 'o', 1.3],
-  [14, 'a', 1.8],
-  [7, 'o', 0.8],
-  [6, 'o', 0.7],
-  [9, 'a', 0.9],
-  [5, 'a', 0.5],
+  () => eruptionBuffer(AC),
+  () => awwBuffer(AC),
+  () => oohApplauseBuffer(AC, false),
+  () => oohApplauseBuffer(AC, true),
+  () => riffClapsBuffer(AC, RIFF_BEAT),
+  () => chantBuffer(AC),
+  () => shoutBuffer(AC, 'a', 1.8, 14),
+  () => shoutBuffer(AC, 'o', 0.7, 6),
+  () => shoutBuffer(AC, 'a', 0.9, 9),
+  () => shoutBuffer(AC, 'a', 0.5, 5),
 ];
 export function warmShouts(i = 0) {
   if (!AC || i >= REACTIONS.length) return;
-  const [n, v, dur, drop] = REACTIONS[i];
-  shoutBuffer(AC, v, dur, n, drop);
+  REACTIONS[i]();
   setTimeout(() => warmShouts(i + 1), 120);
 }
 export function clatter(t, n, vol) {

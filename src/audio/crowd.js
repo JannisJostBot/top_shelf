@@ -281,6 +281,231 @@ export function shoutBuffer(AC, vowel, dur, people, drop) {
   return buf;
 }
 
+/* ---------- reactions built from groups of voices, claps and whistles ---------- */
+const stereo = sec => {
+  const n = Math.ceil(sec * SR);
+  return [new Float32Array(n), new Float32Array(n)];
+};
+const voiceF0 = (female, lo, hi) => (female ? rnd(lo[1], hi[1]) : rnd(lo[0], hi[0]));
+
+/** `n` people clapping once around time t (each a little early or late). */
+function claps(L, R, t, n, spread, level) {
+  const res = resonator();
+  for (let c = 0; c < n; c++) {
+    const j0 = Math.floor((t + rnd(-spread, spread)) * SR);
+    if (j0 < 0) continue;
+    const amp = level * rnd(0.4, 1),
+      pan = rnd(-1, 1);
+    res.tune(1400 * rnd(0.75, 1.3), 1.2);
+    for (let i = 0; i < SR * 0.012 && j0 + i < L.length; i++) {
+      const y = res.run((Math.random() * 2 - 1) * Math.exp(-i / (SR * 0.0025))) * amp;
+      L[j0 + i] += y * (1 - pan) * 0.5;
+      R[j0 + i] += y * (1 + pan) * 0.5;
+    }
+  }
+}
+/** Free applause between t0 and t1: `rate` claps per second, fading in over `fadeIn` and out at the end. */
+function applause(L, R, t0, t1, rate, level, fadeIn) {
+  const res = resonator();
+  for (let c = 0; c < (t1 - t0) * rate; c++) {
+    const t = t0 + Math.random() * (t1 - t0),
+      j0 = Math.floor(t * SR),
+      amp = rnd(0.2, 0.6) * level * Math.min(1, (t - t0) / fadeIn) * Math.min(1, (t1 - t) / 0.6),
+      pan = rnd(-1, 1);
+    res.tune(1400 * rnd(0.8, 1.2), 1.2);
+    for (let i = 0; i < SR * 0.012 && j0 + i < L.length; i++) {
+      const y = res.run((Math.random() * 2 - 1) * Math.exp(-i / (SR * 0.0025))) * amp;
+      L[j0 + i] += y * (1 - pan) * 0.5;
+      R[j0 + i] += y * (1 + pan) * 0.5;
+    }
+  }
+}
+/** Two-finger whistles from fans in the stands; some go up and come back down. */
+function whistles(L, R, count, t0, t1, level = 0.18) {
+  for (let w = 0; w < count; w++) {
+    const st = rnd(t0, t1),
+      ln = rnd(0.35, 0.7),
+      f = rnd(1900, 2800),
+      pan = rnd(-0.8, 0.8),
+      gl = Math.cos(((pan + 1) * Math.PI) / 4),
+      gr = Math.sin(((pan + 1) * Math.PI) / 4),
+      wolf = Math.random() < 0.3;
+    let ph = 0;
+    for (let i = 0; i < ln * SR; i++) {
+      const t = i / SR,
+        k = t / ln,
+        fr = wolf
+          ? f * (0.8 + 0.4 * Math.sin(k * Math.PI))
+          : f * (1 + 0.12 * Math.sin(k * Math.PI)) * (k > 0.7 ? 1 - (k - 0.7) * 0.4 : 1);
+      ph += fr / SR;
+      const y = Math.sin(2 * Math.PI * ph) * level * smooth(k / 0.1) * smooth((1 - k) / 0.2),
+        j = Math.floor((st + t) * SR);
+      if (j < L.length) {
+        L[j] += y * gl;
+        R[j] += y * gr;
+      }
+    }
+  }
+}
+/**
+ * Many people shouting together.
+ * @param {object} o  voices; t0 and spread (start times); len, atk ([min, max] seconds); female (share);
+ *   lo, hi ([male, female] pitch ranges); vowels (picked per voice); vowelAt(x, vowel) (optional, x = 0..1 through
+ *   the voice); pitch(x, k) (multiplier, k = a random 0..1 per voice); breath; level; fall (how early it fades)
+ */
+function group(L, R, o) {
+  for (let v = 0; v < o.voices; v++) {
+    const start = (o.t0 || 0) + rnd(0, o.spread),
+      len = rnd(o.len[0], o.len[1]),
+      atk = rnd(o.atk[0], o.atk[1]),
+      female = Math.random() < (o.female ?? 0.4),
+      f0 = voiceF0(female, o.lo, o.hi),
+      level = rnd(0.35, 1) * (o.level || 1),
+      vw = pick(o.vowels),
+      k = Math.random();
+    addVoice(L, R, {
+      f0,
+      pitch: t => o.pitch(t / len, k),
+      amp: t => (t > len ? 0 : level * smooth(t / atk) * Math.min(1, ((len - t) / len) * (o.fall || 2.2))),
+      vowel: o.vowelAt ? t => o.vowelAt(t / len, vw) : () => vw,
+      start,
+      len,
+      breath: o.breath ?? 0.45,
+      pan: rnd(-0.95, 0.95),
+    });
+  }
+}
+/** A chanted line: every voice says the same syllables ([time, length, vowel, pitch]) on the beat, a little apart. */
+function chantVoices(L, R, syllables, voices) {
+  for (let v = 0; v < voices; v++) {
+    const female = Math.random() < 0.35,
+      f0 = voiceF0(female, [125, 230], [190, 320]),
+      jit = syllables.map(() => rnd(-0.035, 0.035)),
+      lv = rnd(0.4, 1);
+    const at = t => {
+      for (let i = syllables.length - 1; i >= 0; i--) if (t >= syllables[i][0] + jit[i]) return i;
+      return -1;
+    };
+    addVoice(L, R, {
+      f0,
+      pitch: t => {
+        const i = at(t);
+        return i < 0 ? 1 : syllables[i][3];
+      },
+      amp: t => {
+        const i = at(t);
+        if (i < 0) return 0;
+        const x = t - syllables[i][0] - jit[i],
+          d = syllables[i][1];
+        return x > d ? 0 : lv * Math.min(1, x / 0.025) * Math.min(1, (d - x) / 0.07);
+      },
+      vowel: t => syllables[Math.max(0, at(t))][2],
+      start: 0,
+      len: L.length / SR,
+      breath: 0.4,
+      pan: rnd(-0.95, 0.95),
+    });
+  }
+}
+/** Renders once per key and keeps it (every reaction below is fixed, so one take each is enough). */
+const made = new Map();
+function once(key, render) {
+  let b = made.get(key);
+  if (!b) made.set(key, (b = render()));
+  return b;
+}
+function finish(AC, L, R) {
+  normalizeRms([L, R], 0.3);
+  return toBuffer(AC, L, R);
+}
+
+/** Goal: the whole arena jumps up at once. An instant roar, high yelling, whistles, thunderous applause. */
+export const eruptionBuffer = AC =>
+  once('eruption', () => {
+    const [L, R] = stereo(4.6);
+    group(L, R, {
+      voices: 70,
+      spread: 0.08,
+      len: [2.6, 3.8],
+      atk: [0.03, 0.08],
+      lo: [180, 300],
+      hi: [300, 480],
+      vowels: ['a', 'a', 'ae', 'o', 'e'],
+      pitch: (x, k) => 1 + (0.1 + k * 0.2) * Math.sin(Math.min(1, x * 1.4) * Math.PI),
+      breath: 0.5,
+    });
+    whistles(L, R, 7, 0.1, 2.4);
+    applause(L, R, 0.25, 4.4, 260, 1, 0.25);
+    return finish(AC, L, R);
+  });
+
+/** Goal against: a deflated "awww" that sags all the way down, then a few scattered claps. */
+export const awwBuffer = AC =>
+  once('aww', () => {
+    const [L, R] = stereo(2.6);
+    group(L, R, {
+      voices: 40,
+      spread: 0.12,
+      len: [1.4, 2],
+      atk: [0.04, 0.12],
+      lo: [150, 240],
+      hi: [260, 380],
+      vowels: ['a', 'o', 'a'],
+      vowelAt: (x, v) => (x < 0.5 ? v : 'o'),
+      pitch: x => 1.15 - 0.55 * smooth(x),
+      breath: 0.5,
+      fall: 1.6,
+    });
+    applause(L, R, 1.6, 2.6, 18, 0.8, 0.2);
+    return finish(AC, L, R);
+  });
+
+/**
+ * Near miss: an "oooh", then the crowd applauds the effort. `short` is the version after big hits: a quicker
+ * "ooh" and only a little applause.
+ */
+export const oohApplauseBuffer = (AC, short) =>
+  once(short ? 'oohShort' : 'ooh', () => {
+    const k = short ? 0.75 : 1,
+      [L, R] = stereo(2.6 * k);
+    group(L, R, {
+      voices: short ? 24 : 30,
+      spread: 0.12,
+      len: [0.9 * k, 1.2 * k],
+      atk: [0.08, 0.18],
+      lo: [140, 230],
+      hi: [250, 380],
+      vowels: ['o', 'o', 'u'],
+      pitch: x => 1 + 0.12 * Math.sin(x * Math.PI),
+      breath: 0.45,
+    });
+    applause(L, R, 0.7 * k, 2.5 * k, short ? 60 : 110, short ? 0.7 : 0.9, 0.4);
+    return finish(AC, L, R);
+  });
+
+/** The crowd clapping the organ's "da-da da-da-da" back, twice; `beat` matches the organ riff. */
+export const riffClapsBuffer = (AC, beat) =>
+  once('riffClaps', () => {
+    const [L, R] = stereo(8 * beat + 1);
+    for (const bar of [4, 8]) for (const b of [0, 1, 2, 2.5, 3]) claps(L, R, (bar - 0.5 + b) * beat, 45, 0.025, 0.55);
+    return finish(AC, L, R);
+  });
+
+/** "Let's go Blue!" (clap clap clap-clap-clap), twice. */
+export const chantBuffer = AC =>
+  once('chant', () => {
+    const beat = 0.45,
+      bar = 8 * beat,
+      [L, R] = stereo(2 * bar + 1);
+    const syl = [];
+    for (const b0 of [0, bar]) {
+      syl.push([b0, 0.22, 'e', 1], [b0 + beat, 0.28, 'o', 1.12], [b0 + 2 * beat, 0.45, 'u', 1]);
+      for (const b of [4, 5, 6, 6.5, 7]) claps(L, R, b0 + b * beat, 40, 0.025, 0.5);
+    }
+    chantVoices(L, R, syl, 40);
+    return finish(AC, L, R);
+  });
+
 /** Impulse response of a large arena: a short pre-delay, then a dense, darkening ~2.4 s decay. */
 export function arenaImpulse(AC) {
   const sr = AC.sampleRate,
