@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Menu Concepts 2</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap"
+    />
+    <style>
+      /* Design mockups only: round two of the Top Shelf main menu, three takes on the "matchday program" direction
+         that make the menu unmistakably hockey and part of this game. Not used by the game. */
+      :root {
+        --bg: #070a14;
+        --muted: #8f9cc0;
+        --led: #ffc845;
+        --display: 'Press Start 2P', monospace;
+        --pixel: 'Silkscreen', monospace;
+        /* Frost Hollow's inks; every arena prints in its own two */
+        --p1: #2f6bd8;
+        --p2: #e0414a;
+        --paper: #eef3f7; /* fresh ice */
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: #eaf0ff;
+        font-family: var(--pixel);
+        font-size: 13px;
+        padding: 28px 16px 80px;
+      }
+      header.page,
+      .concept {
+        max-width: 1240px;
+        margin: 0 auto;
+      }
+      header.page h1 {
+        font-family: var(--display);
+        font-size: 16px;
+        color: var(--led);
+        margin: 0 0 10px;
+      }
+      header.page p,
+      .why {
+        color: var(--muted);
+        max-width: 860px;
+        line-height: 1.55;
+        margin: 0 0 8px;
+      }
+      .concept {
+        border-top: 2px solid #1b2744;
+        padding-top: 22px;
+        margin-top: 34px;
+      }
+      .concept h2 {
+        font-family: var(--display);
+        font-size: 13px;
+        margin: 0 0 8px;
+      }
+      .concept h2 small {
+        color: var(--led);
+        margin-right: 10px;
+      }
+      ul.notes {
+        color: var(--muted);
+        margin: 6px 0 16px;
+        padding-left: 18px;
+        line-height: 1.5;
+        max-width: 860px;
+      }
+      .frames {
+        display: flex;
+        gap: 22px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .label {
+        font-size: 10px;
+        color: var(--muted);
+        margin: 0 0 6px;
+      }
+      .phone {
+        width: 340px;
+        height: 700px;
+        flex: none;
+        border-radius: 34px;
+        border: 8px solid #1d2233;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+      }
+      .desk {
+        width: 840px;
+        max-width: 100%;
+        aspect-ratio: 16 / 9;
+        flex: 1 1 560px;
+        border: 6px solid #1d2233;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+      }
+      .swatches {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 8px 0 14px;
+      }
+      .swatches span {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .swatches i {
+        width: 22px;
+        height: 14px;
+        background: linear-gradient(90deg, var(--a) 50%, var(--b) 50%);
+      }
+
+      /* ---------- shared print look ---------- */
+      .print {
+        background: var(--paper);
+        color: var(--p1);
+        font-family: var(--pixel);
+      }
+      .grain {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(rgba(0, 0, 0, 0.07) 0.6px, transparent 0.8px) 0 0 / 3px 3px,
+          radial-gradient(rgba(0, 0, 0, 0.05) 0.6px, transparent 0.8px) 1px 2px / 5px 5px;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 9;
+      }
+      .ai {
+        font-size: 8px;
+        line-height: 1.4;
+      }
+      .ai b {
+        color: var(--p2);
+      }
+      .ttl {
+        font-family: var(--display);
+        line-height: 0.95;
+        color: var(--p1);
+        text-shadow: 3px 2px 0 var(--p2); /* the second ink a little off register */
+      }
+      .dot2 {
+        background: radial-gradient(circle, var(--p2) 0 1.4px, transparent 1.7px) 0 0 / 5px 5px;
+      }
+      .dot1 {
+        background: radial-gradient(circle, var(--p1) 0 1.4px, transparent 1.7px) 0 0 / 5px 5px;
+      }
+      .stub {
+        position: absolute;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        border: 2px solid var(--p2);
+        color: var(--p2);
+        background: var(--paper);
+        z-index: 3;
+      }
+      .stub div {
+        padding: 8px 10px;
+        font-size: 9px;
+        line-height: 1.5;
+      }
+      .stub b {
+        display: block;
+        font-family: var(--display);
+        font-size: 9px;
+        margin-bottom: 3px;
+      }
+      .stub .go {
+        border-left: 2px dashed var(--p2);
+        background: var(--p2);
+        color: var(--paper);
+        font-family: var(--display);
+        font-size: 10px;
+        display: grid;
+        place-items: center;
+        padding: 0 14px;
+      }
+      svg.px {
+        shape-rendering: crispEdges;
+        image-rendering: pixelated;
+      }
+
+      /* ================= E: THE RINK IS THE MENU ================= */
+      .rink {
+        position: absolute;
+        border: 4px solid var(--p1);
+        border-radius: 46px;
+        background: var(--paper);
+        z-index: 1;
+      }
+      /* red centre line, blue lines (vertical rink on a phone) */
+      .rink.v .cl {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 4px;
+        margin-top: -2px;
+        background: repeating-linear-gradient(90deg, var(--p2) 0 10px, transparent 10px 14px);
+      }
+      .rink.v .bl {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: var(--p1);
+      }
+      .rink.v .gl {
+        position: absolute;
+        left: 6%;
+        right: 6%;
+        height: 2px;
+        background: var(--p2);
+      }
+      .rink .circ {
+        position: absolute;
+        width: 92px;
+        height: 92px;
+        border: 3px solid var(--p2);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        display: grid;
+        place-items: center;
+        text-align: center;
+        font-family: var(--display);
+        font-size: 9px;
+        color: var(--p1);
+        line-height: 1.5;
+      }
+      .rink .circ::after {
+        content: '';
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--p2);
+        bottom: 12px;
+      }
+      .rink .circ.center {
+        width: 120px;
+        height: 120px;
+        border-color: var(--p1);
+        background: radial-gradient(circle, rgba(47, 107, 216, 0.14) 0 1.4px, transparent 1.7px) 0 0 / 5px 5px;
+      }
+      .rink .circ.center .puckgo {
+        display: grid;
+        gap: 8px;
+        justify-items: center;
+        color: var(--p2);
+        font-size: 10px;
+      }
+      .rink .circ.center::after {
+        display: none;
+      }
+      .rink .circ.on {
+        background: var(--p1);
+        color: var(--paper);
+        border-color: var(--p1);
+      }
+      .rink .circ.on::after {
+        background: var(--paper);
+      }
+      .rink .net {
+        position: absolute;
+        left: 50%;
+        width: 40px;
+        height: 16px;
+        transform: translateX(-50%);
+        border: 3px solid var(--p2);
+        background: repeating-linear-gradient(45deg, rgba(224, 65, 74, 0.35) 0 2px, transparent 2px 5px);
+      }
+      .rink .crease {
+        position: absolute;
+        left: 50%;
+        width: 56px;
+        height: 22px;
+        transform: translateX(-50%);
+        border: 2px solid var(--p2);
+        background: rgba(47, 107, 216, 0.12);
+      }
+      .rink .bench {
+        position: absolute;
+        width: 26px;
+        border: 3px solid var(--p1);
+        background: var(--paper);
+        font-family: var(--display);
+        font-size: 7px;
+        color: var(--p1);
+        writing-mode: vertical-rl;
+        display: grid;
+        place-items: center;
+      }
+      .rink .bench.on {
+        background: var(--p1);
+        color: var(--paper);
+      }
+      .rink .tag {
+        position: absolute;
+        font-size: 8px;
+        color: var(--p2);
+      }
+      .E .mast {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        top: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        z-index: 3;
+      }
+      .E .mast .ttl {
+        font-size: 26px;
+      }
+      .E .mast small {
+        font-size: 8px;
+        text-align: right;
+        line-height: 1.5;
+      }
+
+      /* ================= F: GAME-ART COVER ================= */
+      .F .cover {
+        position: absolute;
+        overflow: hidden;
+      }
+      .F .boards {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 38px;
+        background: var(--paper);
+        border-top: 3px solid var(--p1);
+        border-bottom: 6px solid var(--p2);
+        display: flex;
+        z-index: 2;
+      }
+      .F .boards span {
+        flex: 1;
+        border-right: 3px solid var(--p1);
+        font-family: var(--display);
+        font-size: 7px;
+        display: grid;
+        place-items: center;
+        color: var(--p1);
+      }
+      .F .boards span:nth-child(2n) {
+        color: var(--p2);
+      }
+      .F .crowd {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        background:
+          radial-gradient(circle at 50% 30%, var(--p1) 0 3px, transparent 3.5px) 0 0 / 12px 14px,
+          radial-gradient(circle at 50% 30%, var(--p2) 0 3px, transparent 3.5px) 6px 7px / 12px 14px;
+        opacity: 0.85;
+      }
+      .F .glass {
+        position: absolute;
+        left: 0;
+        right: 0;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.15));
+        z-index: 1;
+      }
+      .F .ice {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+          repeating-linear-gradient(170deg, rgba(47, 107, 216, 0.08) 0 2px, transparent 2px 14px),
+          var(--paper);
+      }
+      .F .sprite {
+        position: absolute;
+        z-index: 4;
+      }
+      .F .ttl {
+        position: absolute;
+        z-index: 5;
+      }
+      .F .scorebar {
+        position: absolute;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        border: 3px solid var(--p1);
+        background: var(--paper);
+        z-index: 3;
+        font-family: var(--display);
+        font-size: 10px;
+      }
+      .F .scorebar div {
+        padding: 8px 6px;
+        text-align: center;
+      }
+      .F .scorebar .h {
+        background: var(--p1);
+        color: var(--paper);
+      }
+      .F .scorebar .a {
+        background: var(--p2);
+        color: var(--paper);
+      }
+      .F .scorebar .vs {
+        color: var(--p2);
+      }
+      /* the print treatment over the game art: a dot screen and a faint second-ink misregistration */
+      .F .screen {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle, rgba(238, 243, 247, 0.55) 0 0.9px, transparent 1.2px) 0 0 / 4px 4px,
+          linear-gradient(90deg, rgba(224, 65, 74, 0.08), rgba(47, 107, 216, 0.08));
+        mix-blend-mode: screen;
+        box-shadow: inset 2px 1px 0 rgba(224, 65, 74, 0.5);
+      }
+      .F .toc {
+        position: absolute;
+        z-index: 3;
+        display: grid;
+      }
+      .F .toc div {
+        display: grid;
+        grid-template-columns: 22px 1fr;
+        align-items: center;
+        gap: 6px;
+        border-bottom: 2px solid var(--p1);
+        padding: 7px 0;
+        font-size: 12px;
+      }
+      .F .toc .pk {
+        width: 16px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--p1);
+        box-shadow: 0 2px 0 var(--p2);
+      }
+      .F .toc div.on {
+        color: var(--p2);
+      }
+      .F .toc div.on .pk {
+        background: var(--p2);
+        box-shadow: 0 2px 0 var(--p1);
+      }
+
+      /* ================= G: NIGHT EDITION SCORESHEET ================= */
+      .G {
+        --paper: #0f1730; /* dark stock, like the game's screens */
+        --ink: #e8f0f7; /* ice white */
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--pixel);
+      }
+      .G .grain {
+        background:
+          radial-gradient(rgba(255, 255, 255, 0.05) 0.6px, transparent 0.8px) 0 0 / 3px 3px,
+          radial-gradient(rgba(255, 255, 255, 0.035) 0.6px, transparent 0.8px) 1px 2px / 5px 5px;
+        mix-blend-mode: screen;
+      }
+      .G .ttl {
+        color: var(--ink);
+        text-shadow: 3px 2px 0 var(--p2);
+      }
+      .G .sheet {
+        position: absolute;
+        border: 2px solid var(--ink);
+        z-index: 2;
+      }
+      .G .row {
+        display: grid;
+        border-bottom: 1px solid rgba(232, 240, 247, 0.5);
+      }
+      .G .row > * {
+        padding: 6px 7px;
+        border-right: 1px solid rgba(232, 240, 247, 0.5);
+        font-size: 10px;
+      }
+      .G .row > *:last-child {
+        border-right: 0;
+      }
+      .G .hd {
+        background: var(--ink);
+        color: var(--paper);
+        font-family: var(--display);
+        font-size: 8px;
+      }
+      .G .hd.home {
+        background: var(--p1);
+        color: var(--ink);
+      }
+      .G .lbl {
+        font-size: 7px;
+        color: rgba(232, 240, 247, 0.6);
+        display: block;
+      }
+      .G .num {
+        font-family: var(--display);
+        font-size: 9px;
+        color: var(--led);
+      }
+      .G .pos {
+        font-family: var(--display);
+        font-size: 9px;
+        text-align: center;
+      }
+      .G .pos i {
+        font-style: normal;
+        display: inline-grid;
+        place-items: center;
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--ink);
+        border-radius: 50%;
+      }
+      .G .stamp {
+        position: absolute;
+        z-index: 3;
+        border: 3px solid var(--p2);
+        color: var(--p2);
+        font-family: var(--display);
+        font-size: 12px;
+        padding: 10px 14px;
+        transform: rotate(-6deg);
+        background: rgba(15, 23, 48, 0.6);
+        box-shadow: 0 0 0 3px rgba(224, 65, 74, 0.25);
+      }
+      .G .menu {
+        position: absolute;
+        z-index: 2;
+        display: grid;
+        gap: 6px;
+      }
+      .G .menu span {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px dashed rgba(232, 240, 247, 0.4);
+        padding: 4px 0;
+        font-size: 11px;
+      }
+      .G .menu span b {
+        font-family: var(--display);
+        font-size: 8px;
+        color: var(--p2);
+      }
+      .G .menu span.on {
+        color: var(--led);
+      }
+      .G .ai {
+        color: rgba(232, 240, 247, 0.75);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page">
+      <h1>MAIN MENU · ROUND TWO</h1>
+      <p>
+        Three takes on the matchday program, built so you see hockey at first glance and the game's own pixel look:
+        the rink itself, the game's sprites, and the paperwork of a real game night. All keep D's print craft (two inks
+        from the arena, halftone, paper grain, the ticket stub to play) and use the game's pixel fonts.
+      </p>
+      <div class="swatches">
+        <span><i style="--a: #2f6bd8; --b: #e0414a"></i>Frost Hollow</span>
+        <span><i style="--a: #13897f; --b: #e0573c"></i>Harbor Dome</span>
+        <span><i style="--a: #1b2333; --b: #f08a12"></i>Pack Ice</span>
+        <span><i style="--a: #22b8e6; --b: #ff3fb4"></i>Neon Coliseum</span>
+        <span><i style="--a: #1f6b3a; --b: #b5482a"></i>Timberline</span>
+        <span><i style="--a: #3a4250; --b: #d1361b"></i>Ironworks</span>
+      </div>
+    </header>
+
+    <!-- ============ E ============ -->
+    <section class="concept">
+      <h2><small>E</small>The rink is the menu</h2>
+      <p class="why">
+        The page is a rink diagram printed on ice-white stock: boards, red centre line, blue lines, face-off circles,
+        creases and nets, exactly as you see the ice in the game's top-down view. Every section sits on the spot of the
+        rink where it belongs: <b>Play</b> on the centre face-off circle with the puck on the dot, <b>Train</b> and
+        <b>Watch</b> in the end-zone circles, <b>Line-up</b> on the players' bench, <b>Setup</b> in the penalty box,
+        <b>Teams</b> and <b>Arena</b> in the other zone, <b>Keys</b> and <b>Guide</b> at the referee's crease. The
+        blue and red lines are the two inks, so each arena prints its own rink.
+      </p>
+      <ul class="notes">
+        <li>Unmistakably hockey; it is the same picture as the game, so moving from menu to match feels continuous.</li>
+        <li>Picking a circle could "drop the puck" there: a small animation before that section opens.</li>
+        <li>Phone shows the rink upright like in the game; desktop turns it sideways with the ticket beside it.</li>
+      </ul>
+      <div class="frames">
+        <div>
+          <p class="label">Phone</p>
+          <div class="phone print E">
+            <div class="mast">
+              <div class="ttl">TOP<br />SHELF</div>
+              <small>MATCHDAY PROGRAM<br />FROST HOLLOW ARENA</small>
+            </div>
+            <div class="rink v" style="left: 16px; right: 16px; top: 92px; bottom: 116px">
+              <div class="crease" style="top: 22px"></div>
+              <div class="net" style="top: 8px"></div>
+              <div class="gl" style="top: 28px"></div>
+              <div class="circ" style="left: 26%; top: 18%">TRAIN</div>
+              <div class="circ" style="left: 74%; top: 18%">WATCH</div>
+              <div class="bl" style="top: 33%"></div>
+              <div class="cl"></div>
+              <div class="circ center" style="left: 50%; top: 50%">
+                <div class="puckgo">
+                  PLAY
+                  <svg class="px" width="28" height="14" viewBox="0 0 7 5">
+                    <rect x="1" y="0" width="5" height="1" fill="var(--p1)" />
+                    <rect x="0" y="1" width="7" height="3" fill="var(--p1)" />
+                    <rect x="1" y="4" width="5" height="1" fill="var(--p1)" />
+                    <rect x="1" y="1" width="2" height="1" fill="#8fb0ea" />
+                    <rect x="1" y="3" width="5" height="1" fill="#16306b" />
+                  </svg>
+                </div>
+              </div>
+              <div class="bl" style="top: 67%"></div>
+              <div class="circ on" style="left: 26%; top: 82%">TEAMS</div>
+              <div class="circ" style="left: 74%; top: 82%">ARENA</div>
+              <div class="gl" style="bottom: 28px"></div>
+              <div class="crease" style="bottom: 22px"></div>
+              <div class="net" style="bottom: 8px"></div>
+              <div class="bench" style="left: -16px; top: 38%; height: 24%">LINE-UP</div>
+              <div class="bench" style="right: -16px; top: 42%; height: 16%">SETUP</div>
+              <div class="tag" style="left: 50%; bottom: 52px; transform: translateX(-50%)">KEYS · GUIDE</div>
+            </div>
+            <div class="stub" style="left: 16px; right: 16px; bottom: 44px">
+              <div><b>BLUE vs NAVY</b>Pro · Realistic · 3 × 1:00</div>
+              <div class="go">PLAY</div>
+            </div>
+            <div class="ai" style="position: absolute; left: 16px; right: 16px; bottom: 14px"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+        </div>
+        <div style="flex: 1 1 560px">
+          <p class="label">Desktop</p>
+          <div class="desk print E">
+            <div class="mast" style="left: 24px; right: 24px">
+              <div class="ttl" style="font-size: 30px">TOP SHELF</div>
+              <small>MATCHDAY PROGRAM · No. 07<br />FROST HOLLOW ARENA · HOME OF THE WOLVES</small>
+            </div>
+            <!-- the rink sideways -->
+            <div class="rink" style="left: 24px; right: 270px; top: 70px; bottom: 24px">
+              <div style="position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; margin-left: -2px; background: repeating-linear-gradient(180deg, var(--p2) 0 10px, transparent 10px 14px)"></div>
+              <div style="position: absolute; top: 0; bottom: 0; left: 33%; width: 6px; background: var(--p1)"></div>
+              <div style="position: absolute; top: 0; bottom: 0; left: 67%; width: 6px; background: var(--p1)"></div>
+              <div style="position: absolute; top: 6%; bottom: 6%; left: 7%; width: 2px; background: var(--p2)"></div>
+              <div style="position: absolute; top: 6%; bottom: 6%; right: 7%; width: 2px; background: var(--p2)"></div>
+              <div class="circ" style="left: 18%; top: 28%">TRAIN</div>
+              <div class="circ" style="left: 18%; top: 72%">WATCH</div>
+              <div class="circ center" style="left: 50%; top: 50%"><div class="puckgo">PLAY<svg class="px" width="28" height="14" viewBox="0 0 7 5"><rect x="1" y="0" width="5" height="1" fill="var(--p1)" /><rect x="0" y="1" width="7" height="3" fill="var(--p1)" /><rect x="1" y="4" width="5" height="1" fill="var(--p1)" /><rect x="1" y="3" width="5" height="1" fill="#16306b" /></svg></div></div>
+              <div class="circ on" style="left: 82%; top: 28%">TEAMS</div>
+              <div class="circ" style="left: 82%; top: 72%">ARENA</div>
+              <div class="tag" style="left: 35%; top: 7%">LINE-UP ▸ BENCH</div>
+              <div class="tag" style="left: 53%; top: 7%">KEYS · GUIDE</div>
+              <div class="tag" style="left: 38%; bottom: 7%">SETUP ▸ PENALTY BOX</div>
+            </div>
+            <div style="position: absolute; right: 24px; top: 74px; width: 226px; font-size: 10px; line-height: 1.7; z-index: 3">
+              <b style="font-family: var(--display); font-size: 9px; color: var(--p2)">TONIGHT</b><br />Blue (you) vs Navy<br />CPU: Pro · Realistic<br />3 periods × 1:00<br /><br /><b style="font-family: var(--display); font-size: 9px; color: var(--p2)">RECORD</b><br />vs Pro 4 W – 2 L
+            </div>
+            <div class="stub" style="right: 24px; width: 226px; bottom: 56px"><div><b>BLUE vs NAVY</b>Sec. 104 · Row F</div><div class="go">PLAY</div></div>
+            <div class="ai" style="position: absolute; right: 24px; width: 226px; bottom: 22px"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ F ============ -->
+    <section class="concept">
+      <h2><small>F</small>Game-art cover</h2>
+      <p class="why">
+        The program's cover is the game itself: the animated title scene from Top Shelf (the crowd, the boards, a
+        skater winding up and burying a slap shot top shelf) reprinted with a halftone screen and the second ink a hair
+        off register, like a riso print. Below it the matchup prints as a scoreboard in team colours, the sections are
+        a contents list with pucks as bullets, and the ticket stub tears off to play. (The cover here runs the game's
+        real title art.)
+      </p>
+      <ul class="notes">
+        <li>The hockey is the first thing you see, in the game's own pixel art, so menu and match are one product.</li>
+        <li>Keeps everything you liked about D: paper, two inks per arena, contents list, ticket stub.</li>
+        <li>The cover animates (the shot, the crowd jumping), the rest stays calm and readable.</li>
+      </ul>
+      <div class="frames">
+        <div>
+          <p class="label">Phone</p>
+          <div class="phone print F">
+            <div style="position: absolute; left: 16px; right: 16px; top: 14px; display: flex; justify-content: space-between; font-size: 8px; border-bottom: 3px solid var(--p1); padding-bottom: 5px; z-index: 3">
+              <span>MATCHDAY PROGRAM</span><span>No. 07</span>
+            </div>
+            <div class="cover" style="left: 16px; right: 16px; top: 40px; aspect-ratio: 168 / 76; border: 3px solid var(--p1)">
+              <canvas class="art" width="336" height="152" style="width: 100%; height: 100%; display: block; image-rendering: pixelated"></canvas>
+              <div class="screen"></div>
+            </div>
+            <div class="issue" style="position: absolute; left: 16px; top: 190px; font-family: var(--display); font-size: 8px; color: var(--paper); background: var(--p1); padding: 5px 7px; z-index: 3">3-ON-3 HOCKEY · FROST HOLLOW</div>
+            <div class="scorebar" style="left: 16px; right: 16px; top: 226px">
+              <div class="h">BLUE</div>
+              <div class="vs">VS</div>
+              <div class="a">NAVY</div>
+            </div>
+            <div class="toc" style="left: 16px; right: 16px; top: 280px">
+              <div class="on"><span class="pk"></span>Play</div>
+              <div><span class="pk"></span>Watch</div>
+              <div><span class="pk"></span>Train</div>
+              <div><span class="pk"></span>Teams &amp; line-up</div>
+              <div><span class="pk"></span>Arena</div>
+              <div><span class="pk"></span>Setup · Keys · Guide</div>
+            </div>
+            <div class="stub" style="left: 16px; right: 16px; bottom: 44px"><div><b>FROST HOLLOW ARENA</b>Pro · 3 × 1:00 · Sec. 104</div><div class="go">PLAY</div></div>
+            <div class="ai" style="position: absolute; left: 16px; right: 16px; bottom: 14px"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+        </div>
+        <div style="flex: 1 1 560px">
+          <p class="label">Desktop</p>
+          <div class="desk print F">
+            <div style="position: absolute; left: 24px; right: 24px; top: 16px; display: flex; justify-content: space-between; font-size: 9px; border-bottom: 3px solid var(--p1); padding-bottom: 6px; z-index: 3">
+              <span>MATCHDAY PROGRAM · FROST HOLLOW ARENA · HOME OF THE WOLVES</span><span>No. 07</span>
+            </div>
+            <div class="cover" style="left: 24px; width: 56%; top: 50px; aspect-ratio: 168 / 76; border: 3px solid var(--p1)">
+              <canvas class="art" width="336" height="152" style="width: 100%; height: 100%; display: block; image-rendering: pixelated"></canvas>
+              <div class="screen"></div>
+            </div>
+            <div class="scorebar" style="left: 24px; width: 56%; bottom: 30px"><div class="h">BLUE · YOU</div><div class="vs">VS</div><div class="a">NAVY · CPU PRO</div></div>
+            <div class="toc" style="left: 63%; right: 24px; top: 50px">
+              <div class="on"><span class="pk"></span>Play</div>
+              <div><span class="pk"></span>Watch</div>
+              <div><span class="pk"></span>Train</div>
+              <div><span class="pk"></span>Teams &amp; line-up</div>
+              <div><span class="pk"></span>Arena</div>
+              <div><span class="pk"></span>Setup · Keys · Guide</div>
+            </div>
+            <div class="stub" style="left: 63%; right: 24px; bottom: 54px"><div><b>FROST HOLLOW ARENA</b>Pro · 3 × 1:00 · Sec. 104</div><div class="go">PLAY</div></div>
+            <div class="ai" style="position: absolute; left: 63%; right: 24px; bottom: 16px"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ G ============ -->
+    <section class="concept">
+      <h2><small>G</small>Night edition scoresheet</h2>
+      <p class="why">
+        The program printed on dark stock, the same deep navy as the game's screens, with ice-white and arena inks. The
+        menu is the official game sheet a scorekeeper fills in: the header holds the arena, CPU level and periods
+        (tap to change), the roster table is your line-up (numbers, names, positions circled like on a real sheet,
+        ratings as tally marks), and "Drop the puck" is the referee's stamp. The other sections are a contents strip.
+      </p>
+      <ul class="notes">
+        <li>Keeps the game's dark look, so it clearly belongs to the same product; hockey through its paperwork.</li>
+        <li>The line-up and match settings are visible right on the first screen, no extra tabs.</li>
+        <li>Most information on one page; phone layout needs the most care.</li>
+      </ul>
+      <div class="frames">
+        <div>
+          <p class="label">Phone</p>
+          <div class="phone G">
+            <div style="position: absolute; left: 16px; right: 16px; top: 16px; display: flex; justify-content: space-between; align-items: end; z-index: 2">
+              <div class="ttl" style="font-size: 24px">TOP<br />SHELF</div>
+              <div style="font-size: 8px; text-align: right; line-height: 1.6">OFFICIAL GAME SHEET<br />No. 07</div>
+            </div>
+            <div class="sheet" style="left: 16px; right: 16px; top: 82px">
+              <div class="row" style="grid-template-columns: 1.4fr 1fr 1fr">
+                <span><span class="lbl">ARENA</span>Frost Hollow</span><span><span class="lbl">CPU</span>Pro</span><span><span class="lbl">PERIODS</span>3 × 1:00</span>
+              </div>
+              <div class="row"><span class="hd home">HOME · BLUE (YOU)</span></div>
+              <div class="row" style="grid-template-columns: 34px 1fr 40px 64px">
+                <span class="lbl">NO.</span><span class="lbl">PLAYER</span><span class="lbl">POS</span><span class="lbl">SHT HND CHK</span>
+              </div>
+              <div class="row" style="grid-template-columns: 34px 1fr 40px 64px">
+                <span class="num">20</span><span>Brandt</span><span class="pos"><i>C</i></span><span>||| |||| ||</span>
+              </div>
+              <div class="row" style="grid-template-columns: 34px 1fr 40px 64px">
+                <span class="num">26</span><span>Lindqvist</span><span class="pos"><i>W</i></span><span>|||| ||| |</span>
+              </div>
+              <div class="row" style="grid-template-columns: 34px 1fr 40px 64px">
+                <span class="num">55</span><span>Quinn</span><span class="pos"><i>D</i></span><span>|| || ||||</span>
+              </div>
+              <div class="row" style="grid-template-columns: 34px 1fr 104px; border-bottom: 0">
+                <span class="num">31</span><span>Duval</span><span class="pos">GOALIE</span>
+              </div>
+            </div>
+            <div class="menu" style="left: 16px; right: 16px; top: 318px">
+              <span class="on">Play <b>01</b></span><span>Watch <b>02</b></span><span>Train <b>03</b></span><span>Teams · Arena <b>04</b></span><span>Setup · Keys · Guide <b>05</b></span>
+            </div>
+            <div class="stamp" style="right: 26px; bottom: 74px">DROP THE PUCK</div>
+            <div class="ai" style="position: absolute; left: 16px; right: 16px; bottom: 14px"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+        </div>
+        <div style="flex: 1 1 560px">
+          <p class="label">Desktop</p>
+          <div class="desk G">
+            <div style="position: absolute; left: 24px; top: 20px; z-index: 2">
+              <div class="ttl" style="font-size: 34px">TOP SHELF</div>
+              <div style="font-size: 9px; margin-top: 10px">OFFICIAL GAME SHEET · No. 07 · FROST HOLLOW ARENA</div>
+            </div>
+            <div class="sheet" style="left: 24px; width: 54%; top: 92px">
+              <div class="row" style="grid-template-columns: 1.4fr 1fr 1fr 1fr">
+                <span><span class="lbl">ARENA</span>Frost Hollow</span><span><span class="lbl">CPU</span>Pro · Realistic</span><span><span class="lbl">PERIODS</span>3 × 1:00</span><span><span class="lbl">RECORD</span>4 W – 2 L</span>
+              </div>
+              <div class="row" style="grid-template-columns: 1fr 1fr"><span class="hd home">HOME · BLUE (YOU)</span><span class="hd" style="background: var(--p2); color: var(--ink)">VISITORS · NAVY (CPU)</span></div>
+              <div class="row" style="grid-template-columns: 30px 1fr 40px 30px 1fr 40px">
+                <span class="num">20</span><span>Brandt</span><span class="pos"><i>C</i></span><span class="num">9</span><span>Okafor</span><span class="pos">C</span>
+              </div>
+              <div class="row" style="grid-template-columns: 30px 1fr 40px 30px 1fr 40px">
+                <span class="num">26</span><span>Lindqvist</span><span class="pos"><i>W</i></span><span class="num">71</span><span>Reyes</span><span class="pos">W</span>
+              </div>
+              <div class="row" style="grid-template-columns: 30px 1fr 40px 30px 1fr 40px">
+                <span class="num">55</span><span>Quinn</span><span class="pos"><i>D</i></span><span class="num">4</span><span>Moreau</span><span class="pos">D</span>
+              </div>
+              <div class="row" style="grid-template-columns: 30px 1fr 40px 30px 1fr 40px; border-bottom: 0">
+                <span class="num">31</span><span>Duval</span><span class="pos">G</span><span class="num">35</span><span>Haas</span><span class="pos">G</span>
+              </div>
+            </div>
+            <div class="menu" style="right: 24px; width: 34%; top: 92px">
+              <span class="on">Play <b>01</b></span><span>Watch <b>02</b></span><span>Train <b>03</b></span><span>Teams <b>04</b></span><span>Arena <b>05</b></span><span>Setup <b>06</b></span><span>Keys · Guide <b>07</b></span>
+            </div>
+            <div class="stamp" style="right: 60px; bottom: 60px">DROP THE PUCK</div>
+            <div class="ai" style="position: absolute; left: 24px; bottom: 16px"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- the game's real animated title art, copied onto the F covers -->
+    <canvas id="logo" width="168" height="76" hidden></canvas>
+    <script type="module">
+      import { drawLogo } from '/src/ui/logo.js';
+      import { clock } from '/src/core/time.ts';
+      const arts = [...document.querySelectorAll('canvas.art')],
+        src = document.getElementById('logo');
+      function frame(t) {
+        clock.now = t / 1000;
+        drawLogo();
+        for (const c of arts) {
+          const g = c.getContext('2d');
+          g.imageSmoothingEnabled = false;
+          g.drawImage(src, 0, 0, c.width, c.height);
+        }
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>
