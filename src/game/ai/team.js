@@ -11,6 +11,44 @@ import { settings } from '../../settings';
 // a puck carrier standing still this long gets pressed (and double-teamed a bit later)
 export const PRESS_AFTER = 0.6,
   DOUBLE_AFTER = 2;
+// Defenders are not perfect. A chaser reads the carrier's straight-line skating but needs a moment to notice a
+// cut (READ, seconds, by CPU level), and after pressing tight for a while without winning the puck it eases off
+// goal-side for about a second to reset, which gives the carrier room to break away.
+const READ = { rookie: 0.3, pro: 0.22, allstar: 0.16 },
+  // how long a chaser keeps pressing tight before it eases off (scaled by a random 1.4..2.6 s per cycle)
+  PRESS_LEN = { rookie: 0.8, pro: 1, allstar: 1.25 },
+  TIGHT = 12;
+/** Where chaser `ch` thinks carrier `o` is right now: an estimate that follows the carrier with a short delay
+ * and extrapolates its (equally delayed) velocity, so straight skating is read well and sharp cuts late. */
+export function readCarrier(ch, o, dt) {
+  const lag = READ[settings.diffKey] || 0.22;
+  let s = ch.seen;
+  if (!s || ch.seenOf !== o) s = ch.seen = { x: o.x, y: o.y, vx: o.vx, vy: o.vy };
+  ch.seenOf = o;
+  const k = Math.min(1, dt / lag);
+  s.x += (o.x + o.vx * lag - s.x) * k; // the lag would otherwise leave the estimate trailing behind
+  s.y += (o.y + o.vy * lag - s.y) * k;
+  s.vx += (o.vx - s.vx) * k;
+  s.vy += (o.vy - s.vy) * k;
+  return s;
+}
+/** Runs a chaser's press-and-ease cycle; true while it is easing off. */
+export function easingOff(ch, o, dt) {
+  if (ch.easeT > 0) {
+    ch.easeT -= dt;
+    return true;
+  }
+  if (dist(ch, o) < TIGHT) ch.pressT = (ch.pressT || 0) + dt;
+  else ch.pressT = Math.max(0, (ch.pressT || 0) - dt * 0.5);
+  if (!ch.pressMax) ch.pressMax = rnd(1.4, 2.6) * (PRESS_LEN[settings.diffKey] || 1);
+  if (ch.pressT > ch.pressMax) {
+    ch.pressT = 0;
+    ch.pressMax = 0;
+    ch.easeT = rnd(0.6, 1.0);
+    return true;
+  }
+  return false;
+}
 export function teamMul(t) {
   if (G.practice && t === 1 && G.practice.opp === 'easy') return 0.55;
   return t === 1 ? settings.diff.spd : G.demo ? 0.94 : 0.95;
@@ -150,9 +188,13 @@ export function teamAI(t, dt) {
           gy = oG - o.y,
           gl = Math.hypot(gx, gy) || 1;
         // a carrier who stands still gets no room: the chaser goes straight for the puck on their stick, and
-        // after a while a second skater comes to help (otherwise everyone would just wait it out)
-        if (G.holdT > PRESS_AFTER) steer(ch, puck.x, puck.y, dt, mul, false);
-        else steer(ch, o.x + (gx / gl) * 4 + o.vx * 0.15, o.y + (gy / gl) * 4 + o.vy * 0.15, dt, mul, false);
+        // after a while a second skater comes to help (otherwise everyone would just wait it out). Otherwise the
+        // chaser goes by its read of the carrier, and now and then eases off goal-side to reset.
+        const s = readCarrier(ch, o, dt),
+          ease = easingOff(ch, o, dt);
+        if (ease) steer(ch, s.x + (gx / gl) * 18, s.y + (gy / gl) * 18, dt, mul * 0.8, false);
+        else if (G.holdT > PRESS_AFTER) steer(ch, puck.x, puck.y, dt, mul, false);
+        else steer(ch, s.x + (gx / gl) * 4 + s.vx * 0.15, s.y + (gy / gl) * 4 + s.vy * 0.15, dt, mul, false);
         faceTo(ch, o.x, o.y, 0.3);
         if (G.holdT > DOUBLE_AFTER && rest.length) {
           const help = nearest(rest, o);
@@ -164,6 +206,7 @@ export function teamAI(t, dt) {
         const rate =
           G.practice && G.practice.opp === 'easy' ? 0 : t === 1 && !G.ai0 ? settings.diff.chk : 0.3;
         if (
+          !ease &&
           ch.down <= 0 &&
           ch.checkCd <= 0 &&
           o.down <= 0 &&

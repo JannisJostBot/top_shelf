@@ -1,5 +1,5 @@
 import { ACC, BASE, GT } from '../config';
-import { clamp, dist } from '../core/math';
+import { clamp, dist, rnd } from '../core/math';
 import { nearest } from './ai/team';
 import { startCheck } from './hits';
 import { accelTo, burst, faceTo, maxSpd, reachFactor } from './physics/motion';
@@ -67,6 +67,8 @@ export function humanUpdate(dt) {
   }
   const m = Math.hypot(jx, jy),
     mx = maxSpd(p, 1);
+  // trying to skate somewhere (even when pinned against someone or the boards) is not standing still
+  p.pushing = m > 0.3;
   if (p.down > 0) {
     accelTo(p, 0, 0, dt, 70);
     input.sp = input.sr = input.pp = false;
@@ -221,12 +223,20 @@ function bodyCheck(p) {
   faceTo(p, tx, ty, 1);
   S('dash');
 }
+// a computer skater's chance per poke, from its steal rate; and how much harder a poke is against a moving carrier
+const POKE = 0.35,
+  POKE_MOVING = 0.5;
 export function steals(dt) {
   const c = puck.owner;
   if (!c || c.role !== 'S' || c.imm > 0) return;
   for (const p of SK[1 - c.team]) {
-    if (p.stun > 0 || p.cool > 0 || p.down > 0 || p.benched || p.dummy) continue;
-    if (dist(p, c) < 7.5) {
+    p.pokeCd = (p.pokeCd || 0) - dt;
+    if (p.stun > 0 || p.cool > 0 || p.down > 0 || p.benched || p.dummy || p.easeT > 0) continue;
+    const inReach = dist(p, c) < 7.5;
+    // just arrived within reach: the stick needs a moment to get set before the first poke
+    if (inReach && !p.inReach) p.pokeCd = Math.max(p.pokeCd, rnd(0.25, 0.5));
+    p.inReach = inReach;
+    if (inReach) {
       const base =
         G.practice && G.practice.opp === 'easy' && p.team === 1
           ? 0.15
@@ -239,6 +249,20 @@ export function steals(dt) {
                 : settings.diff.ourSteal * 0.7;
       const reach = reachFactor(p, c),
         rate = (base * (reach > 0 ? reach : 0.1) * p.st.hnd) / c.st.hnd;
+      if (p !== G.controlled || G.ai0) {
+        // A computer skater pokes rather than pulling steadily: one try every so often, harder against a carrier
+        // skating at speed, and a miss leaves its stick out of position for a moment. So keeping your feet moving
+        // gets you away from a defender that keeps up with you.
+        if (p.pokeCd > 0) continue;
+        p.pokeCd = rnd(0.5, 0.9);
+        const moving = Math.hypot(c.vx, c.vy) > 35 ? POKE_MOVING : 1;
+        if (Math.random() < Math.min(0.85, rate * POKE * moving)) {
+          steal(p, c);
+          return;
+        }
+        p.cool = 0.3;
+        continue;
+      }
       if (Math.random() < rate * dt) {
         steal(p, c);
         return;

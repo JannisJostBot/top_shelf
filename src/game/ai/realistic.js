@@ -19,7 +19,7 @@ import { GK, SK, live } from '../players';
 import { bestMate, passTo, shoot } from '../puck';
 import { G, puck } from '../world';
 import { settings } from '../../settings';
-import { DOUBLE_AFTER, PRESS_AFTER, nearest, teamMul } from './team';
+import { DOUBLE_AFTER, PRESS_AFTER, easingOff, nearest, readCarrier, teamMul } from './team';
 
 const wrap = a => ((a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
 
@@ -268,12 +268,17 @@ export function teamAIRealistic(t, dt) {
         gy = oG - o.y,
         gl = Math.hypot(gx, gy) || 1,
         gap = lerp(4, 14, clamp(gl / 140, 0, 1)); // tighter the closer to our net
-      // a carrier who stands still gets no room: the gap closes and the chaser goes for the puck itself
-      if (G.holdT > PRESS_AFTER) skate(chaser, puck.x, puck.y, dt, mul, 1);
-      else skate(chaser, o.x + (gx / gl) * gap + o.vx * 0.2, o.y + (gy / gl) * gap + o.vy * 0.2, dt, mul, 1);
+      // a carrier who stands still gets no room: the gap closes and the chaser goes for the puck itself.
+      // Otherwise the chaser goes by its read of the carrier, and now and then eases off goal-side to reset.
+      const s = readCarrier(chaser, o, dt),
+        ease = easingOff(chaser, o, dt);
+      if (ease) skate(chaser, s.x + (gx / gl) * (gap + 16), s.y + (gy / gl) * (gap + 16), dt, mul * 0.8, 1);
+      else if (G.holdT > PRESS_AFTER) skate(chaser, puck.x, puck.y, dt, mul, 1);
+      else skate(chaser, s.x + (gx / gl) * gap + s.vx * 0.2, s.y + (gy / gl) * gap + s.vy * 0.2, dt, mul, 1);
       faceTo(chaser, o.x, o.y, 0.25);
       const rate = G.practice && G.practice.opp === 'easy' ? 0 : t === 1 && !G.ai0 ? settings.diff.chk : 0.3;
       if (
+        !ease &&
         chaser.down <= 0 &&
         chaser.checkCd <= 0 &&
         o.down <= 0 &&
