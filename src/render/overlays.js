@@ -37,16 +37,84 @@ export function drawCtlTop(c) {
     R(x + hw + 1, ay + i, 1, 1, AMB_D);
   }
   R(x, ay + 7, 1, 1, AMB_D);
-  if (G.charging && puck.owner === c) {
+  // carrying the puck: the puck badge sits in the top of the marker arrow, one combined shape
+  const has = puck.owner === c,
+    up = has ? 6 : 0;
+  if (has) puckBadge(x, ay - 6, false);
+  if (G.charging && has) {
     const k = G.charge / 0.7;
-    R(x - 12, ay - 8, 25, 5, '#0a0f1e');
-    R(x - 11, ay - 7, Math.max(1, Math.round(23 * k)), 3, k > 0.95 ? '#ef4b52' : AMB);
+    R(x - 12, ay - 8 - up, 25, 5, '#0a0f1e');
+    R(x - 11, ay - 7 - up, Math.max(1, Math.round(23 * k)), 3, k > 0.95 ? '#ef4b52' : AMB);
   }
   if (c.checkCd > 0 && c.checkT <= 0) {
     const k = clamp(c.checkCd / 1.4, 0, 1);
-    R(x - 8, ay - 4, 17, 2, '#0a0f1e');
-    R(x - 8, ay - 4, Math.round(17 * (1 - k)), 2, '#ff5a3c');
+    R(x - 8, ay - 4 - up, 17, 2, '#0a0f1e');
+    R(x - 8, ay - 4 - up, Math.round(17 * (1 - k)), 2, '#ff5a3c');
   }
+}
+/** A small puck badge bobbing over the head of whoever carries the puck (any team, CPU or not). */
+export function drawPossession(p) {
+  const x = toS(p.x),
+    y = toS(p.y),
+    bob = Math.floor(clock.now * 4.5 + 1) & 1 ? 1 : 0,
+    by = (p.down > 0 ? y - 22 : y - 33) + bob;
+  puckBadge(x, by);
+}
+// the badge: a puck seen from above at an angle (top face, rim and highlight) in a white outline, with a
+// pointer under it; W white outline, O dark edge, T top face, t highlight, S side
+const BADGE = [
+  '...WWWWWWW...',
+  '..WOOOOOOOW..',
+  '.WOTTtttTTOW.',
+  '.WOTTTTTTTOW.',
+  '.WOSSSSSSSOW.',
+  '..WOOOOOOOW..',
+  '...WWWOWWW...',
+  '.....WOW.....',
+  '......W......',
+];
+const BADGE_C = { W: '#f2f4f7', O: '#0b0f1a', T: '#3a4258', t: '#8d9ab8', S: '#151a26' };
+/** The puck-carrier badge centred on x with its top at y; without `pointer` just the puck. */
+export function puckBadge(x, y, pointer = true) {
+  for (let r = 0; r < (pointer ? BADGE.length : 6); r++)
+    for (let c = 0; c < BADGE[r].length; c++) {
+      const ch = BADGE[r][c];
+      if (ch !== '.') R(x - 6 + c, y + r, 1, 1, BADGE_C[ch]);
+    }
+}
+const BOLT = [
+  [1, 0, 2],
+  [0, 1, 2],
+  [0, 2, 3],
+  [1, 3, 2],
+  [1, 4, 1],
+];
+/** A skater of the team with a speed buff: a small blinking bolt beside them and streaks behind when moving. */
+export function drawBuffed(p) {
+  const x = toS(p.x),
+    y = toS(p.y),
+    sp = Math.hypot(p.vx, p.vy);
+  if (sp > 12) {
+    const ux = -p.vx / sp,
+      uy = -p.vy / sp;
+    for (let i = 0; i < 3; i++) {
+      const d = 9 + i * 4 + ((clock.now * 40 + i * 3) % 4),
+        lx = Math.round(x + ux * d + (i - 1) * uy * 4),
+        ly = Math.round(y - 8 + uy * d - (i - 1) * ux * 4);
+      view.ctx.globalAlpha = 0.6 - i * 0.15;
+      R(lx - 1, ly, 3, 1, i ? '#ffffff' : '#ffc845');
+    }
+    view.ctx.globalAlpha = 1;
+  }
+  if (Math.floor(clock.now * 3) & 1) return;
+  const bx = x + 7,
+    by = y - 15;
+  for (const [cx, cy, w] of BOLT) {
+    R(bx + cx - 1, by + cy, w + 2, 1, '#0b0f1a');
+  }
+  R(bx, by - 1, 3, 1, '#0b0f1a');
+  R(bx, by + 5, 2, 1, '#0b0f1a');
+  for (const [cx, cy, w] of BOLT) R(bx + cx, by + cy, w, 1, '#ffc845');
 }
 export function drawOutlined(p) {
   view.sil = AMB;

@@ -10,7 +10,7 @@ import { cinema } from './atmosphere';
 import { view } from './canvas';
 import { SH } from './colors';
 import { iceBuf } from './ice';
-import { replayOverlay } from './overlays';
+import { puckBadge, replayOverlay } from './overlays';
 import { R } from './pixels';
 import { drawGoalie, drawRef, drawSkater } from './players';
 import { puckPixels } from './puck';
@@ -470,6 +470,17 @@ export function render3D(overlay = true) {
     if (!q) continue;
     if (it.k === 'R') rel(e, () => billboard(drawRef, q));
     else rel(e, () => billboard(() => (e.role === 'G' ? drawGoalie(e) : drawSkater(e)), q));
+  }
+  // the puck carrier's badge, scaled with the distance like the sprites
+  const o = puck.owner;
+  if (o && G.state !== 'zamboni' && G.state !== 'brawl') {
+    const q = proj(o.x, o.y, o.down > 0 ? 6 : 13.5);
+    if (q && q.d > 3) {
+      const sc = clamp(q.s / K, 1, 4);
+      view.ctx.setTransform(sc, 0, 0, sc, Math.round(q.x), Math.round(q.y));
+      puckBadge(0, Math.floor(clock.now * 4.5) & 1);
+      view.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
   }
   for (const p of parts) {
     const q = proj(p.x, p.y, 1);

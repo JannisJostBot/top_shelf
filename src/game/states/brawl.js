@@ -251,7 +251,7 @@ function endBrawl(w) {
     vib([150]);
   } else banner('BROKEN UP', 'small', 'The refs pull them apart');
   G.bannerT = 2.4;
-  if (w !== null) G.mom = { team: w, t: 25 };
+  if (w !== null) G.mom = { team: w, t: 25, dur: 25, src: 'fight' };
 }
 function finishBrawl() {
   const B = G.br,

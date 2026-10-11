@@ -141,3 +141,57 @@
 #camBtn[aria-pressed='true'] {
   color: #ffc845;
 }
+/* team buff: a lightning badge; the ring is the time left */
+.buff {
+  --k: 1;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #ffc845;
+  background:
+    radial-gradient(circle, #0a0f1e 0 7.5px, transparent 8px),
+    conic-gradient(#ffc845 calc(var(--k) * 360deg), rgba(255, 200, 69, 0.18) 0);
+  box-shadow: 0 0 8px rgba(255, 200, 69, 0.55);
+  animation: buffPulse 1.2s ease-in-out infinite;
+}
+.buff svg {
+  width: 10px;
+  height: 12px;
+  fill: currentColor;
+}
+.buff.ending {
+  animation: buffBlink 0.5s steps(2) infinite;
+}
+@keyframes buffPulse {
+  50% {
+    box-shadow: 0 0 14px rgba(255, 200, 69, 0.9);
+  }
+}
+@keyframes buffBlink {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .buff,
+  .buff.ending {
+    animation: none;
+  }
+}
+/* it hangs just below the clock, on the side of the team that has it, so it never squeezes the team names */
+.buff {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+}
+#bf0 {
+  margin-left: -30px;
+  outline: 2px solid var(--home-ui);
+}
+#bf1 {
+  margin-left: 8px;
+  outline: 2px solid var(--away-ui);
+}

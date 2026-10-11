@@ -21,7 +21,16 @@ import { skateGrooves } from './grooves';
 import { ice } from './ice';
 import { broadcastCam, render3D, updDemoCam } from './mode7';
 import { drawNet } from './net';
-import { drawCtlBase, drawCtlTop, drawMini, drawOutlined, offscreenPuck, replayOverlay } from './overlays';
+import {
+  drawCtlBase,
+  drawCtlTop,
+  drawMini,
+  drawPossession,
+  drawBuffed,
+  drawOutlined,
+  offscreenPuck,
+  replayOverlay,
+} from './overlays';
 import { R, ellipsePx } from './pixels';
 import { drawGoalie, drawRef, drawSkater } from './players';
 import { drawPuck, puckGround } from './puck';
@@ -113,6 +122,7 @@ export function render() {
       if (p.role === 'G') drawGoalie(p);
       else if (p === c) drawOutlined(p);
       else drawSkater(p);
+      if (G.mom && G.mom.t > 0 && G.mom.team === p.team && p.role !== 'G' && p.down <= 0) drawBuffed(p);
       if (puck.owner === p) {
         drawPuck();
         drawn = true;
@@ -136,6 +146,8 @@ export function render() {
   } else if (!drawn || puck.z > 0) drawPuck();
   else if (!(puck.owner && puck.owner.role === 'G')) drawPuck(0.5);
   if (c) drawCtlTop(c);
+  if (puck.owner && puck.owner !== c && G.state !== 'zamboni' && G.state !== 'brawl')
+    drawPossession(puck.owner);
   for (const p of parts) {
     view.ctx.globalAlpha = Math.min(1, p.life * 3);
     R(toS(p.x), toS(p.y), 2, 2, p.c);

@@ -244,7 +244,7 @@ function finishZamboni() {
   );
   G.bannerT = 2.6;
   if (pct >= 80) {
-    if (!G.practice) G.mom = { team: 0, t: 20 };
+    if (!G.practice) G.mom = { team: 0, t: 20, dur: 20, src: 'ice' };
     S('cheer');
     vib([40, 30, 80]);
   } else S('ooh');

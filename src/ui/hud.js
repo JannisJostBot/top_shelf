@@ -11,6 +11,45 @@ export function hud() {
   $('per').textContent = G.demo ? 'DEMO' : G.practice ? 'PRACTICE' : ORD[G.period];
   hudClock();
 }
+// Team buffs (the speed boost for polishing the ice or winning a fight): a lightning badge under the clock on that team's
+// side, with a ring that runs down as the boost wears off and a blink in its last seconds.
+const BUFF_NAME = { ice: 'Fresh ice', fight: 'Fight won' };
+const BOLT =
+  '<svg viewBox="0 0 8 10" shape-rendering="crispEdges" aria-hidden="true">' +
+  [
+    [4, 0, 3],
+    [3, 1, 3],
+    [2, 2, 3],
+    [1, 3, 6],
+    [3, 4, 3],
+    [2, 5, 3],
+    [2, 6, 2],
+    [1, 7, 2],
+    [1, 8, 1],
+  ]
+    .map(([x, y, w]) => `<rect x="${x}" y="${y}" width="${w}" height="1"/>`)
+    .join('') +
+  '</svg>';
+let lastBuff = '';
+export function hudBuff() {
+  const m = G.mom,
+    on = m && m.t > 0 && !G.demo && G.state !== 'over',
+    key = on ? m.team + m.src + Math.ceil(m.t) : '';
+  if (key === lastBuff) return;
+  lastBuff = key;
+  for (const t of [0, 1]) {
+    const el = $('bf' + t),
+      show = on && m.team === t;
+    el.hidden = !show;
+    if (!show) continue;
+    if (!el.firstChild) el.innerHTML = BOLT;
+    const left = Math.ceil(m.t);
+    el.style.setProperty('--k', String(Math.max(0, m.t / (m.dur || 20))));
+    el.classList.toggle('ending', left <= 4);
+    el.title = (BUFF_NAME[m.src] || 'Boost') + ': skating faster, ' + left + 's left';
+    el.setAttribute('aria-label', el.title);
+  }
+}
 let lastClock = '';
 export const clockText = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
 export function hudClock() {
