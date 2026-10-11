@@ -17,7 +17,8 @@ import { R } from './pixels';
 import { drawGoalie, drawRef, drawSkater } from './players';
 import { puckPixels } from './puck';
 import { FAN_ROWS, FAN_SEATS, U32, fanTab } from './stands';
-import { ROOF_H, roofPainter } from './roofs';
+import { ROOF_H, roofLamps, roofPainter } from './roofs';
+import { drawScoreboard } from './scoreboard';
 import { settings } from '../settings';
 
 /* ---------- 2.5D replay renderer (Mode 7 floor + raycast boards + billboard sprites) ---------- */
@@ -271,6 +272,8 @@ function boxSpan(x, y, dx, dy) {
 const CORNER_SLACK = RR * 1.5;
 // per-frame caches: floor distance per screen row, and each fan's cheering wave
 let rowT = new Float64Array(0);
+// per column, the screen row where the roof ends (the back wall starts); glares only show on the roof
+let roofEdge = new Float32Array(0);
 let fanWave = new Float64Array(0),
   fanWaveAt = new Float64Array(0);
 /** Halfway between two opaque packed colours. */
@@ -284,6 +287,45 @@ function glassTint(c) {
     // floor(c * 0.75 + tint * 0.25), since a quarter is exact)
     ((255 << 24) | (((3 * b + 240) >> 2) << 16) | (((3 * g + 228) >> 2) << 8) | ((3 * r + 205) >> 2)) >>> 0
   );
+}
+/** Small star glares on the roof lamps: a bright core with spikes up, down and sideways (and shorter diagonal
+ * ones), sized by distance and twinkling a little. Drawn before the players, so they pass in front. */
+function drawGlares(proj, lamps) {
+  const g = view.ctx,
+    now = clock.now;
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  for (const l of lamps) {
+    const q = proj(l.x, l.y, ROOF_H);
+    if (!q) continue;
+    const cx = Math.round(q.x),
+      cy = Math.round(q.y);
+    if (cx < 0 || cx >= view.CW || cy < 0 || cy >= roofEdge[cx] - 1) continue;
+    const core = l.r * q.s;
+    if (core < 0.25) continue;
+    const tw = 0.8 + 0.2 * Math.sin(now * 3 + l.ph),
+      a = Math.min(1, Math.max(0.3, core * 0.8)) * tw,
+      L = Math.max(1, Math.min(9, Math.round((core * 3 + 1) * tw))),
+      D = Math.floor(L / 2.5);
+    g.fillStyle = l.col;
+    g.globalAlpha = a;
+    g.fillRect(cx, cy, 1, 1);
+    for (let i = 1; i <= L; i++) {
+      g.globalAlpha = a * Math.pow(1 - i / (L + 1), 1.5);
+      g.fillRect(cx - i, cy, 1, 1);
+      g.fillRect(cx + i, cy, 1, 1);
+      g.fillRect(cx, cy - i, 1, 1);
+      g.fillRect(cx, cy + i, 1, 1);
+    }
+    for (let i = 1; i <= D; i++) {
+      g.globalAlpha = a * 0.6 * Math.pow(1 - i / (D + 1), 1.5);
+      g.fillRect(cx - i, cy - i, 1, 1);
+      g.fillRect(cx + i, cy - i, 1, 1);
+      g.fillRect(cx - i, cy + i, 1, 1);
+      g.fillRect(cx + i, cy + i, 1, 1);
+    }
+  }
+  g.restore();
 }
 /** Draws the 3D view from G.cam3. `overlay` adds the REPLAY label and letterbox bars. */
 export function render3D(overlay = true) {
@@ -319,6 +361,7 @@ export function render3D(overlay = true) {
       // the fan cam sits in the stands: rays first cross the near boards and glass, then the ice
       outside = !insideRinkW(C3.x, C3.y);
     if (rowT.length !== view.CH) rowT = new Float64Array(view.CH);
+    if (roofEdge.length !== view.CW) roofEdge = new Float32Array(view.CW);
     for (let y = hor + 1; y < view.CH; y++) rowT[y] = (h * f) / (y - hor);
     if (fanWave.length !== fanTab.length) {
       fanWave = new Float64Array(fanTab.length);
@@ -406,6 +449,7 @@ export function render3D(overlay = true) {
       // the back wall rises from behind the top row to the roof
       const tW = t + ROW_D0 + ROWS * ROW_DD,
         wallTop = hor + ((h - ROOF_H) * f) / tW;
+      roofEdge[x] = wallTop;
       for (let r = 0; r <= ROWS; r++)
         rowY[r] = hor + ((h - (ROW_Z0 + r * ROW_DZ)) * f) / (t + ROW_D0 + r * ROW_DD);
       let r = 0;
@@ -536,6 +580,10 @@ export function render3D(overlay = true) {
       Math.round(56 * sc),
     );
   };
+  if (buf3 && fanTab.length) {
+    drawGlares(proj, roofLamps(STADIUMS[settings.stadiumKey]));
+    drawScoreboard(view.ctx, proj, C3);
+  }
   drawPyro3D(proj);
   const items = [];
   for (const p of players) items.push({ e: p, k: p.role, d: (p.x - C3.x) * Fx + (p.y - C3.y) * Fy });

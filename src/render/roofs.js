@@ -167,3 +167,48 @@ export function roofPainter(S) {
   cache = (x, y, foot, dist) => mix(paint(x, y, foot), base, Math.min(0.85, Math.max(0, (dist - 140) / 260)));
   return cache;
 }
+
+/* ---------- lamp positions, for the glares drawn over them (see drawGlares in mode7.js) ---------- */
+// the roof stretches past the rink over the stands
+const X0 = -60,
+  X1 = 220,
+  Y0 = -60,
+  Y1 = 316;
+function gridLamps(sx, sy, ox, oy, r, keep = (x, y) => true) {
+  const out = [];
+  for (let x = ox + Math.ceil((X0 - ox) / sx) * sx; x <= X1; x += sx)
+    for (let y = oy + Math.ceil((Y0 - oy) / sy) * sy; y <= Y1; y += sy) if (keep(x, y)) out.push({ x, y, r });
+  return out;
+}
+const LAMPS = {
+  truss: () => gridLamps(48, 48, 12, 12, 1.5),
+  dome: () => {
+    const out = [];
+    for (const [R, n] of [
+      [16, 12],
+      [73, 36],
+    ])
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        out.push({ x: CX + Math.cos(a) * R, y: CY + Math.sin(a) * R, r: 1.3 });
+      }
+    return out;
+  },
+  // only every fourth bulb on the strings glints, or the roof would be all stars
+  tent: () => gridLamps(14, 24, 0, 3, 0.6),
+  // glints where the neon tubes cross
+  neon: () => gridLamps(17, 17, 0, 0, 0.8, (x, y) => (((x + y - 17) % 34) + 34) % 34 === 0),
+  beams: () => gridLamps(20, 30, 10, 15, 1.1),
+  girders: () => gridLamps(36, 36, 18, 18, 1.5),
+};
+let lampsFor = null,
+  lampList = null;
+/** The roof's lamps for a stadium: world positions on the roof plane, size, twinkle phase and glare colour. */
+export function roofLamps(S) {
+  if (lampsFor !== S) {
+    lampsFor = S;
+    const col = S.roof.kind === 'neon' ? '#ffd6f2' : S.roof.light;
+    lampList = LAMPS[S.roof.kind]().map((l, i) => ({ ...l, ph: ((i * 2654435761) >>> 0) / 4294967296 * 6.28, col }));
+  }
+  return lampList;
+}
