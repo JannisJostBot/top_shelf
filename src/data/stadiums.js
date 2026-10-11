@@ -1,3 +1,4 @@
+// roof: the ceiling seen in the 3D views (kind and colours, see render/roofs.js)
 // lines: the colours painted into the ice: `red` for the centre line, goal lines and face-off circles,
 // `blue` for the blue lines and the centre circle
 export const STADIUMS = {
@@ -15,6 +16,7 @@ export const STADIUMS = {
     logo: 'flake',
     lines: { red: '#d8343f', blue: '#2f6bd8' },
     lc: ['#2f6bd8', '#ffffff', '#132457'],
+    roof: { kind: 'truss', base: '#0b1226', line: '#46557a', light: '#fff4d6' },
     song: 'snow',
   },
   harbor: {
@@ -31,6 +33,7 @@ export const STADIUMS = {
     logo: 'kraken',
     lines: { red: '#e0573c', blue: '#13897f' },
     lc: ['#13897f', '#f4f1e0', '#0b3b3a'],
+    roof: { kind: 'dome', base: '#08181d', line: '#1f4d55', accent: '#1d4a52', light: '#d8fff6' },
     song: 'stomp',
   },
   penguin: {
@@ -47,6 +50,7 @@ export const STADIUMS = {
     logo: 'penguin',
     lines: { red: '#f08a12', blue: '#1b2333' },
     lc: ['#1b2333', '#ffffff', '#ff9f1c'],
+    roof: { kind: 'tent', base: '#14273b', alt: '#0f1f30', line: '#25405a', light: '#ffd27a' },
     song: 'waddle',
   },
   neon: {
@@ -63,6 +67,7 @@ export const STADIUMS = {
     logo: 'comet',
     lines: { red: '#ff3fb4', blue: '#22b8e6' },
     lc: ['#ff3fb4', '#3ff0ff', '#ffde59'],
+    roof: { kind: 'neon', base: '#07040f', line: '#ff3fb4', alt: '#22b8e6' },
     song: 'comet',
   },
   timber: {
@@ -79,6 +84,7 @@ export const STADIUMS = {
     logo: 'pine',
     lines: { red: '#b5482a', blue: '#1f6b3a' },
     lc: ['#1f6b3a', '#ffffff', '#8a5a2b'],
+    roof: { kind: 'beams', base: '#2b1b0f', alt: '#24170c', line: '#5e3c1d', accent: '#8a5a2b', light: '#ffb347' },
     song: 'lumber',
   },
   iron: {
@@ -95,6 +101,7 @@ export const STADIUMS = {
     logo: 'anvil',
     lines: { red: '#d1361b', blue: '#3a4250' },
     lc: ['#2b2f36', '#ffffff', '#ff5a1f'],
+    roof: { kind: 'girders', base: '#1a1c20', alt: '#212429', line: '#7c2a16', light: '#ffa64d' },
     song: 'forge',
   },
 };

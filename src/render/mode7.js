@@ -17,6 +17,7 @@ import { R } from './pixels';
 import { drawGoalie, drawRef, drawSkater } from './players';
 import { puckPixels } from './puck';
 import { FAN_ROWS, FAN_SEATS, U32, fanTab } from './stands';
+import { ROOF_H, roofPainter } from './roofs';
 import { settings } from '../settings';
 
 /* ---------- 2.5D replay renderer (Mode 7 floor + raycast boards + billboard sprites) ---------- */
@@ -309,9 +310,10 @@ export function render3D(overlay = true) {
       NEARSEAT = U32('#2a3454'), // the fan cam's own seat rows below the near boards
       NEARSEAT2 = U32('#222a45'),
       ARENA = U32(S.arena),
-      ROOF = U32('#070a14'),
-      LIGHT = U32('#fff4d6'),
-      roofY = hor - Math.round(view.CH * 0.3),
+      WALL = U32(S.arena),
+      RIBBON = U32(S.kick),
+      SUITE = U32('#3a3222'),
+      roof = roofPainter(S),
       hype = G.hype;
     const crowd = crowdTone(),
       // the fan cam sits in the stands: rays first cross the near boards and glass, then the ice
@@ -401,6 +403,9 @@ export function render3D(overlay = true) {
         seat = ((Math.floor(seatF) % FAN_SEATS) + FAN_SEATS) % FAN_SEATS,
         xin = seatF - Math.floor(seatF);
       prevSeat = seatF;
+      // the back wall rises from behind the top row to the roof
+      const tW = t + ROW_D0 + ROWS * ROW_DD,
+        wallTop = hor + ((h - ROOF_H) * f) / tW;
       for (let r = 0; r <= ROWS; r++)
         rowY[r] = hor + ((h - (ROW_Z0 + r * ROW_DZ)) * f) / (t + ROW_D0 + r * ROW_DD);
       let r = 0;
@@ -415,7 +420,18 @@ export function render3D(overlay = true) {
         else if (y >= bt) col = bcol;
         else {
           while (r < ROWS && y < rowY[r + 1]) r++;
-          if (y < rowY[ROWS]) col = u % 64 < 3 && y % 26 < 2 ? LIGHT : ROOF;
+          if (y < rowY[ROWS]) {
+            if (y < wallTop) {
+              // the roof: where this pixel's ray meets the roof plane
+              const up = hor - y,
+                tc = ((ROOF_H - h) * f) / up;
+              col = roof(camX + dx * tc, camY + dy * tc, Math.max(tc / f, (tc * tc) / (f * (ROOF_H - h))), tc);
+            } else {
+              // the back wall above the top row: a ribbon board in the arena colour and a row of lit suites
+              const z = h - ((y - hor) * tW) / f;
+              col = z >= 36 && z < 37.6 ? RIBBON : z >= 40 && z < 44 && u % 8 < 6 ? SUITE : WALL;
+            }
+          }
           else {
             const top = rowY[r + 1],
               bh = rowY[r] - top,
