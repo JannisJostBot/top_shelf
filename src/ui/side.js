@@ -29,6 +29,13 @@ export function resetSide() {
   feedItems.length = 0;
   feedDirty = true;
 }
+// the panels refresh a few times a second; the page is only touched when something actually changed
+const shown = new Map();
+function setHTML(el, html) {
+  if (shown.get(el) === html) return;
+  shown.set(el, html);
+  el.innerHTML = html;
+}
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 function drawFeed() {
   feedDirty = false;
@@ -61,7 +68,7 @@ function drawStats() {
     pb = s.poss[1],
     k = pa + pb ? pa / (pa + pb) : 0.5;
   html += `<div class="srow"><b>${Math.round(k * 100)}%</b><span>POSSESSION</span><b>${Math.round((1 - k) * 100)}%</b><i class="sbar" style="--k:${k}"></i></div>`;
-  $('sdStats').innerHTML = html;
+  setHTML($('sdStats'), html);
 }
 
 /* ---------- status: boosts, shot power, controls ---------- */
@@ -71,14 +78,16 @@ function drawBoost() {
   const el = $('sdBoost');
   if (!on) {
     el.className = 'boost';
-    el.innerHTML = '<span class="bi off"></span><span>No boost active</span>';
+    setHTML(el, '<span class="bi off"></span><span>No boost active</span>');
     return;
   }
   const name = m.src === 'fight' ? 'Fight won' : 'Fresh ice';
   el.className = 'boost ' + (m.team === 0 ? 'home' : 'away') + (m.t < 4 ? ' ending' : '');
-  el.innerHTML =
+  setHTML(
+    el,
     `<span class="bi"></span><span><b>${esc(kit.TEAMS[m.team].name.toUpperCase())} · SPEED</b>` +
-    `<small>${name} · ${Math.ceil(m.t)}s left</small></span><i class="sbar" style="--k:${m.t / (m.dur || 20)}"></i>`;
+      `<small>${name} · ${Math.ceil(m.t)}s left</small></span><i class="sbar" style="--k:${m.t / (m.dur || 20)}"></i>`,
+  );
 }
 const WATCH_KEYS = [
   ['V', 'Next shot'],
@@ -119,16 +128,18 @@ function drawBanners() {
   for (const t of [0, 1]) {
     const T = kit.TEAMS[t],
       el = $('sdBan' + t);
-    el.textContent = G.demo
+    const txt = G.demo
       ? T.name.toUpperCase()
       : G.watch || t
         ? T.name.toUpperCase()
         : 'YOU · ' + T.name.toUpperCase();
+    if (el.textContent !== txt) el.textContent = txt;
   }
 }
 
 /* ---------- layout switch and per-frame update ---------- */
-let lastT = 0;
+let lastT = 0,
+  lastShot = -1;
 function applyLayout() {
   const on = WIDE.matches;
   document.body.classList.toggle('wide', on);
@@ -169,10 +180,14 @@ export function updSide() {
   const match = !G.demo;
   // the side bars slide in for a game and out for the menu (CSS transitions on this class)
   if (document.body.classList.contains('inmatch') !== match) document.body.classList.toggle('inmatch', match);
-  const ch = $('sdShot');
+  // the shot meter follows the wind-up every frame, but only touches the page when it changed
   const k = G.charging && !G.ai0 ? Math.min(1, G.charge / 0.7) : 0;
-  ch.style.setProperty('--k', String(k));
-  ch.classList.toggle('full', k > 0.95);
+  if (k !== lastShot) {
+    lastShot = k;
+    const ch = $('sdShot');
+    ch.style.setProperty('--k', String(k));
+    ch.classList.toggle('full', k > 0.95);
+  }
   if (clock.now - lastT < 0.25) return;
   lastT = clock.now;
   drawBanners();
@@ -181,7 +196,9 @@ export function updSide() {
   drawBoost();
   drawKeys();
   if (feedDirty) drawFeed();
-  $('sdTeams').innerHTML =
+  setHTML(
+    $('sdTeams'),
     `<span class="home">${esc(G.watch ? kit.TEAMS[0].name.toUpperCase() : 'YOU')}</span>` +
-    `<span class="away">${esc(G.watch ? kit.TEAMS[1].name.toUpperCase() : 'CPU')}</span>`;
+      `<span class="away">${esc(G.watch ? kit.TEAMS[1].name.toUpperCase() : 'CPU')}</span>`,
+  );
 }

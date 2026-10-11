@@ -231,6 +231,43 @@ export function upd3D(snap) {
   const dyaw = ((yaw - C.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
   C.yaw += dyaw * (snap ? 1 : 0.08);
 }
+// Ray marching samples, exactly as the march accumulates them (0.5, then +1.2 each step, up to the first one past
+// 420), so a march can jump ahead to any sample and still land on the very same values it would have stepped to.
+const MARCH = (() => {
+  const a = [];
+  for (let t = 0.5; ; t += 1.2) {
+    a.push(t);
+    if (t >= 420) break;
+  }
+  return a;
+})();
+const MARCH_END = MARCH.length - 1;
+/** Index of the last march sample at or below t (0 if none). */
+const sampleAtOrBelow = t => (t <= 0.5 ? 0 : Math.min(MARCH_END, Math.floor((t - 0.5) / 1.2 + 1e-9)));
+/** Where a ray from (x, y) along (dx, dy) enters and leaves the rink's bounding box: [enter, exit]. */
+function boxSpan(x, y, dx, dy) {
+  let lo = -Infinity,
+    hi = Infinity;
+  if (dx) {
+    const a = (RX0 - x) / dx,
+      b = (RX1 - x) / dx;
+    lo = Math.max(lo, Math.min(a, b));
+    hi = Math.min(hi, Math.max(a, b));
+  } else if (x < RX0 || x > RX1) return [Infinity, -Infinity];
+  if (dy) {
+    const a = (RY0 - y) / dy,
+      b = (RY1 - y) / dy;
+    lo = Math.max(lo, Math.min(a, b));
+    hi = Math.min(hi, Math.max(a, b));
+  } else if (y < RY0 || y > RY1) return [Infinity, -Infinity];
+  return [lo, hi];
+}
+// how much shorter than the bounding box a ray can be inside the rink: at most the diagonal of a corner square
+const CORNER_SLACK = RR * 1.5;
+// per-frame caches: floor distance per screen row, and each fan's cheering wave
+let rowT = new Float64Array(0);
+let fanWave = new Float64Array(0),
+  fanWaveAt = new Float64Array(0);
 /** Halfway between two opaque packed colours. */
 const avg32 = (a, b) => ((((a >>> 1) & 0x7f7f7f7f) + ((b >>> 1) & 0x7f7f7f7f)) | 0xff000000) >>> 0;
 function glassTint(c) {
@@ -238,11 +275,9 @@ function glassTint(c) {
     g = (c >> 8) & 255,
     b = (c >> 16) & 255;
   return (
-    ((255 << 24) |
-      (((b * 0.75 + 240 * 0.25) | 0) << 16) |
-      (((g * 0.75 + 228 * 0.25) | 0) << 8) |
-      ((r * 0.75 + 205 * 0.25) | 0)) >>>
-    0
+    // a quarter of the way to a cool white: (3 * c + tint) / 4, in integers (the same values as
+    // floor(c * 0.75 + tint * 0.25), since a quarter is exact)
+    ((255 << 24) | (((3 * b + 240) >> 2) << 16) | (((3 * g + 228) >> 2) << 8) | ((3 * r + 205) >> 2)) >>> 0
   );
 }
 /** Draws the 3D view from G.cam3. `overlay` adds the REPLAY label and letterbox bars. */
@@ -277,15 +312,41 @@ export function render3D(overlay = true) {
     const crowd = crowdTone(),
       // the fan cam sits in the stands: rays first cross the near boards and glass, then the ice
       outside = !insideRinkW(C3.x, C3.y);
+    if (rowT.length !== view.CH) rowT = new Float64Array(view.CH);
+    for (let y = hor + 1; y < view.CH; y++) rowT[y] = (h * f) / (y - hor);
+    if (fanWave.length !== fanTab.length) {
+      fanWave = new Float64Array(fanTab.length);
+      fanWaveAt = new Float64Array(fanTab.length).fill(NaN);
+    }
+    const now = clock.now,
+      CW = view.CW,
+      ib = iceBuf,
+      camX = C3.x,
+      camY = C3.y;
+    /** sin(now * 11 + phase) for fan i, worked out once per frame */
+    const wave = i => {
+      if (fanWaveAt[i] !== now) {
+        fanWaveAt[i] = now;
+        fanWave[i] = Math.sin(now * 11 + fanTab[i].ph);
+      }
+      return fanWave[i];
+    };
     let prevSeat = NaN;
-    for (let x = 0; x < view.CW; x++) {
+    for (let x = 0; x < CW; x++) {
       const k = (x - cxs) / f,
         dx = Fx + Rx * k,
         dy = Fy + Ry * k;
-      let t = 0.5,
+      // The rink is convex, so along a ray the samples are outside, then inside, then outside again: skipping
+      // samples that are certainly before the boards (by the bounding box) gives the same result as stepping.
+      const [bIn, bOut] = boxSpan(C3.x, C3.y, dx, dy);
+      let n = 0,
+        t = 0.5,
         tIn = 0;
       if (outside) {
-        while (t < 420 && !insideRinkW(C3.x + dx * t, C3.y + dy * t)) t += 1.2;
+        // samples before the ray reaches the bounding box are outside the rink
+        n = bIn > bOut ? MARCH_END : Math.max(0, sampleAtOrBelow(bIn) - 1);
+        while (MARCH[n] < 420 && !insideRinkW(C3.x + dx * MARCH[n], C3.y + dy * MARCH[n])) n++;
+        t = MARCH[n];
         let lo = Math.max(0.1, t - 1.2),
           hi = t;
         for (let i = 0; i < 5 && t < 420; i++) {
@@ -299,7 +360,10 @@ export function render3D(overlay = true) {
         nearBase = hor + (h * f) / tIn,
         nearGlass = hor + ((h - 10) * f) / tIn,
         nearKick = nearBase - (nearBase - nearTop) * 0.22;
-      while (t < 420 && insideRinkW(C3.x + dx * t, C3.y + dy * t)) t += 1.2;
+      // samples well before the far side of the bounding box are still inside the rink
+      if (bOut - CORNER_SLACK > MARCH[n]) n = Math.max(n, sampleAtOrBelow(bOut - CORNER_SLACK) - 1);
+      while (MARCH[n] < 420 && insideRinkW(C3.x + dx * MARCH[n], C3.y + dy * MARCH[n])) n++;
+      t = MARCH[n];
       if (t < 420) {
         let lo = Math.max(0.1, t - 1.2),
           hi = t;
@@ -317,7 +381,7 @@ export function render3D(overlay = true) {
       let bcol = BOARD;
       const bx = ((C3.x + dx * (t + 1.2)) * K) | 0,
         by = ((C3.y + dy * (t + 1.2)) * K) | 0;
-      if (iceBuf && bx >= 0 && by >= 0 && bx < IW && by < IH) bcol = iceBuf[by * IW + bx];
+      if (ib && bx >= 0 && by >= 0 && bx < IW && by < IH) bcol = ib[by * IW + bx];
       const ang = C3.yaw + Math.atan(k);
       let u = Math.floor((ang / (2 * Math.PI)) * 512) % 512;
       if (u < 0) u += 512;
@@ -339,10 +403,10 @@ export function render3D(overlay = true) {
       for (let y = view.CH - 1; y >= 0; y--) {
         let col;
         if (y > wb) {
-          const tt = (h * f) / (y - hor),
-            ix = ((C3.x + dx * tt) * K) | 0,
-            iy = ((C3.y + dy * tt) * K) | 0;
-          col = iceBuf && ix >= 0 && iy >= 0 && ix < IW && iy < IH ? iceBuf[iy * IW + ix] : ARENA;
+          const tt = rowT[y],
+            ix = ((camX + dx * tt) * K) | 0,
+            iy = ((camY + dy * tt) * K) | 0;
+          col = ib && ix >= 0 && iy >= 0 && ix < IW && iy < IH ? ib[iy * IW + ix] : ARENA;
         } else if (y >= kick) col = KICK;
         else if (y >= bt) col = bcol;
         else {
@@ -351,19 +415,20 @@ export function render3D(overlay = true) {
           else {
             const top = rowY[r + 1],
               bh = rowY[r] - top,
-              fan = fanTab[seat * FAN_ROWS + (r % FAN_ROWS)];
+              fi = seat * FAN_ROWS + (r % FAN_ROWS),
+              fan = fanTab[fi];
             if (bh < 2 || tiny) {
               // too far for whole fans: each pixel still shows one fan's colours (softened toward the crowd
               // tone), so the far stands read as a packed crowd instead of flat bands; loud fans pop up
               const shade = r & 1 ? crowd.dark : crowd.mid;
               if (fan.empty) col = shade;
               else {
-                const up = hype > 0.05 && Math.sin(clock.now * 11 + fan.ph) > 0.4,
+                const up = hype > 0.05 && wave(fi) > 0.4,
                   head = bh >= 1.5 && (y - top) / bh < 0.32;
                 col = avg32(head || up ? fan.head : xin > 0.6 ? fan.bodyD : fan.body, shade);
               }
             } else {
-              const bob = hype > 0.05 ? Math.sin(clock.now * 11 + fan.ph) * hype * 0.18 : 0,
+              const bob = hype > 0.05 ? wave(fi) * hype * 0.18 : 0,
                 w = (y - top) / bh + bob;
               col = w >= 0.84 ? SEAT : STAND;
               if (!fan.empty) {
@@ -381,7 +446,7 @@ export function render3D(overlay = true) {
             col = y >= nearBase ? ((y >> 2) & 1 ? NEARSEAT : NEARSEAT2) : y >= nearKick ? KICK : BOARD;
           else if (y >= nearGlass) col = glassTint(col);
         }
-        buf3[y * view.CW + x] = col;
+        buf3[y * CW + x] = col;
       }
     }
     view.ctx.putImageData(img3, 0, 0);

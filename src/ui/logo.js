@@ -54,6 +54,22 @@ function word(text, x0, y0, s, fill, inner, outer) {
   for (const [cx, cy, r] of cells) px(cx, cy, s, s, r < 2 ? fill[0] : r < 5 ? fill[1] : fill[2]);
 }
 
+let letters = null,
+  lettersFor = '';
+function lettering(kick) {
+  if (lettersFor !== kick) {
+    letters = letters || Object.assign(document.createElement('canvas'), { width: W, height: H });
+    const main = g;
+    g = letters.getContext('2d');
+    g.clearRect(0, 0, W, H);
+    word('TOP', 12, 9, 4, ['#ffffff', '#e6f0f9', '#bcd3e9'], kick, OUT);
+    word('SHELF', 12, 42, 3, [mix(kick, '#ffffff', 0.3), kick, mix(kick, '#000000', 0.3)], '#ffffff', OUT);
+    g = main;
+    lettersFor = kick;
+  }
+  return letters;
+}
+
 /* ---------- the arena behind it ---------- */
 const BOARDS_Y = 34,
   KICK_Y = 52,
@@ -299,9 +315,9 @@ export function drawLogo() {
     c = t % CYCLE;
   arena(t, c > T_LAND && c < T_LAND + 1.2 ? 1 - (c - T_LAND) / 1.2 : 0);
   drawSkater(poseAt(c));
-  // lettering takes the selected arena's accent colour, so it changes with the arena
+  // lettering takes the selected arena's accent colour, so it changes with the arena; it is the same every
+  // frame, so it is drawn once per colour onto its own layer and copied in
   const kick = (STADIUMS[settings.stadiumKey] || STADIUMS.frost).kick;
-  word('TOP', 12, 9, 4, ['#ffffff', '#e6f0f9', '#bcd3e9'], kick, OUT);
-  word('SHELF', 12, 42, 3, [mix(kick, '#ffffff', 0.3), kick, mix(kick, '#000000', 0.3)], '#ffffff', OUT);
+  g.drawImage(lettering(kick), 0, 0);
   puck(c);
 }
