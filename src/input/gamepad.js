@@ -10,7 +10,7 @@ import { togglePause } from '../game/match';
 import { endReplay, nextAngle } from '../game/replay';
 import { endCelebration } from '../game/states/celebrate';
 import { G } from '../game/world';
-import { input } from './state';
+import { input, pad } from './state';
 import { toggleWatchCam } from '../ui/menu';
 
 // standard mapping button indices
@@ -30,7 +30,7 @@ const A = 0,
 const DEAD = 0.22;
 
 /** Shared with the rest of the game: whether the controller is the active input, and the stick reading. */
-export const pad = { active: false, x: 0, y: 0 };
+export { pad };
 let prev = [],
   navDir = null,
   navNext = 0,

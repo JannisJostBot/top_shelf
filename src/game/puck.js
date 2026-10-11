@@ -1,4 +1,3 @@
-import { S } from '../audio/sfx';
 import { clock } from '../core/time';
 import { HARD_SHOT } from '../config';
 import { clamp, dist, rnd } from '../core/math';
@@ -6,7 +5,8 @@ import { blade, burst } from './physics/motion';
 import { SK, SKATERS } from './players';
 import { G, parts, puck } from './world';
 import { input } from '../input/state';
-import { AMB } from '../render/colors';
+import { S } from './fx';
+import { AMB } from '../data/colors';
 
 /* ---------- puck actions ---------- */
 export function take(p) {

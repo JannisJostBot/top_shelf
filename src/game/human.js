@@ -1,4 +1,3 @@
-import { S } from '../audio/sfx';
 import { ACC, BASE, GT } from '../config';
 import { clamp, dist } from '../core/math';
 import { nearest } from './ai/team';
@@ -7,12 +6,10 @@ import { accelTo, burst, faceTo, maxSpd, reachFactor } from './physics/motion';
 import { GK, SK } from './players';
 import { openness, passTo, shoot, steal } from './puck';
 import { G, puck } from './world';
-import { vib } from '../input/haptics';
 import { input, mouse, readStick } from '../input/state';
-import { CY } from '../render/colors';
-import { pop } from '../render/effects';
 import { settings } from '../settings';
-import { hud } from '../ui/hud';
+import { hud, pop, S, vib } from './fx';
+import { CY } from '../data/colors';
 
 /* ---------- human ---------- */
 export function autoSwitch(dt) {

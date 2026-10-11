@@ -1,7 +1,2 @@
-export const SH = 'rgba(30,60,110,.28)',
-  WOOD = '#9a6a35',
-  WOOD_D = '#5e3c1a',
-  AMB = '#ffc845',
-  AMB_D = '#7a5200',
-  CY = '#46f2ff',
-  CY_D = '#0b5d6b';
+// The palette lives in data/ so the simulation can name colours (for pop-up texts) without importing render/.
+export * from '../data/colors';

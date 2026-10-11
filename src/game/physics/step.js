@@ -1,4 +1,3 @@
-import { S } from '../../audio/sfx';
 import { rnd } from '../../core/math';
 import { PUCKS } from '../../data/pucks';
 import { goalieCheck } from '../ai/goalie';
@@ -9,6 +8,7 @@ import { SKATERS, players } from '../players';
 import { pickupCheck } from '../puck';
 import { G, parts, puck } from '../world';
 import { settings } from '../../settings';
+import { S } from '../fx';
 
 /* ---------- world step ---------- */
 export function integrate(dt) {

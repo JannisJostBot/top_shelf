@@ -1,17 +1,32 @@
-import { audio } from '../audio/engine';
-import { feed, resetSide } from '../ui/side';
-import { resetDirector } from '../render/director';
-import { startGoalFx } from '../render/goalFx';
-import { goalMusic, stopSong } from '../audio/music';
-import { S } from '../audio/sfx';
-import { setCrowd } from '../audio/voices';
-import { $ } from '../core/dom';
 import { clamp, rnd } from '../core/math';
 import { loadRec, saveRec } from '../core/storage';
 import { clock } from '../core/time';
 import { LABEL, ORD } from '../data/difficulty';
 import { FIRE } from '../data/pucks';
 import { COLORS } from '../data/teams';
+import {
+  S,
+  audio,
+  banner,
+  bubble,
+  feed,
+  goalLamp,
+  goalMusic,
+  hideBanner,
+  hud,
+  netHit,
+  resetDirector,
+  resetSide,
+  screen,
+  setCrowd,
+  showPad,
+  showRec,
+  showTab,
+  startGoalFx,
+  stopSong,
+  vib,
+  zoom,
+} from './fx';
 import { clearIceWear } from './iceWear';
 import { kit } from './kit';
 import { SK, genRoster, players } from './players';
@@ -19,19 +34,11 @@ import { practiceGoal, resetRosterFlags } from './practice';
 import { faceoff } from './states/faceoff';
 import { stopEngine } from './states/zamboni';
 import { G, REC, parts, puck } from './world';
-import { vib } from '../input/haptics';
 import { input } from '../input/state';
-import { knobAt, pad, touchState } from '../input/touch';
-import { fit } from '../render/camera';
-import { view } from '../render/canvas';
-import { bubble } from '../render/effects';
-import { netHit } from '../render/net';
 import { reduceMotion, settings } from '../settings';
-import { banner, hideBanner, hud, showRec } from '../ui/hud';
-import { showTab } from '../ui/menu';
 
 /* ---------- flow ---------- */
-function teamLabel(t) {
+export function teamLabel(t) {
   return G.watch ? kit.TEAMS[t].name.toUpperCase() : t === 0 ? 'YOU' : 'CPU';
 }
 export function confetti(team) {
@@ -49,7 +56,7 @@ export function goalScored(team, n) {
   puck.trail.length = 0;
   netHit(n, ix, 1.5);
   startGoalFx(settings.puckKey, ix, puck.y, n.top);
-  view.lamp = { n, until: clock.now + 3.2 };
+  goalLamp({ n, until: clock.now + 3.2 });
   G.goalX = ix;
   G.goalFrame = REC.length;
   if (G.practice) {
@@ -145,41 +152,11 @@ export function endPeriod() {
     G.bannerT = 0;
   } else endGame();
 }
-export function showPad(on) {
-  touchState.padWanted = on;
-  pad.hidden = !(on && touchState.touchUI);
-  if (!on) {
-    touchState.stickId = null;
-    input.touch = false;
-    input.tx = input.ty = 0;
-    input.shootHeld = false;
-    knobAt(0, 0);
-  }
-  fit();
-}
-/** Shots on goal, saves and save percentage for both teams on the results card. */
-function showMatchStats() {
-  const s = G.stats,
-    pct = t => (s.sog[1 - t] ? (s.saves[t] / s.sog[1 - t]).toFixed(3).replace(/^0/, '') : '–'),
-    row = (label, a, b) =>
-      '<span>' + a + '</span><span class="lbl">' + label + '</span><span>' + b + '</span>';
-  $('overStats').innerHTML =
-    '<span class="team">' +
-    teamLabel(0) +
-    '</span><span></span><span class="team">' +
-    teamLabel(1) +
-    '</span>' +
-    row('SHOTS ON GOAL', s.sog[0], s.sog[1]) +
-    row('SAVES', s.saves[0], s.saves[1]) +
-    row('SAVE %', pct(0), pct(1));
-}
 export function endGame() {
   feed('FINAL · ' + G.score[0] + '–' + G.score[1]);
   stopEngine();
   G.state = 'over';
-  $('rpBar').hidden = true;
-  $('pcard').hidden = true;
-  view.camZ = 1;
+  zoom(1);
   const w = G.score[0] > G.score[1] ? 0 : 1;
   if (G.watch) {
     S('horn');
@@ -188,22 +165,14 @@ export function endGame() {
     S('cheer');
   } else S('groan');
   setCrowd(0.015);
-  $('overK').textContent =
-    'FINAL' +
-    (G.period > 3 ? ' / OT' : '') +
-    (G.watch ? ' · EXHIBITION' : ' · ' + LABEL[settings.diffKey].toUpperCase());
-  $('overT').textContent = G.watch ? teamLabel(w) + ' WINS' : w === 0 ? 'YOU WIN' : 'CPU WINS';
-  $('overT').style.color = w === 0 ? 'var(--home-ui)' : 'var(--away-ui)';
-  $('overS').textContent = G.score[0] + ' – ' + G.score[1];
-  showMatchStats();
-  if (G.watch) {
-    $('overR').textContent = 'CPU vs CPU exhibition. Your record is unchanged.';
-  } else {
+  let record;
+  if (G.watch) record = 'CPU vs CPU exhibition. Your record is unchanged.';
+  else {
     const r = loadRec();
     r[settings.diffKey] = r[settings.diffKey] || { w: 0, l: 0 };
     r[settings.diffKey][w === 0 ? 'w' : 'l']++;
     saveRec(r);
-    $('overR').textContent =
+    record =
       'Record vs ' +
       LABEL[settings.diffKey] +
       ': ' +
@@ -212,16 +181,21 @@ export function endGame() {
       r[settings.diffKey].l +
       ' L';
   }
-  $('againBtn').textContent = G.watch ? 'WATCH AGAIN' : 'REMATCH';
-  // the result gets its moment before the results card comes up
-  banner($('overT').textContent, w === 0 ? 'home' : 'away', G.score[0] + ' – ' + G.score[1], true);
-  setTimeout(() => {
-    if (G.state !== 'over') return;
-    hideBanner();
-    $('overOv').hidden = false;
-  }, 1900);
+  const title = G.watch ? teamLabel(w) + ' WINS' : w === 0 ? 'YOU WIN' : 'CPU WINS';
+  // the results card (filled in now, shown after the result has had its moment)
+  screen('over', {
+    kicker:
+      'FINAL' +
+      (G.period > 3 ? ' / OT' : '') +
+      (G.watch ? ' · EXHIBITION' : ' · ' + LABEL[settings.diffKey].toUpperCase()),
+    title,
+    winner: w,
+    score: G.score[0] + ' – ' + G.score[1],
+    record,
+    again: G.watch ? 'WATCH AGAIN' : 'REMATCH',
+  });
+  banner(title, w === 0 ? 'home' : 'away', G.score[0] + ' – ' + G.score[1], true);
   showPad(false);
-  $('pauseBtn').disabled = true;
 }
 export function startGame(watch) {
   G.practice = null;
@@ -238,12 +212,7 @@ export function startGame(watch) {
   G.period = 1;
   G.clock = settings.periodLen;
   G.ignoreRelease = false;
-  $('menu').hidden = true;
-  $('overOv').hidden = true;
-  $('pauseOv').hidden = true;
-  $('pauseBtn').disabled = false;
-  $('nm0').textContent = teamLabel(0);
-  $('nm1').textContent = teamLabel(1);
+  screen('match', { watch: G.watch });
   genRoster();
   for (const p of players) {
     p.stride = p.lastStride = 0;
@@ -255,7 +224,6 @@ export function startGame(watch) {
   setCrowd(0.05);
   S('organ');
   showPad(!G.watch);
-  $('camBtn').hidden = !G.watch;
   hud();
   feed('PUCK DROP · ' + kit.TEAMS[0].name + ' vs ' + kit.TEAMS[1].name);
   faceoff();
@@ -274,17 +242,9 @@ export function toMenu() {
   G.score = [0, 0];
   hideBanner();
   setCrowd(0);
-  $('nm0').textContent = 'YOU';
-  $('nm1').textContent = 'CPU';
-  $('rpBar').hidden = true;
-  view.camZ = 1;
+  zoom(1);
   stopSong(0.3);
-  $('pcard').hidden = true;
-  $('overOv').hidden = true;
-  $('pauseOv').hidden = true;
-  $('menu').hidden = false;
-  $('pauseBtn').disabled = true;
-  $('camBtn').hidden = true;
+  screen('menu');
   showPad(false);
   showRec();
   hud();
@@ -294,20 +254,15 @@ export function togglePause() {
   if (G.demo) return;
   if (G.state === 'paused') {
     G.state = G.resume;
-    $('pauseOv').hidden = true;
+    screen('pause', false);
     setCrowd(0.05);
   } else if (G.state !== 'over') {
     G.resume = G.state;
     G.state = 'paused';
-    $('pauseOv').hidden = false;
+    screen('pause', true);
     setCrowd(0.012);
     input.shootHeld = false;
     G.charging = false;
     G.charge = 0;
   }
-}
-export function initMatch() {
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && !G.demo && G.state !== 'paused' && G.state !== 'over') togglePause();
-  });
 }

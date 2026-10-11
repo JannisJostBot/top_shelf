@@ -1,7 +1,7 @@
 import { clamp, pick, rnd } from '../core/math';
 import { NAMES, ROLE_BASE, SKINS, TAPES } from '../data/roster';
 import { kit } from './kit';
-import { FACEV } from '../render/sprites';
+import { FACEV } from '../data/faces';
 
 /* ---------- entities & rosters ---------- */
 export const live = p => !p.benched;

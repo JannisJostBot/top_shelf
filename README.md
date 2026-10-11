@@ -25,11 +25,13 @@ npm run format     # Prettier
 index.html            markup: HUD, stage, touch pad, menus
 src/
   main.js             bootstrap: wires listeners, applies saved prefs, starts the loop
+  bindings.js         connects the simulation's events to render/, audio/ and ui/
   config.ts           world size, rink/net geometry, physics constants
   settings.ts         user options (difficulty, jerseys, arena, toggles)
-  core/               loop, math helpers, clock, DOM helper, localStorage
+  core/               loop, event bus, math helpers, clock, DOM helper, localStorage
   data/               pure tables: teams/colors, pucks, stadiums, difficulty, roster names
-  game/               simulation
+  game/               simulation (never imports render/, audio/ or ui/; runs headless)
+    fx.js             the simulation's outlet: sounds, effects, camera, HUD and screen changes as events
     world.js          G (game state), puck, referee, particles, replay buffer
     players.js        player factory + roster generation
     kit.js            active team colors/palettes and puck style
@@ -51,12 +53,16 @@ tests/                Vitest specs
 
 - **Shared mutable state lives in objects**, because ES module imports are read-only:
   `G` (match state), `settings`, `view` (canvas context, size, zoom), `kit`, `clock`, `mixer`, `touchState`.
-  To change one from another module, assign the property (`view.camZ = 2`).
+  To change one from another module, assign the property (`settings.periodLen = 60`).
+- **The simulation talks to the presentation through events.** `game/` announces what happened via `game/fx.js`
+  (`S('steal')`, `banner(...)`, `zoom(2)`, `screen('over', …)`), which emits on the bus in `core/events.ts`;
+  `bindings.js` subscribes the real sound, drawing and DOM functions. Emits are synchronous, so they behave like
+  direct calls. With nothing subscribed the game still runs: `tests/headless.test.ts` plays a whole match in Node.
 - **Modules only declare things at load time.** Event listeners are registered in `init*()` functions that `main.js` calls in order.
 - **TypeScript is adopted gradually.** `allowJs` is on, so convert a module by renaming it to `.ts` and adding types. Start with leaf modules (`data/`, `game/physics/`), then work up.
 
 ## Next refactoring steps
 
-1. Decouple simulation from presentation: `game/` currently calls into `render/`, `audio/` and `ui/` directly (e.g. `S('steal')`, `banner(...)`). An event emitter would let the simulation run headless and be unit-tested.
+1. ~~Decouple simulation from presentation~~ (done: `game/` emits events through `game/fx.js`, see Conventions).
 2. Pass `ctx` explicitly to draw functions instead of swapping `view.ctx` (done today in `ui/preview.js` and `render/mode7.js`).
 3. Use a seeded RNG so replays and AI tests are deterministic.

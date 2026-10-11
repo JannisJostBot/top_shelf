@@ -1,6 +1,4 @@
-import { S, strideSounds } from '../audio/sfx';
 import { teamAIRealistic } from './ai/realistic';
-import { startGoalFx } from '../render/goalFx';
 import { NETS, W } from '../config';
 import { pick, rnd } from '../core/math';
 import { clock } from '../core/time';
@@ -21,13 +19,22 @@ import { faceoff, foUpdate } from './states/faceoff';
 import { startZamboni, zamStep } from './states/zamboni';
 import { G, parts, puck } from './world';
 import { input } from '../input/state';
-import { updCam } from '../render/camera';
-import { view } from '../render/canvas';
-import { pop } from '../render/effects';
-import { upd3D } from '../render/mode7';
-import { clothStep, netHit } from '../render/net';
 import { settings } from '../settings';
-import { banner, hideBanner, hud, hudClock } from '../ui/hud';
+import {
+  banner,
+  clothStep,
+  goalLamp,
+  hideBanner,
+  hud,
+  hudClock,
+  netHit,
+  pop,
+  S,
+  startGoalFx,
+  strideSounds,
+  upd3D,
+  updCam,
+} from './fx';
 
 /* ---------- update ---------- */
 export function update(dt) {
@@ -73,7 +80,7 @@ export function update(dt) {
         tn = fl ? NETS[G.lastNet === NETS[0] ? 1 : 0] : G.lastNet;
       netHit(tn, fl ? W - G.goalX : G.goalX, 1.5);
       startGoalFx(settings.puckKey, fl ? W - G.goalX : G.goalX, tn.top ? tn.y0 + 3 : tn.y1 - 3, tn.top);
-      view.lamp = { n: tn, until: clock.now + 2.6 };
+      goalLamp({ n: tn, until: clock.now + 2.6 });
     }
     applyFrame(G.rp.i);
     updCam(dt, false);

@@ -1,4 +1,6 @@
 import { GB, GT, IH, IW, K, ND, NETS, RR, RX0, RX1, RY0, RY1 } from '../config';
+import { insideRinkW } from '../game/physics/rink';
+export { insideRinkW };
 import { drawPyro3D } from './pyro';
 import { clamp, lerp } from '../core/math';
 import { clock } from '../core/time';
@@ -54,12 +56,6 @@ const SPC = document.createElement('canvas');
 SPC.width = 48;
 SPC.height = 56;
 const spx = SPC.getContext('2d');
-export function insideRinkW(x, y) {
-  if (x < RX0 || x > RX1 || y < RY0 || y > RY1) return false;
-  const cx = x < RX0 + RR ? RX0 + RR : x > RX1 - RR ? RX1 - RR : null,
-    cy = y < RY0 + RR ? RY0 + RR : y > RY1 - RR ? RY1 - RR : null;
-  return cx === null || cy === null || Math.hypot(x - cx, y - cy) <= RR;
-}
 // Broadcast-style 3D shots. The menu background and the cinematic Watch mode both use them: each shot picks
 // its goal and side at the cut and keeps them, and the camera follows a smoothed focus point with capped
 // turning and travel speed, so the only sudden changes are the cuts themselves.

@@ -1,12 +1,10 @@
-import { S } from '../../audio/sfx';
-import { feed } from '../../ui/side';
 import { GB, GT } from '../../config';
 import { clamp, rnd } from '../../core/math';
 import { GK, SK } from '../players';
 import { grab, openness, passTo } from '../puck';
 import { G, puck } from '../world';
-import { pop } from '../../render/effects';
 import { settings } from '../../settings';
+import { feed, pop, S } from '../fx';
 
 export function goalieAI(g, dt) {
   if (g.benched) return;

@@ -1,30 +1,34 @@
-import { AC, master, osc } from '../../audio/engine';
-import { feed } from '../../ui/side';
-import { S } from '../../audio/sfx';
-import { H, IH, IW, NETS, RX0, RX1, RY0, RY1, W } from '../../config';
-import { clamp, rnd, toS } from '../../core/math';
-import { FG, FH, FW, fctx, frost, rinkPathOn, wctx } from '../iceWear';
-import { netPushBody, rinkPush } from '../physics/rink';
+import { H, NETS, RX0, RX1, RY0, RY1, W } from '../../config';
+import { clamp, rnd } from '../../core/math';
+import { loadBest, saveBest } from '../../core/storage';
+import {
+  S,
+  banner,
+  clearFx,
+  feed,
+  hideBanner,
+  iceChew,
+  icePolish,
+  updCam,
+  vib,
+  zamEngine,
+  zamHorn,
+  zoom,
+} from '../fx';
+import { FG, FH, FW, frost } from '../iceWear';
+import { insideRinkW, netPushBody, rinkPush } from '../physics/rink';
 import { practiceOver } from '../practice';
 import { faceoff } from './faceoff';
 import { G, parts } from '../world';
-import { vib } from '../../input/haptics';
 import { input, readStick } from '../../input/state';
-import { updCam } from '../../render/camera';
-import { view } from '../../render/canvas';
-import { bubbles, pops, rings } from '../../render/effects';
-import { insideRinkW } from '../../render/mode7';
-import { settings } from '../../settings';
-import { banner, hideBanner } from '../../ui/hud';
 
 const ZCELL = 4,
   ZW = W / ZCELL,
   ZH = H / ZCELL;
 const COUNTDOWN = 3; // seconds of 3, 2, 1 before driving starts
+const polished = []; // spots the conditioner wiped this step, [x, y, …]
 export function startZamboni() {
-  pops.length = 0;
-  rings.length = 0;
-  bubbles.length = 0;
+  clearFx();
   parts.length = 0;
   G.state = 'zamboni';
   // start at the side boards at centre ice, facing up the rink, so there is room to drive off
@@ -40,7 +44,6 @@ export function startZamboni() {
     total: 0,
     count: 0,
     horn: 0,
-    eng: null,
   };
   for (let j = 0; j < ZH; j++)
     for (let i = 0; i < ZW; i++) {
@@ -53,72 +56,18 @@ export function startZamboni() {
     }
   // the ice is chewed up after a period of hockey
   for (let i = 0; i < frost.length; i++) frost[i] = Math.max(frost[i], 0.7);
-  fctx.save();
-  rinkPathOn(fctx);
-  fctx.clip();
-  fctx.globalAlpha = 0.5;
-  fctx.fillStyle = '#b9c6d4';
-  fctx.fillRect(0, 0, IW, IH);
-  // skate gouges: short diagonal scratches, light and dark
-  for (let k = 0; k < 1800; k++) {
-    const x = rnd(0, IW),
-      y = rnd(0, IH),
-      a = rnd(-0.6, 0.6) + (Math.random() < 0.5 ? 0 : Math.PI / 2),
-      l = rnd(4, 14);
-    fctx.globalAlpha = rnd(0.25, 0.6);
-    fctx.strokeStyle = Math.random() < 0.55 ? '#ffffff' : '#8fa1b5';
-    fctx.lineWidth = 1;
-    fctx.beginPath();
-    fctx.moveTo(x, y);
-    fctx.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l);
-    fctx.stroke();
-  }
-  fctx.restore();
-  fctx.globalAlpha = 1;
+  iceChew();
   hideBanner();
   banner('ICE RESURFACING', 'alert', 'Steer with the stick. Polish as much ice as you can.');
   S('tick'); // the first beat of the 3, 2, 1
   G.bannerT = 2.2;
   G.controlled = null;
-  view.camZ = 1;
+  zoom(1);
   updCam(0, true);
-  if (AC && !settings.muted && !G.demo) {
-    try {
-      const t = AC.currentTime,
-        o1 = AC.createOscillator(),
-        o2 = AC.createOscillator(),
-        lp = AC.createBiquadFilter(),
-        g = AC.createGain();
-      o1.type = 'sawtooth';
-      o2.type = 'triangle';
-      o1.frequency.value = 52;
-      o2.frequency.value = 104;
-      lp.type = 'lowpass';
-      lp.frequency.value = 420;
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.linearRampToValueAtTime(0.09, t + 0.4);
-      o1.connect(lp);
-      o2.connect(lp);
-      lp.connect(g);
-      g.connect(master);
-      o1.start(t);
-      o2.start(t);
-      G.zam.eng = { o1, o2, g, lp };
-    } catch (e) {}
-  }
+  if (!G.demo) zamEngine('start');
 }
 export function stopEngine() {
-  const z = G.zam;
-  if (!z || !z.eng || !AC) return;
-  const t = AC.currentTime;
-  try {
-    z.eng.g.gain.cancelScheduledValues(t);
-    z.eng.g.gain.setValueAtTime(z.eng.g.gain.value, t);
-    z.eng.g.gain.linearRampToValueAtTime(0.0001, t + 0.5);
-    z.eng.o1.stop(t + 0.6);
-    z.eng.o2.stop(t + 0.6);
-  } catch (e) {}
-  z.eng = null;
+  zamEngine('stop');
 }
 export function zamStep(dt) {
   const z = G.zam;
@@ -138,10 +87,7 @@ export function zamStep(dt) {
       const pct = z.pct;
       G.zam = null;
       if (G.practice) {
-        let b = 0;
-        try {
-          b = +localStorage.getItem('blb-zam') || 0;
-        } catch (e) {}
+        const b = loadBest();
         practiceOver(z.rating, pct + '% polished · best ' + Math.max(b, pct) + '%');
       } else faceoff();
     }
@@ -177,17 +123,11 @@ export function zamStep(dt) {
     px = -hy,
     py = hx;
   if (z.v > 3) {
-    fctx.save();
-    fctx.globalCompositeOperation = 'destination-out';
-    wctx.globalAlpha = 0.3;
-    wctx.fillStyle = '#8fd3ff';
+    polished.length = 0;
     for (let k = -6.5; k <= 6.5; k += 1.3) {
       const sx = bx + px * k,
         sy = by + py * k;
-      fctx.beginPath();
-      fctx.arc(toS(sx), toS(sy), 3.6, 0, Math.PI * 2);
-      fctx.fill();
-      wctx.fillRect(toS(sx) - 2, toS(sy) - 2, 4, 4);
+      polished.push(sx, sy);
       const fi = clamp(Math.floor(sx / FG), 0, FW - 1) + clamp(Math.floor(sy / FG), 0, FH - 1) * FW;
       frost[fi] = 0;
       const ci = Math.floor(sx / ZCELL),
@@ -197,8 +137,7 @@ export function zamStep(dt) {
         z.count++;
       }
     }
-    fctx.restore();
-    wctx.globalAlpha = 1;
+    icePolish(polished);
     if (Math.random() < 0.4)
       parts.push({
         x: bx + px * rnd(-5, 5),
@@ -209,19 +148,10 @@ export function zamStep(dt) {
         c: '#e6f6ff',
       });
   }
-  if (z.eng) {
-    const t = AC.currentTime;
-    z.eng.o1.frequency.setTargetAtTime(52 + z.v * 1.1, t, 0.1);
-    z.eng.o2.frequency.setTargetAtTime(104 + z.v * 2.2, t, 0.1);
-    z.eng.lp.frequency.setTargetAtTime(420 + z.v * 14, t, 0.1);
-  }
+  zamEngine('speed', z.v);
   if (input.sp && z.horn <= 0) {
     z.horn = 0.5;
-    if (AC && !settings.muted) {
-      const t = AC.currentTime;
-      osc('square', 330, t, 0.38, 0.08);
-      osc('square', 415, t, 0.38, 0.07);
-    }
+    zamHorn();
   }
   z.horn -= dt;
   z.t -= dt;
@@ -250,8 +180,5 @@ function finishZamboni() {
     S('cheer');
     vib([40, 30, 80]);
   } else S('ooh');
-  try {
-    const b = +localStorage.getItem('blb-zam') || 0;
-    if (pct > b) localStorage.setItem('blb-zam', String(pct));
-  } catch (e) {}
+  if (pct > loadBest()) saveBest(pct);
 }

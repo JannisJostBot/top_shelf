@@ -1,23 +1,27 @@
-import { AC, audio } from '../audio/engine';
-import { chime, stopSong } from '../audio/music';
-import { setCrowd } from '../audio/voices';
 import { GB, GT, PERIOD_LEN } from '../config';
-import { $ } from '../core/dom';
+import { AMB } from '../data/colors';
+import {
+  audio,
+  banner,
+  chime,
+  hideBanner,
+  hud,
+  pop,
+  screen,
+  setCrowd,
+  showPad,
+  stopSong,
+  updCam,
+  vib,
+  zoom,
+} from './fx';
 import { clearIceWear } from './iceWear';
-import { showPad } from './match';
 import { GK, SK, genRoster, players } from './players';
 import { take } from './puck';
 import { startBrawl } from './states/brawl';
 import { faceoff } from './states/faceoff';
 import { startZamboni, stopEngine } from './states/zamboni';
 import { G, puck, ref } from './world';
-import { vib } from '../input/haptics';
-import { updCam } from '../render/camera';
-import { view } from '../render/canvas';
-import { AMB } from '../render/colors';
-import { pop } from '../render/effects';
-import { settings } from '../settings';
-import { banner, hideBanner, hud } from '../ui/hud';
 
 /* ---------- practice modes ---------- */
 export let pcfg = { opp: 'dummy', mates: false, goalie: 'cpu' };
@@ -32,7 +36,6 @@ export function startPractice(cfg) {
   G.practice = Object.assign({}, cfg);
   G.demo = false;
   G.watch = false;
-  $('camBtn').hidden = true;
   G.ai0 = false;
   G.controlled = null;
   G.mom = null;
@@ -41,12 +44,7 @@ export function startPractice(cfg) {
   G.clock = PERIOD_LEN;
   G.ignoreRelease = false;
   G.brawlNext = false;
-  $('menu').hidden = true;
-  $('overOv').hidden = true;
-  $('pauseOv').hidden = true;
-  $('pauseBtn').disabled = false;
-  $('nm0').textContent = 'GOALS';
-  $('nm1').textContent = 'SHOTS';
+  screen('practice');
   resetRosterFlags();
   genRoster();
   for (const p of players) {
@@ -148,26 +146,14 @@ export function practiceGoal(team, n) {
   if (team === 0) G.score[0]++;
   hud();
   pop(80, n.top ? GT + 12 : GB - 12, team === 0 ? 'GOAL!' : 'OWN GOAL', team === 0 ? AMB : '#ff8a80', true);
-  if (AC && !settings.muted)
-    try {
-      chime();
-    } catch (e) {}
+  chime();
   if (team === 0) vib([40, 30, 60]);
 }
 export function practiceOver(title, line) {
   G.state = 'over';
   hideBanner();
   stopEngine();
-  $('rpBar').hidden = true;
-  $('pcard').hidden = true;
-  view.camZ = 1;
-  $('overK').textContent = 'PRACTICE';
-  $('overT').textContent = title;
-  $('overT').style.color = 'var(--ink)';
-  $('overS').textContent = '';
-  $('overR').textContent = line;
-  $('againBtn').textContent = 'AGAIN';
-  $('overOv').hidden = false;
+  zoom(1);
+  screen('practiceOver', { title, line });
   showPad(false);
-  $('pauseBtn').disabled = true;
 }

@@ -1,13 +1,19 @@
-import { S } from '../../audio/sfx';
 import { NETS, RR, RX0, RX1, RY0, RY1 } from '../../config';
 import { clamp, rnd } from '../../core/math';
 import { goalScored } from '../match';
 import { GK } from '../players';
 import { grab } from '../puck';
 import { puck } from '../world';
-import { netHit } from '../../render/net';
+import { netHit, S } from '../fx';
 
 /* ---------- physics helpers ---------- */
+/** Whether a world point lies on the ice inside the rounded boards. */
+export function insideRinkW(x, y) {
+  if (x < RX0 || x > RX1 || y < RY0 || y > RY1) return false;
+  const cx = x < RX0 + RR ? RX0 + RR : x > RX1 - RR ? RX1 - RR : null,
+    cy = y < RY0 + RR ? RY0 + RR : y > RY1 - RR ? RY1 - RR : null;
+  return cx === null || cy === null || Math.hypot(x - cx, y - cy) <= RR;
+}
 export function rinkPush(o, rad, e) {
   const x0 = RX0 + rad,
     x1 = RX1 - rad,

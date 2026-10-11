@@ -40,4 +40,5 @@ export const settings: {
   watchCam: 'cine',
 };
 
-export const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+export const reduceMotion =
+  typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;

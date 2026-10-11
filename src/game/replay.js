@@ -1,18 +1,11 @@
 import { H, W } from '../config';
-import { clearGoalFx } from '../render/goalFx';
-import { $ } from '../core/dom';
 import { lerp, rnd } from '../core/math';
 import { endGame } from './match';
 import { players } from './players';
 import { faceoff } from './states/faceoff';
 import { G, PF, REC, REC_MAX, parts, puck, ref } from './world';
 import { input } from '../input/state';
-import { updCam } from '../render/camera';
-import { view } from '../render/canvas';
-import { bubbles, pops, rings } from '../render/effects';
-import { upd3D } from '../render/mode7';
-import { resetCloth } from '../render/net';
-import { hideBanner } from '../ui/hud';
+import { clearFx, clearGoalFx, goalLamp, hideBanner, resetCloth, uiShow, upd3D, updCam, zoom } from './fx';
 
 /* ---------- replay recorder ---------- */
 export function recFrame() {
@@ -128,13 +121,11 @@ export function startReplay() {
   G.state = 'replay';
   G.rp = { i0, i: i0, end: REC.length - 1, angle: ANGLES[angleIdx] };
   parts.length = 0;
-  pops.length = 0;
-  rings.length = 0;
-  bubbles.length = 0;
+  clearFx();
   hideBanner();
-  $('rpBar').hidden = false;
+  uiShow('rpBar', true);
   G.rp.fart = Math.random() < 0.03 ? rnd(0.25, 0.7) : null;
-  $('pcard').hidden = true;
+  uiShow('pcard', false);
   input.sp = input.pp = input.swp = input.sr = false;
   beginAngle();
 }
@@ -143,9 +134,9 @@ export function beginAngle() {
   if (G.rp.fart === undefined) G.rp.fart = null;
   resetCloth();
   clearGoalFx();
-  view.lamp = null;
+  goalLamp(null);
   G.rp.i = G.rp.i0;
-  view.camZ = G.rp.angle.z;
+  zoom(G.rp.angle.z);
   applyFrame(G.rp.i);
   updCam(0, true);
   upd3D(true);
@@ -158,8 +149,8 @@ export function nextAngle() {
 }
 export function endReplay() {
   if (G.state !== 'replay') return;
-  view.camZ = 1;
-  $('rpBar').hidden = true;
+  zoom(1);
+  uiShow('rpBar', false);
   afterGoal();
 }
 function afterGoal() {

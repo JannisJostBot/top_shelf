@@ -1,8 +1,9 @@
 import { K } from '../config';
 import { G } from '../game/world';
-import { pad } from './gamepad';
 
 /* ---------- input ---------- */
+/** The first connected controller's stick (written by input/gamepad.js every frame). */
+export const pad = { active: false, x: 0, y: 0 };
 export const input = {
   aim: null,
   jx: 0,

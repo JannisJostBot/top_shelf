@@ -1,4 +1,3 @@
-import { $ } from '../../core/dom';
 import { clamp, dist, pick, rnd } from '../../core/math';
 import { refAI } from '../ai/referee';
 import { confetti } from '../match';
@@ -8,6 +7,7 @@ import { GK, SK, players } from '../players';
 import { startReplay } from '../replay';
 import { G, parts } from '../world';
 import { input } from '../../input/state';
+import { uiShow } from '../fx';
 
 /* ---------- goal celebrations ---------- */
 
@@ -25,8 +25,8 @@ export function startCelebration() {
     type: pick(CELEB),
     t: 0,
   };
-  $('rpBar').hidden = false;
-  $('angleBtn').hidden = true;
+  uiShow('rpBar', true);
+  uiShow('angleBtn', false);
   input.sp = input.pp = input.swp = input.sr = false;
 }
 export function endCelebration() {
@@ -35,7 +35,7 @@ export function endCelebration() {
     p.jump = 0;
     p.stickUp = false;
   }
-  $('angleBtn').hidden = false;
+  uiShow('angleBtn', true);
   startReplay();
 }
 export function celebrateStep(dt) {

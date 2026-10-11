@@ -1,6 +1,3 @@
-import { S } from '../../audio/sfx';
-import { feed } from '../../ui/side';
-import { $ } from '../../core/dom';
 import { clamp, rnd } from '../../core/math';
 import { LABEL } from '../../data/difficulty';
 import { nearest } from '../ai/team';
@@ -11,13 +8,10 @@ import { GK, SK, SKATERS, players } from '../players';
 import { practiceOver } from '../practice';
 import { startReplay } from '../replay';
 import { G, ref } from '../world';
-import { vib } from '../../input/haptics';
 import { input } from '../../input/state';
-import { view } from '../../render/canvas';
-import { AMB, CY } from '../../render/colors';
-import { bubble, pop } from '../../render/effects';
 import { reduceMotion, settings } from '../../settings';
-import { banner, hideBanner } from '../../ui/hud';
+import { banner, bubble, feed, hideBanner, pop, S, uiShow, vib, zoom } from '../fx';
+import { AMB, CY } from '../../data/colors';
 
 /* ---------- brawl minigame ---------- */
 
@@ -56,9 +50,9 @@ export function startBrawl() {
       { x: f.x, y: f.y + 4, t: 's', c: f.look.tape },
     );
   }
-  view.camZ = settings.viewMode === 'close' ? 3 : 2;
+  zoom(settings.viewMode === 'close' ? 3 : 2);
   hideBanner();
-  $('rpBar').hidden = true;
+  uiShow('rpBar', false);
   G.hype = 0.9;
   bubble(b, '?&!*#!', 0);
   banner('GLOVES OFF!', 'away', '#' + b.num + ' ' + b.name + ' wants a piece of you');
@@ -267,7 +261,7 @@ function finishBrawl() {
     p.jump = 0;
     p.hurtT = 0;
   }
-  view.camZ = 1;
+  zoom(1);
   G.br = null;
   if (G.practice) {
     practiceOver(

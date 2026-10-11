@@ -1,14 +1,11 @@
-import { S } from '../audio/sfx';
-import { feed } from '../ui/side';
 import { BASE } from '../config';
 import { clamp, rnd } from '../core/math';
 import { blade, burst, faceTo } from './physics/motion';
 import { nearBoards } from './physics/rink';
 import { G, puck } from './world';
-import { vib } from '../input/haptics';
-import { AMB } from '../render/colors';
-import { pop, ring } from '../render/effects';
 import { reduceMotion, settings } from '../settings';
+import { feed, pop, ring, S, vib } from './fx';
+import { AMB } from '../data/colors';
 
 /* ---------- body checks (human and AI share this) ---------- */
 export function startCheck(p, c) {

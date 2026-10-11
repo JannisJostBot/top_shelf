@@ -1,20 +1,12 @@
-import { stopSong } from '../../audio/music';
-import { feed } from '../../ui/side';
-import { S } from '../../audio/sfx';
 import { GB, GT } from '../../config';
-import { $ } from '../../core/dom';
 import { rnd } from '../../core/math';
 import { STADIUMS } from '../../data/stadiums';
 import { GK, SK, players } from '../players';
 import { take } from '../puck';
 import { G, REC, puck, ref } from '../world';
 import { input } from '../../input/state';
-import { updCam } from '../../render/camera';
-import { view } from '../../render/canvas';
-import { bubbles, pops, rings } from '../../render/effects';
-import { resetCloth } from '../../render/net';
 import { settings } from '../../settings';
-import { banner } from '../../ui/hud';
+import { banner, clearFx, feed, resetCloth, S, stopSong, uiShow, updCam, zoom } from '../fx';
 
 /* ---------- face-off minigame ---------- */
 export function faceoff() {
@@ -54,7 +46,7 @@ export function faceoff() {
     p.stickUp = false;
   }
   Object.assign(ref, { x: 88, y: 131, vx: 0, vy: 0, fx: -1, fy: 0 });
-  $('angleBtn').hidden = false;
+  uiShow('angleBtn', true);
   Object.assign(puck, {
     x: 80,
     y: 128,
@@ -69,11 +61,9 @@ export function faceoff() {
   puck.miss.clear();
   puck.trail.length = 0;
   REC.length = 0;
-  view.camZ = 1;
+  zoom(1);
   stopSong(0.8);
-  pops.length = 0;
-  rings.length = 0;
-  bubbles.length = 0;
+  clearFx();
   resetCloth();
   G.br = null;
   G.brawlNext = false;

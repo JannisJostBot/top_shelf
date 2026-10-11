@@ -19,7 +19,9 @@ import { PUCKS } from './data/pucks';
 import { STICKS } from './data/sticks';
 import { STADIUMS } from './data/stadiums';
 import { COLORS } from './data/teams';
-import { initMatch, startGame, toMenu } from './game/match';
+import { startGame, toMenu } from './game/match';
+import { bindPresentation } from './bindings';
+import { initScreens } from './ui/screens';
 import { GK, SK, genRoster, players } from './game/players';
 import { startPractice } from './game/practice';
 import { passTo, shoot } from './game/puck';
@@ -62,13 +64,15 @@ import {
 import { drawPreview } from './ui/preview';
 import { initReplayBar } from './ui/replayBar';
 
+// the presentation listens to the simulation's events before anything can happen
+bindPresentation();
 initTouch();
 initMouse();
 initReplayBar();
 initKeyboard();
 initGamepad();
 initFullscreen();
-initMatch();
+initScreens();
 initCamera();
 initSide();
 initCustomize();

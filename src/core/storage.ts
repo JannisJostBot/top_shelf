@@ -15,6 +15,19 @@ export function saveRec(r: Records) {
   } catch (e) {}
 }
 
+/** Best share of the ice polished in the resurfacer minigame, in percent. */
+export function loadBest(): number {
+  try {
+    return +(localStorage.getItem('blb-zam') || 0) || 0;
+  } catch (e) {
+    return 0;
+  }
+}
+export function saveBest(pct: number) {
+  try {
+    localStorage.setItem('blb-zam', String(pct));
+  } catch (e) {}
+}
 export function loadPrefs(): Record<string, any> {
   try {
     return JSON.parse(localStorage.getItem('blb-prefs') || '{}') || {};

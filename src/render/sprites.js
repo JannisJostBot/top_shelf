@@ -141,7 +141,7 @@ export function withNumber(map, num) {
   return out;
 }
 export const FACES = { eyes: faceSet('eyes'), visor: faceSet('visor'), cage: faceSet('cage') };
-export const FACEV = { eyes: '#2a3140', visor: '#6ec2f2', cage: '#d5dce6' };
+export { FACEV } from '../data/faces';
 const G_BODY = [
   '..OOOJJJJJJJJOOO..',
   '.OJJJJJJJJJJJJJJO.',
