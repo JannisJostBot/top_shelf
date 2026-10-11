@@ -71,7 +71,23 @@ export const PUCKS = {
 const pv = v => (typeof v === 'function' ? v() : v);
 export function puckStyle(k) {
   const s = PUCKS[k || settings.puckKey] || PUCKS.classic;
-  return { b: pv(s.b), h: pv(s.h), r: pv(s.r), a: s.a ? s.a() : 1, dk: pkDark(pv(s.r)) };
+  const b = pv(s.b);
+  return { b, h: pv(s.h), r: pv(s.r), a: s.a ? s.a() : 1, dk: pkDark(pv(s.r)), sd: sideOf(b) };
+}
+/** The puck's edge (its side band, seen below the top face): a darker shade of the body colour. */
+export function sideOf(c) {
+  if (c[0] !== '#') return c.replace(/(\d+)%\)$/, (_, l) => Math.round(+l * 0.55) + '%)');
+  const n = parseInt(c.slice(1), 16);
+  return (
+    '#' +
+    [16, 8, 0]
+      .map(o =>
+        Math.floor(((n >> o) & 255) * 0.55)
+          .toString(16)
+          .padStart(2, '0'),
+      )
+      .join('')
+  );
 }
 function pkDark(c) {
   if (c[0] !== '#') return c.replace(/(\d+)%\)$/, '22%)');

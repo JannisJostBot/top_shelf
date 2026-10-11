@@ -6,20 +6,31 @@ import { G, puck } from '../game/world';
 import { view } from './canvas';
 import { SH } from './colors';
 import { R, disc, ellipsePx } from './pixels';
+import { sideOf } from '../data/pucks';
 
-export function puckPixels(x, y, body, rim, hi) {
+/**
+ * The puck seen from above at an angle: a flat disc, wider than tall, with straight sides. The top face (body
+ * colour, a highlight at its back left) sits over a darker band (the puck's edge), all in the style's glowing
+ * outline:
+ *   .rrrrr.
+ *   rhhbbbr
+ *   rbbbbbr
+ *   rsssssr
+ *   .rrrrr.
+ */
+export function puckPixels(x, y, body, rim, hi, side) {
   if (body === undefined) {
     body = kit.PS.b;
     rim = kit.PS.r;
     hi = kit.PS.h;
+    side = kit.PS.sd;
   }
-  R(x - 1, y - 3, 3, 1, rim);
   R(x - 2, y - 2, 5, 1, rim);
   R(x - 3, y - 1, 7, 3, rim);
   R(x - 2, y + 2, 5, 1, rim);
-  R(x - 2, y - 1, 5, 3, body);
-  R(x - 1, y - 2, 3, 1, body);
-  R(x - 1, y - 1, 2, 1, hi || '#5a6378');
+  R(x - 2, y - 1, 5, 2, body);
+  R(x - 2, y - 1, 2, 1, hi || '#5a6378');
+  R(x - 2, y + 1, 5, 1, side || sideOf(body));
 }
 export function puckGround() {
   if (puck.owner && puck.owner.role === 'G') return;
