@@ -1,3 +1,4 @@
+import { rosterForMatch } from './lineup';
 import { catchUp } from './ai/team';
 import { clamp, dist, rnd } from '../core/math';
 import { loadRec, saveRec } from '../core/storage';
@@ -30,7 +31,7 @@ import {
 } from './fx';
 import { clearIceWear } from './iceWear';
 import { kit } from './kit';
-import { SK, genRoster, players } from './players';
+import { SK, players } from './players';
 import { practiceGoal, resetRosterFlags } from './practice';
 import { faceoff } from './states/faceoff';
 import { startIntro } from './states/intro';
@@ -232,7 +233,7 @@ export function startGame(watch) {
   G.clock = settings.periodLen;
   G.ignoreRelease = false;
   screen('match', { watch: G.watch });
-  genRoster();
+  rosterForMatch(); // the line-up you set (if you did), otherwise a fresh roster
   for (const p of players) {
     p.stride = p.lastStride = 0;
   }

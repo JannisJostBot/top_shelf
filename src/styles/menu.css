@@ -43,7 +43,8 @@
   text-align: left;
 }
 .matchup,
-.playarena {
+.playarena,
+.playlineup {
   font-family: var(--pixel);
   color: var(--ink);
   background: var(--arena);
@@ -447,4 +448,70 @@ body.padnav button:focus {
 .tgroup {
   display: grid;
   gap: inherit;
+}
+
+/* ---------- line-up manager ---------- */
+.lsub {
+  color: var(--muted);
+  font-size: 10px;
+}
+.luhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.luhead b {
+  font-family: var(--display);
+  font-size: 11px;
+}
+.luback {
+  padding: 6px 10px;
+}
+#luRows {
+  display: grid;
+  gap: 8px;
+}
+.lurow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  align-items: center;
+  padding: 8px;
+  background: var(--arena);
+  border: 2px solid var(--line);
+}
+.lurow .luname {
+  font-size: 12px;
+}
+.lurow .luname i {
+  font-style: normal;
+  color: var(--led);
+  margin-right: 6px;
+}
+.lurow .lustats {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.lurow .lustats .stat {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+.lurow .seg {
+  min-width: 132px;
+}
+.lurow.goalie .lupos {
+  font-size: 10px;
+  color: var(--muted);
+}
+.lubtns {
+  display: flex;
+  gap: 10px;
+}
+.lubtns .btn {
+  flex: 1;
 }

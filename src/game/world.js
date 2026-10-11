@@ -65,6 +65,8 @@ export const G = {
   intro: /** @type {any} */ (null),
   /** after the final whistle: the winners' celebration behind the results card */
   post: /** @type {any} */ (null),
+  /** a roster rolled for the line-up manager, kept for the next match */
+  rosterReady: false,
   cam3: /** @type {any} */ (null),
   goalX: 80,
   goalFrame: 0,

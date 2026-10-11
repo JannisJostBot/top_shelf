@@ -192,6 +192,12 @@
                   ><span id="matchLine">Blue vs Red</span><span class="go">Jerseys ›</span></span
                 >
               </button>
+              <button class="playlineup" data-goto="lineup" aria-label="Line-up">
+                <span class="mline"
+                  ><span><b>Line-up</b> <span class="lsub">optional: your players and their positions</span></span
+                  ><span class="go">Line-up ›</span></span
+                >
+              </button>
               <button class="playarena" data-goto="arena" aria-label="Change arena">
                 <canvas id="pvArena" width="120" height="82" aria-hidden="true"></canvas>
                 <span
@@ -227,6 +233,23 @@
               <button class="btn go" id="startBtn">DROP THE PUCK</button>
               <button class="btn ghost" id="watchBtn">WATCH CPU VS CPU</button>
               <p class="small" id="rec"></p>
+            </section>
+
+            <section class="tabp" id="p-lineup" role="tabpanel" aria-label="Line-up" hidden>
+              <div class="luhead">
+                <button class="btn ghost luback" data-goto="play">‹ Back</button>
+                <b>Your line-up</b>
+              </div>
+              <p class="small">
+                These players start your next match. Give each skater a position: the centre takes the face-offs,
+                the wing leads the rush, the defenceman stays back. Ratings stay with the player, so a sharp shooter
+                can play centre too. Skip this and every match rolls a fresh roster.
+              </p>
+              <div id="luRows"></div>
+              <div class="lubtns">
+                <button class="btn ghost" id="luAuto">Auto</button>
+                <button class="btn ghost" id="luRoll">New roster</button>
+              </div>
             </section>
 
             <section class="tabp" id="p-train" role="tabpanel" aria-labelledby="t-train" hidden>
@@ -540,7 +563,9 @@
               <p>
                 SPD skating speed, SHT shot power, HND puck handling (stealing and keeping the puck), CHK
                 checking. Wingers shoot harder and skate faster, centers have the best hands, defensemen check
-                hardest but are slower. Every roster is rolled fresh.
+                hardest but are slower. Every match rolls a fresh roster, unless you set your line-up first
+                (Play tab, Line-up): it shows your players' ratings and lets you pick who plays centre, wing
+                and defence.
               </p>
               <h3>Momentum</h3>
               <p>

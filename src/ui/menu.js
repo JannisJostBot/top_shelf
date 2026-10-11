@@ -1,3 +1,4 @@
+import { initLineup, renderLineup } from './lineup';
 import { AC, audio, master } from '../audio/engine';
 import { $ } from '../core/dom';
 import { savePrefs, loadAimBest } from '../core/storage';
@@ -23,7 +24,7 @@ export function showTab(name) {
   document
     .querySelectorAll('.tabs button')
     .forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
-  for (const t of ['play', 'train', 'teams', 'arena', 'options', 'help', 'guide'])
+  for (const t of ['play', 'train', 'teams', 'arena', 'options', 'help', 'guide', 'lineup'])
     $('p-' + t).hidden = t !== name;
   if (name === 'train') {
     let b = 0;
@@ -34,6 +35,7 @@ export function showTab(name) {
     showAimBest();
   }
   if (name === 'arena') arenaThumbs();
+  if (name === 'lineup') renderLineup();
 }
 /** The best one-minute score for the chosen gap (endless rounds keep no best). */
 function showAimBest() {
@@ -150,6 +152,7 @@ function layoutMenu() {
   card.style.setProperty('--headh', head.offsetHeight + 'px');
 }
 export function initMenu() {
+  initLineup();
   layoutMenu();
   addEventListener('resize', layoutMenu);
   const ro = new ResizeObserver(layoutMenu);
