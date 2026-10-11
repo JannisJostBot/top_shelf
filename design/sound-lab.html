@@ -1,0 +1,1026 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sound Lab</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap"
+    />
+    <style>
+      /* Design tool only: audition alternative sound effects for Top Shelf. Not used by the game.
+         Open through the dev server (it reuses the game's current skate synthesis): /design/sound-lab.html */
+      :root {
+        --bg: #070a14;
+        --panel: #0e1428;
+        --line: #1b2744;
+        --ink: #eaf0ff;
+        --muted: #8f9cc0;
+        --home: #3d7bff;
+        --led: #ffc845;
+        --pick: #39d98a;
+        --display: 'Press Start 2P', monospace;
+        --pixel: 'Silkscreen', monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--pixel);
+        font-size: 13px;
+        padding: 28px 16px 140px;
+      }
+      header,
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-family: var(--display);
+        font-size: 16px;
+        color: var(--led);
+        margin: 0 0 10px;
+      }
+      header p {
+        color: var(--muted);
+        margin: 0 0 8px;
+        max-width: 780px;
+        line-height: 1.5;
+      }
+      .engine {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 22px;
+        margin: 16px 0 26px;
+        padding: 12px 14px;
+        border: 2px solid var(--line);
+        background: var(--panel);
+      }
+      .engine label {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        cursor: pointer;
+      }
+      .engine small {
+        color: var(--muted);
+      }
+      main {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 18px;
+      }
+      section {
+        border: 2px solid var(--line);
+        background: var(--panel);
+        padding: 14px;
+      }
+      section h2 {
+        font-family: var(--display);
+        font-size: 11px;
+        margin: 0 0 6px;
+        color: var(--ink);
+      }
+      section > p {
+        color: var(--muted);
+        margin: 0 0 12px;
+        line-height: 1.45;
+      }
+      .opt {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 8px;
+        border: 2px solid transparent;
+        margin-bottom: 6px;
+        background: #0a1020;
+      }
+      .opt.sel {
+        border-color: var(--pick);
+      }
+      .opt b {
+        display: block;
+        font-weight: 700;
+      }
+      .opt span {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+      .opt .cur {
+        color: var(--led);
+        font-size: 11px;
+      }
+      button {
+        font: inherit;
+        color: var(--ink);
+        background: #17213d;
+        border: 2px solid #2c3b66;
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--home);
+      }
+      button.play {
+        width: 40px;
+        height: 34px;
+        padding: 0;
+        font-size: 14px;
+      }
+      button.choose {
+        font-size: 11px;
+      }
+      .opt.sel button.choose {
+        background: var(--pick);
+        border-color: var(--pick);
+        color: #04120b;
+      }
+      .demo {
+        margin-top: 8px;
+        width: 100%;
+        background: #1d2a4f;
+      }
+      footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #0b1124ee;
+        border-top: 2px solid var(--line);
+        padding: 10px 16px;
+      }
+      footer div {
+        max-width: 1180px;
+        margin: 0 auto;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      footer code {
+        flex: 1;
+        font-family: var(--pixel);
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+      @media (max-width: 520px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+        footer div {
+          flex-direction: column;
+          align-items: stretch;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>SOUND LAB</h1>
+      <p>
+        Every sound in Top Shelf is synthesised live. For each effect, <b>▶</b> plays a variant (press it a few times:
+        each play varies a little, as in the game). <b>Pick</b> the one you like; option A is always what the game plays
+        today. Your picks are listed at the bottom. Tell me which ones you want, and only those will be built into the game.
+      </p>
+      <p>Crowd reactions that some effects trigger in the game (the "ooh" after a check, the cheer after the horn) are left out here, so you only hear the effect itself.</p>
+    </header>
+    <div class="engine" style="max-width: 1180px; margin-left: auto; margin-right: auto">
+      <label><input type="checkbox" id="verb" /> Arena reverb on effects <small>(engine upgrade: today only the crowd echoes)</small></label>
+      <label><input type="checkbox" id="vary" checked /> Pitch and level variation per hit <small>(engine upgrade: puck, boards, hits never sound identical twice)</small></label>
+    </div>
+    <main id="cards"></main>
+    <footer>
+      <div>
+        <code id="summary"></code>
+        <button id="copy">Copy picks</button>
+      </div>
+    </footer>
+
+    <script type="module">
+      import { glideBuffer, stopBuffer, strideBuffer } from '/src/audio/skates.js';
+
+      /* ---------- engine: the same chain as the game (master -> compressor), plus an optional effects reverb ---------- */
+      let AC, master, fx, wet, noiseBuf;
+      const rnd = (a, b) => a + Math.random() * (b - a),
+        pick = a => a[Math.floor(Math.random() * a.length)],
+        smooth = x => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+      const vary = () => document.getElementById('vary').checked;
+      /** a random factor around 1 when variation is on */
+      const v = amt => (vary() ? rnd(1 - amt, 1 + amt) : 1);
+
+      function arenaImpulse() {
+        const sr = AC.sampleRate,
+          len = Math.floor(sr * 2.2),
+          b = AC.createBuffer(2, len, sr);
+        for (let ch = 0; ch < 2; ch++) {
+          const d = b.getChannelData(ch);
+          let lp = 0;
+          for (let i = 0; i < len; i++) {
+            const t = i / sr;
+            if (t < 0.018) continue; // pre-delay
+            lp += 0.35 * (Math.random() * 2 - 1 - lp); // darker tail
+            d[i] = lp * Math.exp(-t * 3.1);
+          }
+          // a few early reflections off the boards and the roof
+          for (const [t, a] of [
+            [0.023, 0.5],
+            [0.041, 0.35],
+            [0.067, 0.28],
+            [0.093, 0.2],
+          ])
+            d[Math.floor((t + ch * 0.004) * sr)] += a * (Math.random() < 0.5 ? -1 : 1);
+        }
+        return b;
+      }
+      function init() {
+        if (AC) {
+          if (AC.state === 'suspended') AC.resume();
+          return;
+        }
+        AC = new AudioContext();
+        const comp = AC.createDynamicsCompressor();
+        comp.threshold.value = -16;
+        comp.ratio.value = 4;
+        master = AC.createGain();
+        master.gain.value = 0.9;
+        master.connect(comp);
+        comp.connect(AC.destination);
+        fx = AC.createGain();
+        fx.connect(master);
+        const verb = AC.createConvolver();
+        verb.buffer = arenaImpulse();
+        wet = AC.createGain();
+        wet.gain.value = document.getElementById('verb').checked ? 0.28 : 0;
+        fx.connect(verb);
+        verb.connect(wet);
+        wet.connect(master);
+        noiseBuf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
+        const d = noiseBuf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        buildSkates();
+      }
+      document.getElementById('verb').addEventListener('change', e => {
+        if (wet) wet.gain.setTargetAtTime(e.target.checked ? 0.28 : 0, AC.currentTime, 0.05);
+      });
+
+      // the game's two building blocks, unchanged (routed into the effects bus)
+      function osc(type, f, t, dur, vol, f2, a, dest) {
+        const o = AC.createOscillator(),
+          g = AC.createGain();
+        o.type = type;
+        o.frequency.setValueAtTime(f, t);
+        if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(vol, t + (a || 0.004));
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g);
+        g.connect(dest || fx);
+        o.start(t);
+        o.stop(t + dur + 0.05);
+        return o;
+      }
+      function nz(t, dur, vol, type, f, f2, q, a, dest) {
+        const s = AC.createBufferSource();
+        s.buffer = noiseBuf;
+        const fl = AC.createBiquadFilter();
+        fl.type = type;
+        fl.frequency.setValueAtTime(f, t);
+        if (f2) fl.frequency.exponentialRampToValueAtTime(f2, t + dur);
+        fl.Q.value = q || 1;
+        const g = AC.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(vol, t + (a || 0.003));
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        s.connect(fl);
+        fl.connect(g);
+        g.connect(dest || fx);
+        s.start(t, Math.random() * 1.5);
+        s.stop(t + dur + 0.05);
+      }
+      function playBuf(b, vol, rate, pan, when) {
+        const s = AC.createBufferSource(),
+          g = AC.createGain(),
+          p = AC.createStereoPanner();
+        s.buffer = b;
+        s.playbackRate.value = rate || 1;
+        g.gain.value = vol;
+        p.pan.value = pan || 0;
+        s.connect(g);
+        g.connect(p);
+        p.connect(fx);
+        s.start(when || 0);
+      }
+
+      /* ---------- skate synthesis for the new variants ---------- */
+      function biquad(sr) {
+        let b0 = 0,
+          b2 = 0,
+          a1 = 0,
+          a2 = 0,
+          x1 = 0,
+          x2 = 0,
+          y1 = 0,
+          y2 = 0;
+        return {
+          set(f, q) {
+            const w = (2 * Math.PI * f) / sr,
+              al = Math.sin(w) / (2 * q),
+              a0 = 1 + al;
+            b0 = al / a0;
+            b2 = -al / a0;
+            a1 = (-2 * Math.cos(w)) / a0;
+            a2 = (1 - al) / a0;
+          },
+          run(x) {
+            const y = b0 * x + b2 * x2 - a1 * y1 - a2 * y2;
+            x2 = x1;
+            x1 = x;
+            y2 = y1;
+            y1 = y;
+            return y;
+          },
+        };
+      }
+      const pole = (sr, f) => 1 - Math.exp((-2 * Math.PI * f) / sr);
+      /**
+       * A blade sound: band-passed friction hiss whose band can sweep (the edge digging in and releasing), sparse
+       * crystal cracks through their own resonance, a soft touchdown knock, and a final low-pass.
+       */
+      function scrape(o) {
+        const sr = AC.sampleRate,
+          n = Math.floor(o.dur * sr),
+          buf = AC.createBuffer(1, n, sr),
+          d = buf.getChannelData(0),
+          bp = biquad(sr),
+          gp = biquad(sr),
+          lpA = pole(sr, o.lp),
+          knA = pole(sr, o.knock ? o.knock.f : 400);
+        gp.set(o.grainF * rnd(0.92, 1.08), o.grainQ || 2.5);
+        let l1 = 0,
+          l2 = 0,
+          kn = 0,
+          grain = 0,
+          rough = 0.5;
+        const f0 = o.band[0] * rnd(0.94, 1.06),
+          f1 = o.band[1] * rnd(0.94, 1.06);
+        for (let i = 0; i < n; i++) {
+          const t = i / sr,
+            e = o.env(t);
+          if (i % 64 === 0) bp.set(f0 * Math.pow(f1 / f0, t / o.dur), o.q);
+          const x = Math.random() * 2 - 1;
+          rough += (Math.random() - rough) * 0.015;
+          let s = bp.run(x) * o.hiss * (0.6 + rough * 0.8);
+          const dens = typeof o.grains === 'function' ? o.grains(t, e) : o.grains * e;
+          if (Math.random() < dens / sr) grain = (Math.random() < 0.5 ? -1 : 1) * (0.3 + Math.random() ** 2);
+          s += gp.run(grain) * (o.grainGain || 6);
+          grain *= 0.35;
+          s *= e;
+          if (o.wob) s *= o.wob(t);
+          l1 += lpA * (s - l1);
+          l2 += lpA * (l1 - l2);
+          let k = 0;
+          if (o.knock && t < 0.04) {
+            kn += knA * (x - kn);
+            k = kn * o.knock.amp * Math.exp(-t * o.knock.decay);
+          }
+          d[i] = l2 + k;
+        }
+        let m = 0;
+        for (let i = 0; i < n; i++) m = Math.max(m, Math.abs(d[i]));
+        if (m > 0) for (let i = 0; i < n; i++) d[i] *= (o.peak || 0.9) / m;
+        return buf;
+      }
+      /** Renders a seamless loop: the overhang is cross-faded into the start. */
+      function loopOf(render, len) {
+        const sr = AC.sampleRate,
+          fade = 0.15,
+          raw = render(len + fade).getChannelData(0),
+          n = Math.floor(len * sr),
+          f = Math.floor(fade * sr),
+          b = AC.createBuffer(1, n, sr),
+          d = b.getChannelData(0);
+        for (let i = 0; i < n; i++) d[i] = raw[i];
+        for (let i = 0; i < f; i++) {
+          const k = i / f;
+          d[i] = raw[i] * Math.sin((k * Math.PI) / 2) + raw[n + i] * Math.cos((k * Math.PI) / 2);
+        }
+        return b;
+      }
+      const STR = {},
+        STP = {},
+        GLD = {};
+      function buildSkates() {
+        const many = (k, f) => Array.from({ length: k }, f);
+        STR.A = many(6, () => strideBuffer(AC));
+        STR.B = many(6, () => {
+          const dur = rnd(0.26, 0.32),
+            push = dur * rnd(0.55, 0.65);
+          return scrape({
+            dur,
+            env: t => (t < push ? 0.15 + 0.85 * smooth(t / push) : Math.exp(-(t - push) * 26)),
+            band: [3600, 1900],
+            q: 1.3,
+            lp: 6500,
+            hiss: 1,
+            grains: 320,
+            grainF: 2600,
+            grainGain: 5,
+            knock: { f: 300, amp: 2.2, decay: 120 },
+          });
+        });
+        STR.C = many(6, () =>
+          scrape({
+            dur: rnd(0.18, 0.22),
+            env: t => (t < 0.008 ? t / 0.008 : Math.exp(-(t - 0.008) * 13)),
+            band: [4300, 2500],
+            q: 0.9,
+            lp: 7000,
+            hiss: 1,
+            grains: (t, e) => (t < 0.035 ? 5200 : 1000 * e),
+            grainF: 3000,
+            grainGain: 7,
+            knock: { f: 650, amp: 3.5, decay: 170 },
+          }),
+        );
+        STR.D = many(6, () => {
+          const dur = rnd(0.28, 0.34);
+          return scrape({
+            dur,
+            env: t => Math.pow(Math.sin((Math.PI * t) / dur), 1.6),
+            band: [1900, 1300],
+            q: 0.7,
+            lp: 3400,
+            hiss: 1,
+            grains: 0,
+            grainF: 2000,
+            peak: 0.75,
+          });
+        });
+        STP.A = many(3, () => stopBuffer(AC));
+        STP.B = many(3, () =>
+          scrape({
+            dur: 0.95,
+            env: t => (t < 0.03 ? t / 0.03 : t < 0.25 ? 1 - (t - 0.03) * 0.8 : 0.82 * Math.exp(-(t - 0.25) * 5)),
+            band: [5600, 2300],
+            q: 0.9,
+            lp: 10000,
+            hiss: 1.2,
+            grains: 4200,
+            grainF: 4400,
+            grainQ: 2,
+            grainGain: 6,
+            knock: { f: 500, amp: 4.5, decay: 150 },
+          }),
+        );
+        STP.C = many(3, () =>
+          scrape({
+            dur: 0.38,
+            env: t => (t < 0.012 ? t / 0.012 : Math.exp(-(t - 0.012) * 9)),
+            band: [4200, 2600],
+            q: 1.1,
+            lp: 9000,
+            hiss: 1,
+            grains: 3000,
+            grainF: 3600,
+            grainGain: 6,
+            knock: { f: 600, amp: 5, decay: 170 },
+          }),
+        );
+        GLD.A = glideBuffer(AC);
+        GLD.B = loopOf(
+          len =>
+            scrape({
+              dur: len,
+              env: () => 0.5,
+              band: [2300, 2100],
+              q: 0.8,
+              lp: 4200,
+              hiss: 1,
+              grains: 70,
+              grainF: 3000,
+              grainGain: 5,
+              wob: t => 0.78 + 0.22 * Math.sin(2 * Math.PI * t), // 1 Hz: whole cycles in the 2 s loop
+              peak: 0.45, // as loud as the current glide
+            }),
+          2,
+        );
+        GLD.C = null;
+      }
+
+      /* ---------- small helpers for the new effect variants ---------- */
+      /** Plexiglass panels shaking: a narrow ringing band with a fast flutter that dies away. */
+      function rattle(t, dur, vol, f) {
+        const s = AC.createBufferSource(),
+          bp = AC.createBiquadFilter(),
+          g = AC.createGain(),
+          am = AC.createOscillator(),
+          amg = AC.createGain(),
+          flutter = AC.createGain();
+        s.buffer = noiseBuf;
+        bp.type = 'bandpass';
+        bp.frequency.value = f;
+        bp.Q.value = 9;
+        am.type = 'square';
+        am.frequency.value = rnd(30, 42);
+        amg.gain.value = 0.5;
+        flutter.gain.value = 0.5;
+        am.connect(amg);
+        amg.connect(flutter.gain);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(vol, t + 0.004);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        s.connect(bp);
+        bp.connect(flutter);
+        flutter.connect(g);
+        g.connect(fx);
+        s.start(t, Math.random());
+        am.start(t);
+        s.stop(t + dur + 0.05);
+        am.stop(t + dur + 0.05);
+      }
+      // the game's player grunt (three vowel formants on a buzzy source), for the body checks
+      const VOW = { a: [780, 1150, 2700], o: [480, 830, 2600], u: [380, 950, 2350] };
+      function grunt(f0, delay, soft) {
+        const t = AC.currentTime + (delay || 0),
+          F = VOW[pick(['u', 'o', 'a'])],
+          env = AC.createGain();
+        env.connect(fx);
+        const peak = soft ? 0.22 : 0.42,
+          len = soft ? 0.16 : 0.3;
+        env.gain.setValueAtTime(0.0001, t);
+        env.gain.linearRampToValueAtTime(peak, t + 0.018);
+        env.gain.exponentialRampToValueAtTime(0.0001, t + len);
+        const src = AC.createGain();
+        src.gain.value = 0.6;
+        F.forEach((f, i) => {
+          const b = AC.createBiquadFilter();
+          b.type = 'bandpass';
+          b.frequency.value = f;
+          b.Q.value = 7;
+          const g = AC.createGain();
+          g.gain.value = [1.5, 0.85, 0.35][i] * 3;
+          src.connect(b);
+          b.connect(g);
+          g.connect(env);
+        });
+        const o = AC.createOscillator();
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(f0 * 1.18, t);
+        o.frequency.exponentialRampToValueAtTime(f0 * 0.7, t + len);
+        o.connect(src);
+        o.start(t);
+        o.stop(t + len + 0.05);
+      }
+      /** A referee whistle blast with the pea's rattle: frequency and level flutter together. */
+      function blast(t, dur, vol, f) {
+        const o = AC.createOscillator(),
+          lfo = AC.createOscillator(),
+          lg = AC.createGain(),
+          am = AC.createGain(),
+          ag = AC.createGain(),
+          g = AC.createGain();
+        o.frequency.setValueAtTime(f * 1.03, t);
+        o.frequency.exponentialRampToValueAtTime(f, t + 0.04);
+        o.frequency.setValueAtTime(f, t + dur - 0.06);
+        o.frequency.exponentialRampToValueAtTime(f * 0.94, t + dur);
+        lfo.type = 'triangle';
+        lfo.frequency.value = rnd(48, 58);
+        lg.gain.value = f * 0.045;
+        lfo.connect(lg);
+        lg.connect(o.frequency);
+        ag.gain.value = 0.35;
+        am.gain.value = 0.65;
+        lfo.connect(ag);
+        ag.connect(am.gain);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(vol, t + 0.015);
+        g.gain.setValueAtTime(vol, t + dur - 0.05);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(am);
+        am.connect(g);
+        g.connect(fx);
+        o.start(t);
+        lfo.start(t);
+        o.stop(t + dur + 0.05);
+        lfo.stop(t + dur + 0.05);
+        nz(t, dur, vol * 0.25, 'bandpass', f, null, 5, 0.015); // breath
+      }
+      function hornChord(freqs, type, dur, vol, filt, extra) {
+        const t = AC.currentTime,
+          f = AC.createBiquadFilter(),
+          g = AC.createGain();
+        f.type = filt.type;
+        f.frequency.value = filt.f;
+        f.Q.value = filt.q || 1;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(vol, t + (extra.attack || 0.06));
+        g.gain.setValueAtTime(vol, t + dur - 0.5);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        let into = f;
+        if (extra.drive) {
+          const ws = AC.createWaveShaper(),
+            c = new Float32Array(1024);
+          for (let i = 0; i < 1024; i++) c[i] = Math.tanh((i / 512 - 1) * extra.drive);
+          ws.curve = c;
+          ws.connect(f);
+          into = ws;
+        }
+        f.connect(g);
+        g.connect(fx);
+        for (const fr of freqs) {
+          const o = AC.createOscillator();
+          o.type = type;
+          o.detune.value = rnd(-8, 8);
+          if (extra.scoop) {
+            o.frequency.setValueAtTime(fr * 0.93, t);
+            o.frequency.exponentialRampToValueAtTime(fr, t + 0.22);
+          } else o.frequency.value = fr;
+          if (extra.vib) {
+            const l = AC.createOscillator(),
+              lg = AC.createGain();
+            l.frequency.value = rnd(5, 6);
+            lg.gain.value = fr * 0.008;
+            l.connect(lg);
+            lg.connect(o.frequency);
+            l.start(t);
+            l.stop(t + dur + 0.05);
+          }
+          o.connect(into);
+          o.start(t);
+          o.stop(t + dur + 0.05);
+        }
+      }
+
+      /* ---------- the effects ---------- */
+      const clackA = (k = 1) => {
+        const t = AC.currentTime;
+        nz(t, 0.035, 0.6 * k, 'highpass', 2200);
+        osc('triangle', 1500, t, 0.05, 0.25 * k, 450);
+      };
+      // playback levels that make the stride variants equally loud
+      const STRIDE_VOL = { A: 0.42, B: 0.42, C: 0.32, D: 0.26 };
+      const CARDS = [
+        {
+          id: 'stride',
+          title: 'Skating strides',
+          blurb: 'One push of a skate. In the game it plays on every stride of the player you control (and quieter for others on screen).',
+          opts: [
+            ['Current', 'Dense crackle plus bright hiss. Can sound gritty and harsh when it repeats.', () => playBuf(pick(STR.A), 0.42, rnd(0.92, 1.08))],
+            ['Carve', 'Smooth "shhhk": the edge digs in and the hiss sweeps down as the push releases. Light crunch, soft touchdown.', () => playBuf(pick(STR.B), 0.42, rnd(0.94, 1.06))],
+            ['Bite', 'Crisp, short "tchk-shh": a quick bite of ice crystals, then a fast hiss. Close to real hockey audio.', () => playBuf(pick(STR.C), STRIDE_VOL.C, rnd(0.94, 1.06))],
+            ['Soft', 'An airy, rounded whoosh with no crunch. The calmest, most "arcade" option.', () => playBuf(pick(STR.D), STRIDE_VOL.D, rnd(0.94, 1.06))],
+          ],
+        },
+        {
+          id: 'glide',
+          title: 'Glide bed',
+          blurb: 'The continuous hiss under the strides, louder the faster you skate. Plays as a 2 s sample here.',
+          opts: [
+            ['Current', 'Bright steady hiss with a little crackle.', () => loopPreview(GLD.A)],
+            ['Hum', 'Darker, softer hiss that breathes slowly, almost no crackle. Sits under the strides instead of on top of them.', () => loopPreview(GLD.B)],
+            ['Off', 'No glide bed at all: only strides and stops.', () => {}],
+          ],
+        },
+        {
+          id: 'stop',
+          title: 'Hockey stop',
+          blurb: 'The spray of shavings when a skater stops hard or turns sharply.',
+          opts: [
+            ['Current', 'A 0.6 s spray that tails off.', () => playBuf(pick(STP.A), 0.55, rnd(0.95, 1.05))],
+            ['Big spray', 'A longer, fuller "kssshhh" that sweeps from bright to dark, with shavings trickling at the end.', () => playBuf(pick(STP.B), 0.55, rnd(0.95, 1.05))],
+            ['Quick snap', 'A short, punchy stop. Less spray, more bite.', () => playBuf(pick(STP.C), 0.55, rnd(0.95, 1.05))],
+          ],
+          demo: true,
+        },
+        {
+          id: 'shot',
+          title: 'Shot',
+          blurb: 'Stick on puck when you shoot.',
+          opts: [
+            ['Current', 'A high clack, a small thump and a swish.', () => {
+              const t = AC.currentTime;
+              clackA(1);
+              osc('sine', 90, t, 0.08, 0.25, 50);
+              nz(t + 0.01, 0.26, 0.14, 'bandpass', 600, 2600, 2, 0.03);
+            }],
+            ['Wood slap', 'A meaty "thwack": blade slapping the ice and the puck, then the puck hissing away.', () => {
+              const t = AC.currentTime,
+                p = v(0.08);
+              nz(t, 0.05, 0.7, 'bandpass', 900 * p, 500, 3, 0.001);
+              osc('sine', 190 * p, t, 0.12, 0.45, 85, 0.002);
+              nz(t, 0.012, 0.5, 'highpass', 5000, null, 1, 0.001);
+              nz(t + 0.02, 0.25, 0.08, 'bandpass', 1500, 3500, 1.5, 0.04);
+            }],
+            ['Composite crack', 'A sharp modern carbon-stick crack with a short metallic ring.', () => {
+              const t = AC.currentTime,
+                p = v(0.06);
+              nz(t, 0.015, 0.9, 'highpass', 1800, null, 1, 0.0005);
+              osc('sine', 1150 * p, t, 0.09, 0.18, 1100 * p, 0.001);
+              osc('sine', 2950 * p, t, 0.06, 0.08, null, 0.001);
+              osc('triangle', 140, t, 0.1, 0.4, 70, 0.002);
+              nz(t + 0.01, 0.22, 0.07, 'bandpass', 800, 3000, 2, 0.03);
+            }],
+          ],
+        },
+        {
+          id: 'pass',
+          title: 'Pass',
+          blurb: 'A softer stick-on-puck for passes (also used for steals).',
+          opts: [
+            ['Current', 'The shot clack at half volume.', () => clackA(0.5)],
+            ['Tock', 'A rounded wooden "tock".', () => {
+              const t = AC.currentTime,
+                p = v(0.08);
+              nz(t, 0.03, 0.45, 'bandpass', 1250 * p, null, 4, 0.001);
+              osc('sine', 620 * p, t, 0.05, 0.12, 400);
+            }],
+            ['Muted slap', 'A small version of the wood slap: some body, little click.', () => {
+              const t = AC.currentTime,
+                p = v(0.08);
+              nz(t, 0.035, 0.4, 'bandpass', 800 * p, 500, 2.5, 0.001);
+              osc('sine', 170 * p, t, 0.08, 0.25, 90);
+              nz(t, 0.008, 0.25, 'highpass', 4500, null, 1, 0.0005);
+            }],
+          ],
+        },
+        {
+          id: 'board',
+          title: 'Puck off the boards',
+          blurb: 'The puck hitting the boards (level follows puck speed).',
+          opts: [
+            ['Current', 'A low thud with a little knock.', () => {
+              const t = AC.currentTime;
+              osc('sine', 105, t, 0.22, 0.5, 48);
+              nz(t, 0.16, 0.35, 'lowpass', 900, 300);
+              nz(t + 0.01, 0.22, 0.08, 'bandpass', 1800, 1200, 3);
+            }],
+            ['Glass rattle', 'A thud plus the plexiglass panels shaking in their frames.', () => {
+              const t = AC.currentTime,
+                p = v(0.1);
+              osc('sine', 95 * p, t, 0.25, 0.45, 50);
+              nz(t, 0.18, 0.3, 'lowpass', 700, 250);
+              rattle(t + 0.005, 0.45, 0.25, 2300 * p);
+            }],
+            ['Deep boom', 'A heavy hollow boom, like a big rink with old wooden boards.', () => {
+              const t = AC.currentTime,
+                p = v(0.1);
+              osc('sine', 70 * p, t, 0.5, 0.8, 34);
+              nz(t, 0.45, 0.55, 'lowpass', 300, 90);
+              nz(t, 0.3, 0.2, 'bandpass', 160 * p, null, 2);
+            }],
+          ],
+        },
+        {
+          id: 'post',
+          title: 'Post / crossbar',
+          blurb: 'The puck ringing off the goal frame.',
+          opts: [
+            ['Current', 'Three pure sine tones: clean, slightly electronic "ping".', () => {
+              const t = AC.currentTime;
+              osc('sine', 1860, t, 0.7, 0.14);
+              osc('sine', 2790, t, 0.5, 0.08);
+              osc('sine', 4100, t, 0.25, 0.04);
+              clackA(0.4);
+            }],
+            ['Clang', 'A real metal pipe: inharmonic partials that die away at different rates.', () => {
+              const t = AC.currentTime,
+                b = 640 * v(0.05);
+              [
+                [1, 0.14, 1.1],
+                [2.76, 0.1, 0.8],
+                [5.4, 0.06, 0.45],
+                [8.93, 0.03, 0.3],
+              ].forEach(([m, vol, d]) => osc('sine', b * m, t, d, vol, null, 0.001));
+              nz(t, 0.02, 0.4, 'highpass', 3000, null, 1, 0.0005);
+            }],
+            ['Ting', 'A bright, long "tiiing" with a gentle shimmer (two tones beating).', () => {
+              const t = AC.currentTime,
+                b = 2600 * v(0.04);
+              osc('sine', b, t, 1.3, 0.1, null, 0.001);
+              osc('sine', b + 13, t, 1.3, 0.08, null, 0.001);
+              osc('sine', b * 2.01, t, 0.4, 0.03, null, 0.001);
+              nz(t, 0.015, 0.3, 'highpass', 4000, null, 1, 0.0005);
+            }],
+          ],
+        },
+        {
+          id: 'check',
+          title: 'Body check',
+          blurb: 'Shoulder into a skater (with the grunts, without the crowd "ooh").',
+          opts: [
+            ['Current', 'A deep thump, a clack and a second, smaller thud.', () => {
+              const t = AC.currentTime;
+              osc('sine', 70, t, 0.34, 0.85, 36);
+              nz(t, 0.24, 0.5, 'lowpass', 520, 140);
+              clackA(0.3);
+              grunt(120, 0.01);
+              grunt(140, 0, true);
+              setTimeout(() => {
+                osc('sine', 60, AC.currentTime, 0.25, 0.5, 40);
+                nz(AC.currentTime, 0.3, 0.18, 'highpass', 3000, 1800, 1);
+              }, 230);
+            }],
+            ['Pads & glass', 'Plastic shoulder pads cracking together, a thud, and the glass shaking.', () => {
+              const t = AC.currentTime,
+                p = v(0.08);
+              osc('sine', 82 * p, t, 0.3, 0.8, 38, 0.002);
+              nz(t, 0.035, 0.45, 'bandpass', 1600 * p, null, 5, 0.001);
+              nz(t, 0.2, 0.5, 'lowpass', 900, 200);
+              nz(t + 0.02, 0.3, 0.12, 'bandpass', 3000, 1500, 1);
+              rattle(t + 0.01, 0.4, 0.15, 2200);
+              grunt(120, 0.01);
+              grunt(140, 0, true);
+            }],
+            ['Heavy', 'A big body slam: a sub-bass drop and a long, low boom.', () => {
+              const t = AC.currentTime,
+                p = v(0.08);
+              osc('sine', 60 * p, t, 0.5, 1, 26, 0.002);
+              osc('sine', 120 * p, t, 0.15, 0.5, 55);
+              nz(t, 0.35, 0.7, 'lowpass', 700, 120);
+              nz(t + 0.03, 0.45, 0.35, 'lowpass', 300, 90);
+              grunt(120, 0.01);
+              grunt(140, 0, true);
+            }],
+          ],
+        },
+        {
+          id: 'whistle',
+          title: 'Referee whistle',
+          blurb: 'Offsides, icing, face-offs and the end of fights.',
+          opts: [
+            ['Current', 'A smooth sine with a fast warble.', () => {
+              const t = AC.currentTime,
+                o = AC.createOscillator(),
+                l = AC.createOscillator(),
+                lg = AC.createGain(),
+                g = AC.createGain();
+              o.frequency.value = 2650;
+              l.frequency.value = 32;
+              lg.gain.value = 140;
+              l.connect(lg);
+              lg.connect(o.frequency);
+              g.gain.setValueAtTime(0.0001, t);
+              g.gain.linearRampToValueAtTime(0.1, t + 0.02);
+              g.gain.setValueAtTime(0.1, t + 0.3);
+              g.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
+              o.connect(g);
+              g.connect(fx);
+              o.start(t);
+              l.start(t);
+              o.stop(t + 0.45);
+              l.stop(t + 0.45);
+            }],
+            ['Pea whistle', 'A real referee whistle: the pea rattles, there is breath in it, and it goes "tweet-tweeet".', () => {
+              const t = AC.currentTime,
+                f = 3000 * v(0.03);
+              blast(t, 0.16, 0.09, f);
+              blast(t + 0.24, 0.42, 0.1, f);
+            }],
+            ['Long blast', 'One long, firm pea-whistle blast.', () => blast(AC.currentTime, 0.75, 0.1, 2900 * v(0.03))],
+          ],
+        },
+        {
+          id: 'horn',
+          title: 'Goal horn',
+          blurb: 'After a goal (the cheer that follows is left out here).',
+          opts: [
+            ['Current', 'A bright sawtooth chord.', () => {
+              hornChord([138.6, 174.6, 207.7, 277.2], 'sawtooth', 2.4, 0.15, { type: 'lowpass', f: 1100 }, {});
+            }],
+            ['Foghorn', 'The deep NHL-style goal horn: low, huge and slow to start, with a slight rise into pitch.', () => {
+              hornChord([98, 147, 196, 98.6], 'sawtooth', 2.8, 0.22, { type: 'lowpass', f: 650, q: 1.5 }, { attack: 0.25, scoop: true });
+            }],
+            ['Train horn', 'A brassy, wobbly three-tone air horn with some grit.', () => {
+              hornChord([277, 349, 415], 'square', 2.3, 0.12, { type: 'bandpass', f: 1000, q: 0.6 }, { attack: 0.05, vib: true, drive: 2.5 });
+            }],
+          ],
+        },
+      ];
+
+      /* ---------- glide preview and the skating demo ---------- */
+      let loopSrc = null;
+      function loopPreview(b, dur = 2.2) {
+        if (loopSrc) loopSrc.stop();
+        const s = AC.createBufferSource(),
+          g = AC.createGain();
+        s.buffer = b;
+        s.loop = true;
+        const t = AC.currentTime;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.35, t + 0.25);
+        g.gain.setValueAtTime(0.35, t + dur - 0.3);
+        g.gain.linearRampToValueAtTime(0.0001, t + dur);
+        s.connect(g);
+        g.connect(fx);
+        s.start(t);
+        s.stop(t + dur + 0.05);
+        loopSrc = s;
+      }
+      /** Skates a short burst with the picked stride, glide and stop: speeds up, cruises, then stops hard. */
+      function skateDemo() {
+        const t0 = AC.currentTime + 0.05,
+          gb = GLD[picks.glide],
+          gaps = [0.42, 0.38, 0.35, 0.32, 0.3, 0.3, 0.3, 0.3, 0.31],
+          strideRate = { A: [0.92, 1.08], B: [0.94, 1.06], C: [0.94, 1.06], D: [0.94, 1.06] }[picks.stride];
+        let t = t0,
+          foot = false;
+        gaps.forEach((gap, i) => {
+          foot = !foot;
+          const speed = Math.min(1, 0.45 + i * 0.09);
+          playBuf(pick(STR[picks.stride]), STRIDE_VOL[picks.stride] * speed * 1.1, rnd(...strideRate), foot ? -0.18 : 0.18, t);
+          t += gap;
+        });
+        const stopAt = t + 0.35;
+        playBuf(pick(STP[picks.stop]), 0.55, rnd(0.95, 1.05), 0, stopAt);
+        if (gb) {
+          const s = AC.createBufferSource(),
+            g = AC.createGain();
+          s.buffer = gb;
+          s.loop = true;
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.linearRampToValueAtTime(0.09, t0 + 2);
+          g.gain.setValueAtTime(0.09, stopAt);
+          g.gain.linearRampToValueAtTime(0.0001, stopAt + 0.25);
+          s.connect(g);
+          g.connect(fx);
+          s.start(t0);
+          s.stop(stopAt + 0.3);
+        }
+      }
+
+      /* ---------- page ---------- */
+      const LETTERS = 'ABCD';
+      const picks = {};
+      let saved = {};
+      try {
+        saved = JSON.parse(localStorage.getItem('soundlab-picks') || '{}');
+      } catch (_) {}
+      const root = document.getElementById('cards');
+      for (const c of CARDS) {
+        picks[c.id] = saved[c.id] && LETTERS.indexOf(saved[c.id]) < c.opts.length ? saved[c.id] : 'A';
+        const sec = document.createElement('section');
+        sec.innerHTML = `<h2>${c.title}</h2><p>${c.blurb}</p>`;
+        c.opts.forEach(([name, desc, play], i) => {
+          const L = LETTERS[i],
+            row = document.createElement('div');
+          row.className = 'opt';
+          row.dataset.card = c.id;
+          row.dataset.opt = L;
+          row.innerHTML = `<button class="play" title="Play">▶</button>
+            <div><b>${L} · ${name}${i === 0 ? ' <i class="cur">(now in the game)</i>' : ''}</b><span>${desc}</span></div>
+            <button class="choose">Pick</button>`;
+          row.querySelector('.play').onclick = () => {
+            init();
+            play();
+          };
+          row.querySelector('.choose').onclick = () => {
+            picks[c.id] = L;
+            refresh();
+          };
+          sec.appendChild(row);
+        });
+        if (c.demo) {
+          const b = document.createElement('button');
+          b.className = 'demo';
+          b.textContent = '▶ Skate a burst with your picked stride + glide + stop';
+          b.onclick = () => {
+            init();
+            skateDemo();
+          };
+          sec.appendChild(b);
+        }
+        root.appendChild(sec);
+      }
+      function refresh() {
+        for (const row of document.querySelectorAll('.opt'))
+          row.classList.toggle('sel', picks[row.dataset.card] === row.dataset.opt);
+        const text =
+          CARDS.map(c => `${c.title}: ${picks[c.id]} ${c.opts[LETTERS.indexOf(picks[c.id])][0]}`).join(' · ') +
+          ` · Reverb on effects: ${document.getElementById('verb').checked ? 'yes' : 'no'}` +
+          ` · Variation: ${document.getElementById('vary').checked ? 'yes' : 'no'}`;
+        document.getElementById('summary').textContent = text;
+        try {
+          localStorage.setItem('soundlab-picks', JSON.stringify(picks));
+        } catch (_) {}
+        return text;
+      }
+      document.getElementById('verb').addEventListener('change', refresh);
+      document.getElementById('vary').addEventListener('change', refresh);
+      document.getElementById('copy').onclick = async () => {
+        const text = refresh();
+        try {
+          await navigator.clipboard.writeText(text);
+          document.getElementById('copy').textContent = 'Copied';
+          setTimeout(() => (document.getElementById('copy').textContent = 'Copy picks'), 1200);
+        } catch (_) {}
+      };
+      refresh();
+    </script>
+  </body>
+</html>
