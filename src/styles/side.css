@@ -353,6 +353,7 @@ body.wide #rpBar {
 .pennant {
   display: grid;
   justify-items: center;
+  justify-content: center; /* (the scoreboard's .away rule would push the away banner's content right) */
   gap: 8px;
 }
 .pslot .score {
