@@ -26,6 +26,13 @@ const ZCELL = 4,
   ZW = W / ZCELL,
   ZH = H / ZCELL;
 const COUNTDOWN = 3; // seconds of 3, 2, 1 before driving starts
+// driving: top speed, how wide a strip the conditioner lays down (half width), and the length of a run. Tuned so a
+// perfect lawnmower run covers about two thirds of the ice (turning at the ends costs time), a good one half.
+export const ZAM = { speed: 55, half: 8, time: 30 };
+// share of the ice (percent) for each rating; GOOD earns the speed boost
+const SPOTLESS = 65,
+  GOOD = 50,
+  FAIR = 30;
 // collision size: a little tighter than the drawn machine (about 15 units wide), so it fits through the gap
 // between the back of a goal and the end boards (15 units) and can polish the ice behind the nets
 const BODY_R = 6, // against the boards
@@ -41,7 +48,7 @@ export function startZamboni() {
     y: 150,
     a: 0,
     v: 0,
-    t: 25,
+    t: ZAM.time,
     phase: 'count',
     cd: COUNTDOWN, // countdown before driving
     done: new Uint8Array(ZW * ZH),
@@ -113,7 +120,7 @@ export function zamStep(dt) {
     let da = ((at - z.a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
     z.a += clamp(da, -2.6 * dt, 2.6 * dt);
   }
-  z.v += clamp(m * 38 - z.v, -45 * dt, 30 * dt);
+  z.v += clamp(m * ZAM.speed - z.v, -45 * dt, 30 * dt);
   const hx = Math.sin(z.a),
     hy = -Math.cos(z.a);
   const o = { x: z.x + hx * z.v * dt, y: z.y + hy * z.v * dt, vx: hx * z.v, vy: hy * z.v };
@@ -148,7 +155,7 @@ export function zamStep(dt) {
     py = hx;
   if (z.v > 3) {
     polished.length = 0;
-    for (let k = -6.5; k <= 6.5; k += 1.3) {
+    for (let k = -ZAM.half; k <= ZAM.half + 1e-9; k += (ZAM.half * 2) / 10) {
       const sx = bx + px * k,
         sy = by + py * k;
       polished.push(sx, sy);
@@ -172,7 +179,7 @@ export function zamStep(dt) {
         c: '#e6f6ff',
       });
   }
-  zamEngine('speed', z.v);
+  zamEngine('speed', (z.v * 38) / ZAM.speed); // the engine note at top speed stays where it was
   if (input.sp && z.horn <= 0) {
     z.horn = 0.5;
     zamHorn();
@@ -189,17 +196,17 @@ function finishZamboni() {
   z.end = 2.8;
   stopEngine();
   const pct = Math.round((z.count / Math.max(1, z.total)) * 100);
-  const r = pct >= 92 ? 'SPOTLESS!' : pct >= 80 ? 'GLASS SMOOTH' : pct >= 55 ? 'NOT BAD' : 'BUMPY ICE';
+  const r = pct >= SPOTLESS ? 'SPOTLESS!' : pct >= GOOD ? 'GLASS SMOOTH' : pct >= FAIR ? 'NOT BAD' : 'BUMPY ICE';
   z.pct = pct;
   z.rating = r;
   banner(
     r,
-    pct >= 80 ? 'home' : 'small',
-    pct + '% of the ice polished' + (pct >= 80 && !G.practice ? ' · your team skates faster for 20s' : ''),
+    pct >= GOOD ? 'home' : 'small',
+    pct + '% of the ice polished' + (pct >= GOOD && !G.practice ? ' · your team skates faster for 20s' : ''),
   );
   G.bannerT = 2.6;
-  feed('Ice resurfaced · ' + pct + '% polished' + (pct >= 80 ? ' · speed boost 20s' : ''), 0);
-  if (pct >= 80) {
+  feed('Ice resurfaced · ' + pct + '% polished' + (pct >= GOOD ? ' · speed boost 20s' : ''), 0);
+  if (pct >= GOOD) {
     if (!G.practice) G.mom = { team: 0, t: 20, dur: 20, src: 'ice' };
     S('cheer');
     vib([40, 30, 80]);

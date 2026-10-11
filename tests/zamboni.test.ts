@@ -50,3 +50,33 @@ describe('resurfacer at the boards', () => {
     expect(z.y).toBeLessThan(NETS[0].y0); // still behind the goal line
   });
 });
+
+// The speed boost must be within reach: a good run (here an autopilot driving lanes up and down the rink) has
+// to be able to polish the share of the ice it needs.
+describe('resurfacer run', () => {
+  it('can polish enough ice for the speed boost', () => {
+    clearEvents();
+    G.demo = false;
+    startZamboni();
+    const z = G.zam;
+    while (z.phase === 'count') zamStep(STEP);
+    const pts: number[][] = [];
+    for (let i = 0, x = 12; x < 150; x += 20, i++) {
+      pts.push([x, i % 2 ? 14 : 242], [x + 10, i % 2 ? 14 : 242]);
+    }
+    let w = 0;
+    while (z.phase === 'drive') {
+      const [tx, ty] = pts[Math.min(w, pts.length - 1)],
+        dx = tx - z.x,
+        dy = ty - z.y,
+        l = Math.hypot(dx, dy) || 1;
+      if (l < 9) w++;
+      pad.x = dx / l;
+      pad.y = dy / l;
+      zamStep(STEP);
+    }
+    pad.x = pad.y = 0;
+    input.sp = input.pp = false;
+    expect(z.pct).toBeGreaterThanOrEqual(50);
+  });
+});
