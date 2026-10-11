@@ -5,14 +5,14 @@ import { mouse } from '../input/state';
 import { touchState } from '../input/touch';
 
 const KEYMAP = [
-  [['↑', '↓', '←', '→'], 'Skate (relative to the aim ring when using the mouse)'],
+  [['↑', '↓', '←', '→'], 'Skate (relative to the aim arrow when using the mouse)'],
   [['W', 'A', 'S', 'D'], 'Also skate'],
   [['Space', 'J'], 'Shoot (hold to wind up) · Poke · Draw · Punch · Horn'],
   [['Shift', 'K'], 'Pass · Check · Dash · Block · Finish'],
   [['L', 'C'], 'Switch skater'],
   [
     ['Mouse'],
-    'Steer: move the mouse to swing the aim ring around your skater. W skates that way, S back, A/D strafe. A click traps the mouse in the game; Esc frees it',
+    'Steer: move the mouse to swing the aim arrow around your skater. W skates that way, S back, A/D strafe. A click traps the mouse in the game; Esc frees it',
   ],
   [['Left click'], 'Same as Space'],
   [['Right click'], 'Same as Shift'],

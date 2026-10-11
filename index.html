@@ -471,8 +471,7 @@
               <p>
                 Hold Shoot to wind up (up to about 0.7 s), release to fire. A full wind-up shoots almost twice
                 as hard but less accurately. In the attacking zone, facing the net, the shot goes for a
-                corner: steer left or right to pick one, or let it pick the side the goalie leaves open. With
-                the mouse, the aim ring picks the spot. Anywhere else you shoot straight ahead, which is handy
+                corner: steer left or right to pick one, or let it pick the side the goalie leaves open. With the mouse, the aim arrow picks the spot. Anywhere else you shoot straight ahead, which is handy
                 for dumping the puck in.
               </p>
               <figure class="demo">
@@ -484,7 +483,8 @@
               <h3>Passing</h3>
               <p>
                 The pass goes to the teammate in the direction you are steering. With no direction it finds
-                the most open teammate up the ice.
+                the most open teammate up the ice. While a pass is on its way to you, your skater leans
+                toward it, but steering hard away can still lose it.
               </p>
               <figure class="demo">
                 <canvas data-demo="pass" width="128" height="56" aria-hidden="true"></canvas>
@@ -552,8 +552,8 @@
               </p>
               <h3>Fights</h3>
               <p>
-                After you score, a sore loser may drop the gloves (more likely the longer it has been since
-                the last fight; turn it off in Setup). Punch to hit; Block when they wind up and the red !
+                After you score, a sore loser may drop the gloves: at most once a match, more likely with
+                every goal until it happens (turn it off in Setup). Punch to hit; Block when they wind up and the red !
                 shows. Punching drains stamina, so tired punches are weak; it recovers when you wait. Higher
                 CPU levels block and counter more.
               </p>
@@ -564,9 +564,26 @@
                 is the original arcade AI; Realistic skaters react with a short delay, skate in arcs, keep
                 their positions, mark a man on defence, deke and wind up before they shoot.
               </p>
+              <p>
+                CPU defenders are not perfect: they read a sharp cut a moment late, poke in separate tries
+                (harder against a carrier at speed), and back off to reset when they cannot win the puck.
+                Keep your feet moving. A carrier who just stands still gets pressed, and then double-teamed.
+              </p>
               <h3>Replays</h3>
               <p>
                 Every goal gets a replay from changing camera angles. Next angle or skip from the Keys tab.
+              </p>
+              <h3>Watching</h3>
+              <p>
+                Watch CPU vs CPU plays a match by itself, filmed like a broadcast: Cinematic cuts between
+                the top-down view and 3D shots from the ice, the nets and the stands; Classic keeps the
+                top-down view. Switch with the camera button in the bottom corner.
+              </p>
+              <h3>Training</h3>
+              <p>
+                The Train tab has free skate (pick opponents, teammates and their goalie), the aim trainer (a
+                board covers the goal except a small gap that moves after every goal; one minute or endless,
+                with a still or a sliding gap), fight practice and resurfacer practice.
               </p>
             </section>
           </div>
