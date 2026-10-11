@@ -45,8 +45,9 @@ export function startBrawl() {
     f.stun = 0;
     f.checkT = 0;
     G.br.litter.push(
-      { x: f.x - 2, y: f.y + 2, t: 'g', c: kit.PAL[f.team].G },
-      { x: f.x + 2, y: f.y + 3, t: 'g', c: kit.PAL[f.team].G },
+      // dropped gloves in the team's dark colour (the glove colour of the player palettes)
+      { x: f.x - 2, y: f.y + 2, t: 'g', c: kit.TEAMS[f.team].dark },
+      { x: f.x + 2, y: f.y + 3, t: 'g', c: kit.TEAMS[f.team].dark },
       { x: f.x, y: f.y + 4, t: 's', c: f.look.tape },
     );
   }

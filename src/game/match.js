@@ -38,6 +38,7 @@ import { input } from '../input/state';
 import { reduceMotion, settings } from '../settings';
 
 /* ---------- flow ---------- */
+export const freshStats = () => ({ sog: [0, 0], saves: [0, 0], hits: [0, 0], fo: [0, 0], poss: [0, 0] });
 export function teamLabel(t) {
   return G.watch ? kit.TEAMS[t].name.toUpperCase() : t === 0 ? 'YOU' : 'CPU';
 }
@@ -207,7 +208,8 @@ export function startGame(watch) {
   G.ai0 = G.watch;
   G.controlled = null;
   G.score = [0, 0];
-  G.stats = { sog: [0, 0], saves: [0, 0], hits: [0, 0], fo: [0, 0], poss: [0, 0] };
+  G.stats = freshStats();
+  G.mom = null; // a boost from the last game does not carry over
   resetSide();
   G.period = 1;
   G.clock = settings.periodLen;
@@ -240,6 +242,7 @@ export function toMenu() {
   G.ai0 = true;
   G.controlled = null;
   G.score = [0, 0];
+  G.mom = null;
   hideBanner();
   setCrowd(0);
   zoom(1);

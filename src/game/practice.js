@@ -18,6 +18,7 @@ import {
 import { clearIceWear } from './iceWear';
 import { GK, SK, genRoster, players } from './players';
 import { take } from './puck';
+import { freshStats } from './match';
 import { startBrawl } from './states/brawl';
 import { faceoff } from './states/faceoff';
 import { startZamboni, stopEngine } from './states/zamboni';
@@ -40,6 +41,7 @@ export function startPractice(cfg) {
   G.controlled = null;
   G.mom = null;
   G.score = [0, 0];
+  G.stats = freshStats(); // the last match's numbers don't belong to practice
   G.period = 1;
   G.clock = PERIOD_LEN;
   G.ignoreRelease = false;

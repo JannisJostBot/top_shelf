@@ -97,6 +97,7 @@ const SCREENS = {
     $('overT').style.color = 'var(--ink)';
     $('overS').textContent = '';
     $('overR').textContent = line;
+    $('overStats').innerHTML = ''; // no match stats from an earlier game on a practice card
     $('againBtn').textContent = 'AGAIN';
     $('overOv').hidden = false;
     $('pauseBtn').disabled = true;

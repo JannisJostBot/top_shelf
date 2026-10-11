@@ -50,6 +50,7 @@ export const G = {
   stillT: 0,
   holdT: 0, // seconds the puck carrier has stood still
   holder: null,
+  mom: null, // a team's speed boost: { team, t, dur, src }
   hype: 0,
   fightP: 0.15,
   cam3: null,

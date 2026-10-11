@@ -81,3 +81,15 @@ describe('standing still with the puck', () => {
       expect(lost).toBe(true);
     });
 });
+
+describe('starting fresh', () => {
+  it('drops a speed boost and the stats from the last game', () => {
+    clearEvents();
+    startGame(false);
+    G.mom = { team: 1, t: 20, dur: 20, src: 'fight' };
+    G.stats.sog[0] = 9;
+    startGame(false);
+    expect(G.mom).toBe(null);
+    expect(G.stats.sog[0]).toBe(0);
+  });
+});
