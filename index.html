@@ -262,38 +262,49 @@
 
             <section class="tabp" id="p-teams" role="tabpanel" aria-labelledby="t-teams" hidden>
               <canvas id="pv" width="140" height="36" aria-label="Jersey preview"></canvas>
-              <div class="opt">
-                <span class="olbl">YOUR JERSEY</span>
-                <div class="sw" role="radiogroup" aria-label="Your jersey color" id="swatches"></div>
-                <p class="small" id="cpuLine"></p>
+              <div class="seg two teamSeg" role="radiogroup" aria-label="Team to customise" id="teamSeg">
+                <button role="radio" data-t="0" aria-checked="true">
+                  <i class="tchip home"></i>Your team</button
+                ><button role="radio" data-t="1" aria-checked="false">
+                  <i class="tchip away"></i>Opponent
+                </button>
               </div>
-              <div class="opt">
-                <span class="olbl">CPU JERSEY</span>
-                <div class="sw" role="radiogroup" aria-label="CPU jersey color" id="cpuSwatches"></div>
+              <div class="tgroup" id="tm0">
+                <div class="opt">
+                  <span class="olbl">JERSEY</span>
+                  <div class="sw" role="radiogroup" aria-label="Your jersey color" id="swatches"></div>
+                </div>
+                <div class="opt">
+                  <span class="olbl">STICKS</span>
+                  <div
+                    class="sw stk"
+                    role="radiogroup"
+                    aria-label="Your team's sticks"
+                    id="stickSwatches0"
+                  ></div>
+                </div>
               </div>
+              <div class="tgroup" id="tm1" hidden>
+                <div class="opt">
+                  <span class="olbl">JERSEY</span>
+                  <div class="sw" role="radiogroup" aria-label="CPU jersey color" id="cpuSwatches"></div>
+                </div>
+                <div class="opt">
+                  <span class="olbl">STICKS</span>
+                  <div
+                    class="sw stk"
+                    role="radiogroup"
+                    aria-label="CPU team's sticks"
+                    id="stickSwatches1"
+                  ></div>
+                </div>
+              </div>
+              <p class="small" id="cpuLine"></p>
+              <p class="small" id="stickLine"></p>
               <div class="opt">
                 <span class="olbl">PUCK</span>
                 <div class="sw pk" role="radiogroup" aria-label="Puck color" id="puckSwatches"></div>
                 <p class="small" id="puckLine"></p>
-              </div>
-              <div class="opt">
-                <span class="olbl">YOUR STICKS</span>
-                <div
-                  class="sw stk"
-                  role="radiogroup"
-                  aria-label="Your team's sticks"
-                  id="stickSwatches0"
-                ></div>
-              </div>
-              <div class="opt">
-                <span class="olbl">CPU STICKS</span>
-                <div
-                  class="sw stk"
-                  role="radiogroup"
-                  aria-label="CPU team's sticks"
-                  id="stickSwatches1"
-                ></div>
-                <p class="small" id="stickLine"></p>
               </div>
             </section>
 

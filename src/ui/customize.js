@@ -89,7 +89,18 @@ export function setArena(k, preview) {
     } catch (e) {}
   }
 }
+/** The Teams tab shows one team's options at a time (jersey and sticks); the puck is shared and always shown. */
+export function showTeam(t) {
+  document
+    .querySelectorAll('#teamSeg button')
+    .forEach(b => b.setAttribute('aria-checked', String(+b.dataset.t === t)));
+  $('tm0').hidden = t !== 0;
+  $('tm1').hidden = t !== 1;
+}
 export function initCustomize() {
+  document
+    .querySelectorAll('#teamSeg button')
+    .forEach(b => b.addEventListener('click', () => showTeam(+b.dataset.t)));
   for (const k of Object.keys(COLORS)) {
     const c = COLORS[k],
       b = document.createElement('button');

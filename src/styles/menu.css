@@ -422,3 +422,29 @@ body.padnav button:focus {
   gap: 4px;
   flex-wrap: wrap;
 }
+/* Teams tab: Your team / Opponent switch, each with a chip in that team's colour */
+.teamSeg {
+  margin: 4px 0 2px;
+}
+.teamSeg button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.tchip {
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  flex: none;
+}
+.tchip.home {
+  background: var(--home);
+}
+.tchip.away {
+  background: var(--away);
+}
+.tgroup {
+  display: grid;
+  gap: inherit;
+}
