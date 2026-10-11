@@ -6,6 +6,7 @@ import { clock } from './time';
 import { update } from '../game/update';
 import { pollGamepad } from '../input/gamepad';
 import { render } from '../render/renderer';
+import { beforeStep, blendIn, blendOut } from '../render/interp';
 import { updPad } from '../ui/pad';
 import { updCard } from '../ui/playerCard';
 import { hudBuff } from '../ui/hud';
@@ -28,12 +29,19 @@ export function frame(now) {
   acc += d;
   let n = 0;
   while (acc >= STEP && n < 8) {
+    beforeStep();
     update(STEP);
     acc -= STEP;
     n++;
   }
   if (n === 8) acc = 0;
-  render();
+  // drawn between the last two steps (see render/interp.js); the simulation's values are back right after
+  blendIn(Math.min(1, acc / STEP));
+  try {
+    render();
+  } finally {
+    blendOut();
+  }
   updPad();
   updCard();
   hudBuff();
