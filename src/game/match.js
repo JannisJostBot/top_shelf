@@ -32,6 +32,7 @@ import { kit } from './kit';
 import { SK, genRoster, players } from './players';
 import { practiceGoal, resetRosterFlags } from './practice';
 import { faceoff } from './states/faceoff';
+import { startIntro } from './states/intro';
 import { stopEngine } from './states/zamboni';
 import { G, REC, parts, puck } from './world';
 import { input } from '../input/state';
@@ -230,7 +231,7 @@ export function startGame(watch) {
   showPad(!G.watch);
   hud();
   feed('PUCK DROP · ' + kit.TEAMS[0].name + ' vs ' + kit.TEAMS[1].name);
-  faceoff();
+  startIntro(); // a short flight through the arena, then the opening face-off
 }
 export function toMenu() {
   stopEngine();

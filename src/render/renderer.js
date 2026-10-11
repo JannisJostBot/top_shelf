@@ -22,6 +22,7 @@ import { skateGrooves } from './grooves';
 import { ice } from './ice';
 import { broadcastCam, render3D, updDemoCam } from './mode7';
 import { drawNet } from './net';
+import { drawIntro } from './intro';
 import {
   drawCtlBase,
   drawCtlTop,
@@ -40,6 +41,11 @@ import { drawZamHud, drawZamboni } from './zamboni';
 
 export function render() {
   kit.PS = puckStyle();
+  // the arena intro before the opening face-off
+  if (G.state === 'intro' && G.intro) {
+    drawIntro();
+    return;
+  }
   // behind the main menu the CPU game is filmed with the 3D broadcast cameras
   if (G.demo) {
     updDemoCam();

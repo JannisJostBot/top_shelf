@@ -61,6 +61,8 @@ export const G = {
   fought: false,
   /** the aim trainer while it runs: seconds left, where the gap in the board is, the shooting spot */
   aim: /** @type {any} */ (null),
+  /** the arena intro before the opening face-off while it plays */
+  intro: /** @type {any} */ (null),
   cam3: /** @type {any} */ (null),
   goalX: 80,
   goalFrame: 0,

@@ -11,6 +11,7 @@ import { input, pad } from '../src/input/state';
 import { settings } from '../src/settings';
 
 const STATES = new Set([
+  'intro',
   'faceoff',
   'play',
   'goal',

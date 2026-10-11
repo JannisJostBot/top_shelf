@@ -23,7 +23,7 @@ describe('headless simulation', () => {
     settings.zamOn = false;
     startGame(true);
     expect(G.watch).toBe(true);
-    expect(G.state).toBe('faceoff');
+    expect(G.state).toBe('intro'); // the arena intro plays before the opening face-off
 
     // three 30 s periods plus breaks, replays and celebrations fit easily in 10 simulated minutes
     const steps = Math.floor(600 / STEP);

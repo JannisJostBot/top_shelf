@@ -12,6 +12,7 @@ import { endPeriod } from './match';
 import { coast, integrate, updatePuck } from './physics/step';
 import { GK, SKATERS, players } from './players';
 import { practiceReset } from './practice';
+import { introStep } from './states/intro';
 import { aimTick } from './aim';
 import { applyFrame, endReplay, recFrame, startReplay } from './replay';
 import { brawlStep, startBrawl } from './states/brawl';
@@ -58,6 +59,10 @@ export function update(dt) {
     if (G.bannerT <= 0) hideBanner();
   }
   const st = G.state;
+  if (st === 'intro') {
+    introStep(dt);
+    return;
+  }
   if (st === 'replay') {
     if (input.sp || input.pp || input.swp) {
       input.sp = input.pp = input.swp = input.sr = false;
