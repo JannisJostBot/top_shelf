@@ -198,9 +198,9 @@ export function render() {
         tri = s => {
           // tip ahead in the aim direction, the two back corners to either side
           g.beginPath();
-          g.moveTo(kx + ax * 3.5 * s, ky + ay * 3.5 * s);
-          g.lineTo(kx - ax * 2 * s - ay * 2.8 * s, ky - ay * 2 * s + ax * 2.8 * s);
-          g.lineTo(kx - ax * 2 * s + ay * 2.8 * s, ky - ay * 2 * s - ax * 2.8 * s);
+          g.moveTo(kx + ax * 2.4 * s, ky + ay * 2.4 * s);
+          g.lineTo(kx - ax * 1.4 * s - ay * 2.4 * s, ky - ay * 1.4 * s + ax * 2.4 * s);
+          g.lineTo(kx - ax * 1.4 * s + ay * 2.4 * s, ky - ay * 1.4 * s - ax * 2.4 * s);
           g.closePath();
           g.fill();
         };
