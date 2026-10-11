@@ -68,6 +68,7 @@ export function savePrefs() {
         stk0: settings.sticks[0],
         stk1: settings.sticks[1],
         wcam: settings.watchCam,
+        fps: settings.fps,
       }),
     );
   } catch (e) {}

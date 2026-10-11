@@ -71,3 +71,16 @@ button:focus-visible {
   outline: 3px solid var(--led);
   outline-offset: 2px;
 }
+/* the optional FPS counter, in the top left corner above everything */
+#fps {
+  position: fixed;
+  left: calc(4px + var(--sal));
+  top: calc(4px + var(--sat));
+  z-index: 50;
+  padding: 2px 5px;
+  background: rgba(4, 6, 12, 0.75);
+  color: var(--led);
+  font-family: var(--pixel);
+  font-size: 11px;
+  pointer-events: none;
+}

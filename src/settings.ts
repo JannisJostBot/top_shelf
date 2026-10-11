@@ -21,6 +21,8 @@ export const settings: {
   sticks: [string, string];
   /** Watch mode camera: the directed 'cine' shots or the 'classic' top-down view */
   watchCam: 'cine' | 'classic';
+  /** show the frames-per-second counter */
+  fps: boolean;
 } = {
   puckKey: 'classic',
   diffKey: 'pro',
@@ -38,6 +40,7 @@ export const settings: {
   cpuStyle: 'classic',
   sticks: ['wood', 'wood'],
   watchCam: 'cine',
+  fps: false,
 };
 
 export const reduceMotion =

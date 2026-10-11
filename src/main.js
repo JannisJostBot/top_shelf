@@ -57,6 +57,7 @@ import {
   setFights,
   setPeriodLen,
   setVib,
+  setFps,
   setView,
   setZam,
   showTab,
@@ -85,6 +86,7 @@ if (['close', 'wide', 'arena'].includes(pr.view)) settings.viewMode = pr.view;
 if (pr.cpu && (pr.cpu === 'auto' || COLORS[pr.cpu])) settings.cpuKey = pr.cpu;
 setPuck(pr.puck && PUCKS[pr.puck] ? pr.puck : 'classic');
 setVib(pr.vib !== false);
+setFps(pr.fps === true);
 setCel(pr.cel !== false);
 setFights(pr.fights !== false);
 setZam(pr.zam !== false);

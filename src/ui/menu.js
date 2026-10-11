@@ -114,6 +114,13 @@ export function setCel(on) {
     .querySelectorAll('#celSeg button')
     .forEach(x => x.setAttribute('aria-checked', String((x.dataset.v === 'on') === on)));
 }
+export function setFps(on) {
+  settings.fps = on;
+  $('fps').hidden = !on;
+  document
+    .querySelectorAll('#fpsSeg button')
+    .forEach(x => x.setAttribute('aria-checked', String((x.dataset.v === 'on') === on)));
+}
 export function setVib(on) {
   settings.vibOn = on;
   document
@@ -200,6 +207,12 @@ export function initMenu() {
   document.querySelectorAll('#celSeg button').forEach(b =>
     b.addEventListener('click', () => {
       setCel(b.dataset.v === 'on');
+      savePrefs();
+    }),
+  );
+  document.querySelectorAll('#fpsSeg button').forEach(b =>
+    b.addEventListener('click', () => {
+      setFps(b.dataset.v === 'on');
       savePrefs();
     }),
   );

@@ -24,6 +24,7 @@ function mix(a, b, k) {
     0
   );
 }
+const len = (a, b) => Math.sqrt(a * a + b * b);
 /** Coverage (0..1) of lines `w` wide, every `s` units along p, for a pixel `foot` wide. */
 function lines(p, s, w, foot) {
   const m = (((p % s) + s) % s) - s / 2, // -s/2..s/2, lines sit at the middle of each period
@@ -34,7 +35,7 @@ function lines(p, s, w, foot) {
 function toGrid(x, y, s, o) {
   const mx = (((x - o) % s) + s) % s,
     my = (((y - o) % s) + s) % s;
-  return Math.hypot(Math.min(mx, s - mx), Math.min(my, s - my));
+  return len(Math.min(mx, s - mx), Math.min(my, s - my));
 }
 /** A small lamp: solid core, soft glow around it (both scaled for the pixel size). */
 function lamp(col, d, r, glow, light, foot) {
@@ -44,6 +45,11 @@ function lamp(col, d, r, glow, light, foot) {
   return col;
 }
 
+// the dome's rings of lamps: radius and number of lamps
+const RINGS = [
+  [16, 12],
+  [73, 36],
+];
 const PAINTERS = {
   /** Steel trusses in a square grid, with warm lights hanging between them. */
   truss(c) {
@@ -67,7 +73,7 @@ const PAINTERS = {
     return (x, y, foot) => {
       const dx = x - CX,
         dy = y - CY,
-        r = Math.hypot(dx, dy);
+        r = len(dx, dy);
       if (r < 13) return mix(eye, light, 0.25 * (1 - r / 13));
       let col = base;
       const a = Math.atan2(dy, dx),
@@ -76,13 +82,12 @@ const PAINTERS = {
       col = mix(col, rib, lines(r - 13, 30, 1.2, foot));
       if (Math.abs(r * da) < Math.max(1.3, foot) / 2) col = mix(col, rib, Math.min(1, 1.3 / foot));
       // a ring of lights around the oculus and a fainter outer ring
-      for (const [R, n] of [
-        [16, 12],
-        [73, 36],
-      ]) {
+      for (const [R, n] of RINGS) {
+        // a lamp on this ring is at least |r - R| away, so only pixels near the ring can be lit by one
+        if (Math.abs(r - R) >= 5) continue;
         const step = (Math.PI * 2) / n,
           k = Math.round(a / step) * step,
-          d = Math.hypot(dx - Math.cos(k) * R, dy - Math.sin(k) * R);
+          d = len(dx - Math.cos(k) * R, dy - Math.sin(k) * R);
         if (d < 5) col = lamp(col, d, 1.3, 4, light, foot);
       }
       return col;
@@ -104,7 +109,7 @@ const PAINTERS = {
       // bulbs on the seams, every 6 units
       const sx = Math.abs((((x + 7) % 14) + 14) % 14 - 7),
         sy = Math.abs((((y % 6) + 6) % 6) - 3);
-      return lamp(col, Math.hypot(7 - sx, sy), 0.6, 2.4, light, foot);
+      return lamp(col, len(7 - sx, sy), 0.6, 2.4, light, foot);
     };
   },
   /** Black, criss-crossed by neon tubes in the arena's two colours. */
@@ -137,7 +142,7 @@ const PAINTERS = {
       col = mix(col, edge, 0.7 * lines(y + 1.4, 30, 0.5, foot)); // the lit underside edge of each beam
       const ly = (((y % 30) + 30) % 30) - 15,
         lx = (((x % 20) + 20) % 20) - 10;
-      return lamp(col, Math.hypot(lx, ly), 1.1, 3.6, light, foot);
+      return lamp(col, len(lx, ly), 1.1, 3.6, light, foot);
     };
   },
   /** Corrugated iron on rusty girders, lit by orange sodium lamps. */

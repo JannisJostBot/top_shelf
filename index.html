@@ -18,6 +18,7 @@
     />
   </head>
   <body>
+    <div id="fps" hidden aria-hidden="true"></div>
     <div id="app">
       <aside class="side" id="sideL" hidden aria-label="Match">
         <div class="pennant home"><span id="sdBan0"></span></div>
@@ -405,6 +406,13 @@
                 <div class="seg two" role="radiogroup" aria-label="Ice resurfacing minigame" id="zamSeg">
                   <button role="radio" id="zm-on" data-v="on" aria-checked="true">On</button
                   ><button role="radio" id="zm-off" data-v="off" aria-checked="false">Off</button>
+                </div>
+              </div>
+              <div class="orow">
+                <div><b>FPS counter</b><span>Frames per second, in the corner</span></div>
+                <div class="seg two" role="radiogroup" aria-label="FPS counter" id="fpsSeg">
+                  <button role="radio" data-v="on" aria-checked="false">On</button
+                  ><button role="radio" data-v="off" aria-checked="true">Off</button>
                 </div>
               </div>
               <div class="orow">

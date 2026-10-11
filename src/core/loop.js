@@ -3,6 +3,7 @@ import { G } from '../game/world';
 import { STEP } from '../config';
 import { $ } from './dom';
 import { clock } from './time';
+import { settings } from '../settings';
 import { update } from '../game/update';
 import { pollGamepad } from '../input/gamepad';
 import { render } from '../render/renderer';
@@ -17,8 +18,20 @@ import { drawPreview } from '../ui/preview';
 
 let last = performance.now(),
   acc = 0;
+// the optional FPS counter: frames counted over half a second
+let fpsN = 0,
+  fpsT = 0;
+const fpsEl = $('fps');
+function countFps(now) {
+  fpsN++;
+  if (now - fpsT < 500) return;
+  if (settings.fps) fpsEl.textContent = Math.round((fpsN * 1000) / (now - fpsT)) + ' FPS';
+  fpsN = 0;
+  fpsT = now;
+}
 export function frame(now) {
   clock.now = now / 1000;
+  countFps(now);
   pollGamepad();
   // menus and the pause screen need the mouse pointer back
   if (document.pointerLockElement && (G.demo || G.state === 'paused' || G.state === 'over'))

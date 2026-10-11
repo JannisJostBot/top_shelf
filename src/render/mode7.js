@@ -250,28 +250,36 @@ const MARCH = (() => {
 const MARCH_END = MARCH.length - 1;
 /** Index of the last march sample at or below t (0 if none). */
 const sampleAtOrBelow = t => (t <= 0.5 ? 0 : Math.min(MARCH_END, Math.floor((t - 0.5) / 1.2 + 1e-9)));
-/** Where a ray from (x, y) along (dx, dy) enters and leaves the rink's bounding box: [enter, exit]. */
+/** Where a ray from (x, y) along (dx, dy) enters and leaves the rink's bounding box (into spanIn, spanOut). */
+// boxSpan's result (kept in two variables rather than a new array for every screen column)
+let spanIn = 0,
+  spanOut = 0;
 function boxSpan(x, y, dx, dy) {
   let lo = -Infinity,
     hi = Infinity;
+  spanIn = Infinity;
+  spanOut = -Infinity;
   if (dx) {
     const a = (RX0 - x) / dx,
       b = (RX1 - x) / dx;
     lo = Math.max(lo, Math.min(a, b));
     hi = Math.min(hi, Math.max(a, b));
-  } else if (x < RX0 || x > RX1) return [Infinity, -Infinity];
+  } else if (x < RX0 || x > RX1) return;
   if (dy) {
     const a = (RY0 - y) / dy,
       b = (RY1 - y) / dy;
     lo = Math.max(lo, Math.min(a, b));
     hi = Math.min(hi, Math.max(a, b));
-  } else if (y < RY0 || y > RY1) return [Infinity, -Infinity];
-  return [lo, hi];
+  } else if (y < RY0 || y > RY1) return;
+  spanIn = lo;
+  spanOut = hi;
 }
 // how much shorter than the bounding box a ray can be inside the rink: at most the diagonal of a corner square
 const CORNER_SLACK = RR * 1.5;
 // per-frame caches: floor distance per screen row, and each fan's cheering wave
-let rowT = new Float64Array(0);
+let rowT = new Float64Array(0),
+  roofT = new Float64Array(0),
+  roofFoot = new Float64Array(0);
 // per column, the screen row where the roof ends (the back wall starts); glares only show on the roof
 let roofEdge = new Float32Array(0);
 let fanWave = new Float64Array(0),
@@ -363,6 +371,16 @@ export function render3D(overlay = true) {
     if (rowT.length !== view.CH) rowT = new Float64Array(view.CH);
     if (roofEdge.length !== view.CW) roofEdge = new Float32Array(view.CW);
     for (let y = hor + 1; y < view.CH; y++) rowT[y] = (h * f) / (y - hor);
+    // the same for the roof above the horizon: distance to the roof plane and how much roof one pixel covers
+    if (roofT.length !== view.CH) {
+      roofT = new Float64Array(view.CH);
+      roofFoot = new Float64Array(view.CH);
+    }
+    for (let y = 0; y < hor; y++) {
+      const tc = ((ROOF_H - h) * f) / (hor - y);
+      roofT[y] = tc;
+      roofFoot[y] = Math.max(tc / f, (tc * tc) / (f * (ROOF_H - h)));
+    }
     if (fanWave.length !== fanTab.length) {
       fanWave = new Float64Array(fanTab.length);
       fanWaveAt = new Float64Array(fanTab.length).fill(NaN);
@@ -387,7 +405,9 @@ export function render3D(overlay = true) {
         dy = Fy + Ry * k;
       // The rink is convex, so along a ray the samples are outside, then inside, then outside again: skipping
       // samples that are certainly before the boards (by the bounding box) gives the same result as stepping.
-      const [bIn, bOut] = boxSpan(C3.x, C3.y, dx, dy);
+      boxSpan(C3.x, C3.y, dx, dy);
+      const bIn = spanIn,
+        bOut = spanOut;
       let n = 0,
         t = 0.5,
         tIn = 0;
@@ -467,9 +487,8 @@ export function render3D(overlay = true) {
           if (y < rowY[ROWS]) {
             if (y < wallTop) {
               // the roof: where this pixel's ray meets the roof plane
-              const up = hor - y,
-                tc = ((ROOF_H - h) * f) / up;
-              col = roof(camX + dx * tc, camY + dy * tc, Math.max(tc / f, (tc * tc) / (f * (ROOF_H - h))), tc);
+              const tc = roofT[y];
+              col = roof(camX + dx * tc, camY + dy * tc, roofFoot[y], tc);
             } else {
               // the back wall above the top row: a ribbon board in the arena colour and a row of lit suites
               const z = h - ((y - hor) * tW) / f;
