@@ -27,6 +27,8 @@ import { aimBanner, aimGoal, aimSpot, startAim } from './aim';
 
 /* ---------- practice modes ---------- */
 export let pcfg = { opp: 'dummy', mates: false, goalie: 'cpu' };
+/** Aim trainer options: a one-minute round or endless, and a gap that stays put or slides along the board. */
+export const aimCfg = { endless: false, moving: false };
 export function resetRosterFlags() {
   for (const p of players) {
     p.benched = false;
@@ -81,7 +83,7 @@ export function startPractice(cfg) {
   if (cfg.mode === 'aim') {
     // alone on the ice against the board: no teammates, no opponents, no goalie
     Object.assign(G.practice, { mates: false, opp: 'none', goalie: 'none' });
-    startAim();
+    startAim(cfg);
   }
   const c = G.practice;
   SK[0][1].benched = SK[0][2].benched = !c.mates;

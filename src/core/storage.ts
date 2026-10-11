@@ -28,17 +28,17 @@ export function saveBest(pct: number) {
     localStorage.setItem('blb-zam', String(pct));
   } catch (e) {}
 }
-/** Best number of goals in one round of the aim trainer. */
-export function loadAimBest(): number {
+/** Best number of goals in one minute of the aim trainer, kept apart for the still and the moving gap. */
+export function loadAimBest(moving = false): number {
   try {
-    return +(localStorage.getItem('blb-aim') || 0) || 0;
+    return +(localStorage.getItem(moving ? 'blb-aim-moving' : 'blb-aim') || 0) || 0;
   } catch (e) {
     return 0;
   }
 }
-export function saveAimBest(n: number) {
+export function saveAimBest(n: number, moving = false) {
   try {
-    localStorage.setItem('blb-aim', String(n));
+    localStorage.setItem(moving ? 'blb-aim-moving' : 'blb-aim', String(n));
   } catch (e) {}
 }
 export function loadPrefs(): Record<string, any> {

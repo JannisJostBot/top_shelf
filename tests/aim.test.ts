@@ -49,6 +49,28 @@ describe('aim trainer', () => {
   });
 });
 
+describe('aim trainer options', () => {
+  it('endless rounds have no clock', () => {
+    clearEvents();
+    startPractice({ mode: 'aim', endless: true });
+    step(Math.round(90 / STEP));
+    expect(G.state).not.toBe('over');
+    expect(G.aim).toBeTruthy();
+  });
+  it('a moving gap slides along the board and stays inside the goal mouth', () => {
+    clearEvents();
+    startPractice({ mode: 'aim', moving: true });
+    const seen: number[] = [];
+    for (let i = 0; i < 40; i++) {
+      step(5);
+      seen.push(G.aim.gap);
+    }
+    expect(Math.max(...seen) - Math.min(...seen)).toBeGreaterThan(8);
+    expect(Math.min(...seen)).toBeGreaterThanOrEqual(67 + 1.5 + 2.5 - 1e-9);
+    expect(Math.max(...seen)).toBeLessThanOrEqual(93 - 1.5 - 2.5 + 1e-9);
+  });
+});
+
 describe('fights', () => {
   it('happen at most once a match', () => {
     clearEvents();

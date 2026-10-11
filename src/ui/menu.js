@@ -3,7 +3,7 @@ import { $ } from '../core/dom';
 import { savePrefs, loadAimBest } from '../core/storage';
 import { DIFF } from '../data/difficulty';
 import { startGame, toMenu, togglePause } from '../game/match';
-import { pcfg, startPractice } from '../game/practice';
+import { aimCfg, pcfg, startPractice } from '../game/practice';
 import { G } from '../game/world';
 import { fit, updCam } from '../render/camera';
 import { view } from '../render/canvas';
@@ -31,10 +31,14 @@ export function showTab(name) {
       b = +localStorage.getItem('blb-zam') || 0;
     } catch (e) {}
     $('zamBest').textContent = b ? 'Your best: ' + b + '%.' : '';
-    const a = loadAimBest();
-    $('aimBest').textContent = a ? 'Your best: ' + a + (a === 1 ? ' goal.' : ' goals.') : '';
+    showAimBest();
   }
   if (name === 'arena') arenaThumbs();
+}
+/** The best one-minute score for the chosen gap (endless rounds keep no best). */
+function showAimBest() {
+  const a = aimCfg.endless ? 0 : loadAimBest(aimCfg.moving);
+  $('aimBest').textContent = a ? 'Your best' + (aimCfg.moving ? ' (moving gap): ' : ': ') + a + (a === 1 ? ' goal.' : ' goals.') : '';
 }
 export function setDiff(k) {
   settings.diffKey = k;
@@ -220,7 +224,15 @@ export function initMenu() {
   $('pFree').addEventListener('click', () => startPractice(Object.assign({ mode: 'free' }, pcfg)));
   $('pFight').addEventListener('click', () => startPractice({ mode: 'fight' }));
   $('pZam').addEventListener('click', () => startPractice({ mode: 'zam' }));
-  $('pAim').addEventListener('click', () => startPractice({ mode: 'aim' }));
+  segPick('aimLenSeg', 'v', v => {
+    aimCfg.endless = v === 'endless';
+    showAimBest();
+  });
+  segPick('aimGapSeg', 'v', v => {
+    aimCfg.moving = v === 'moving';
+    showAimBest();
+  });
+  $('pAim').addEventListener('click', () => startPractice(Object.assign({ mode: 'aim' }, aimCfg)));
   $('menuBtn').addEventListener('click', toMenu);
   $('resumeBtn').addEventListener('click', togglePause);
   $('quitBtn').addEventListener('click', toMenu);
