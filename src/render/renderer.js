@@ -198,14 +198,14 @@ export function render() {
         tri = s => {
           // tip ahead in the aim direction, the two back corners to either side
           g.beginPath();
-          g.moveTo(kx + ax * 5 * s, ky + ay * 5 * s);
-          g.lineTo(kx - ax * 3 * s - ay * 4 * s, ky - ay * 3 * s + ax * 4 * s);
-          g.lineTo(kx - ax * 3 * s + ay * 4 * s, ky - ay * 3 * s - ax * 4 * s);
+          g.moveTo(kx + ax * 3.5 * s, ky + ay * 3.5 * s);
+          g.lineTo(kx - ax * 2 * s - ay * 2.8 * s, ky - ay * 2 * s + ax * 2.8 * s);
+          g.lineTo(kx - ax * 2 * s + ay * 2.8 * s, ky - ay * 2 * s - ax * 2.8 * s);
           g.closePath();
           g.fill();
         };
       g.fillStyle = '#0b0f1a';
-      tri(1.45);
+      tri(1.55);
       g.fillStyle = AMB;
       tri(1);
     }
