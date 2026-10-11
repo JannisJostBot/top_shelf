@@ -1,4 +1,5 @@
 import { stopSong } from '../../audio/music';
+import { feed } from '../../ui/side';
 import { S } from '../../audio/sfx';
 import { GB, GT } from '../../config';
 import { $ } from '../../core/dom';
@@ -141,6 +142,8 @@ function foResolve(team, rt) {
     l = SK[1 - team][0];
   G.state = 'play';
   take(w);
+  G.stats.fo[team]++;
+  feed('Faceoff won · ' + '#' + w.num + ' ' + w.name, team);
   l.stun = 0.35;
   if (input.shootHeld) G.ignoreRelease = true;
   if (!G.ai0) {

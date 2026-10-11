@@ -1,4 +1,5 @@
 import { S } from '../audio/sfx';
+import { feed } from '../ui/side';
 import { BASE } from '../config';
 import { clamp, rnd } from '../core/math';
 import { blade, burst, faceTo } from './physics/motion';
@@ -105,6 +106,8 @@ function knockDown(c, nx, ny, by, power) {
   burst(c.x, c.y, 8, '#ffffff', 45);
   ring(c.x, c.y, '#ffffff', 1.2);
   pop(c.x, c.y, 'BIG HIT!', AMB, true);
+  G.stats.hits[by.team]++;
+  feed('BIG HIT · ' + '#' + by.num + ' ' + by.name + ' on ' + '#' + c.num + ' ' + c.name, by.team);
   G.hype = Math.max(G.hype, 0.5);
   if (isMe(by)) vib([35, 25, 70]);
   else if (isMe(c)) vib([90, 40, 140]);
@@ -112,6 +115,7 @@ function knockDown(c, nx, ny, by, power) {
   if (!reduceMotion) G.shake = Math.max(G.shake, 0.22);
 }
 function stumble(c, nx, ny, by) {
+  G.stats.hits[by.team]++;
   if (Math.random() < 0.65) popPuck(c, nx, ny, by);
   c.stun = rnd(0.35, 0.55);
   const kb = rnd(28, 48);

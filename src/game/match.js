@@ -1,4 +1,5 @@
 import { audio } from '../audio/engine';
+import { feed, resetSide } from '../ui/side';
 import { resetDirector } from '../render/director';
 import { startGoalFx } from '../render/goalFx';
 import { goalMusic, stopSong } from '../audio/music';
@@ -101,6 +102,15 @@ export function goalScored(team, n) {
     true,
   );
   G.bannerT = 0;
+  feed(
+    'GOAL' +
+      (scorer && scorer.team === team ? ' · ' + '#' + scorer.num + ' ' + scorer.name : '') +
+      ' · ' +
+      G.score[0] +
+      '–' +
+      G.score[1],
+    team,
+  );
   for (let i = 0; i < 46; i++)
     parts.push({
       x: 80,
@@ -120,6 +130,7 @@ export function endPeriod() {
   G.zamNext = settings.zamOn && !G.ai0;
   if (G.period < 3) {
     banner('END OF ' + ORD[G.period], 'small', '');
+    feed('END OF THE ' + ORD[G.period] + ' PERIOD');
     G.bannerT = 0;
     G.period++;
     G.clock = settings.periodLen;
@@ -130,6 +141,7 @@ export function endPeriod() {
     G.state = 'inter';
     G.timer = 2.4;
     banner('OVERTIME', 'small', 'Next goal wins');
+    feed('OVERTIME · next goal wins');
     G.bannerT = 0;
   } else endGame();
 }
@@ -162,6 +174,7 @@ function showMatchStats() {
     row('SAVE %', pct(0), pct(1));
 }
 export function endGame() {
+  feed('FINAL · ' + G.score[0] + '–' + G.score[1]);
   stopEngine();
   G.state = 'over';
   $('rpBar').hidden = true;
@@ -220,7 +233,8 @@ export function startGame(watch) {
   G.ai0 = G.watch;
   G.controlled = null;
   G.score = [0, 0];
-  G.stats = { sog: [0, 0], saves: [0, 0] };
+  G.stats = { sog: [0, 0], saves: [0, 0], hits: [0, 0], fo: [0, 0], poss: [0, 0] };
+  resetSide();
   G.period = 1;
   G.clock = settings.periodLen;
   G.ignoreRelease = false;
@@ -243,6 +257,7 @@ export function startGame(watch) {
   showPad(!G.watch);
   $('camBtn').hidden = !G.watch;
   hud();
+  feed('PUCK DROP · ' + kit.TEAMS[0].name + ' vs ' + kit.TEAMS[1].name);
   faceoff();
 }
 export function toMenu() {

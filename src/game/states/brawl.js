@@ -1,4 +1,5 @@
 import { S } from '../../audio/sfx';
+import { feed } from '../../ui/side';
 import { $ } from '../../core/dom';
 import { clamp, rnd } from '../../core/math';
 import { LABEL } from '../../data/difficulty';
@@ -61,6 +62,7 @@ export function startBrawl() {
   G.hype = 0.9;
   bubble(b, '?&!*#!', 0);
   banner('GLOVES OFF!', 'away', '#' + b.num + ' ' + b.name + ' wants a piece of you');
+  feed('GLOVES OFF · ' + '#' + a.num + ' ' + a.name + ' vs ' + '#' + b.num + ' ' + b.name);
   G.bannerT = 1.4;
   S('ooh');
   setTimeout(() => {
@@ -252,6 +254,11 @@ function endBrawl(w) {
   } else banner('BROKEN UP', 'small', 'The refs pull them apart');
   G.bannerT = 2.4;
   if (w !== null) G.mom = { team: w, t: 25, dur: 25, src: 'fight' };
+  const fw = w === 0 ? B.a : w === 1 ? B.b : null;
+  feed(
+    fw ? '#' + fw.num + ' ' + fw.name + ' wins the fight · speed boost 25s' : 'Fight broken up by the refs',
+    w ?? -1,
+  );
 }
 function finishBrawl() {
   const B = G.br,

@@ -19,6 +19,18 @@
   </head>
   <body>
     <div id="app">
+      <aside class="side" id="sideL" hidden aria-label="Match">
+        <div class="pennant home" id="sdBan0"></div>
+        <section class="spanel inmatchOnly">
+          <h3>MATCH STATS</h3>
+          <div class="steams" id="sdTeams"></div>
+          <div class="sstats" id="sdStats"></div>
+        </section>
+        <section class="spanel grow inmatchOnly">
+          <h3>PLAY-BY-PLAY</h3>
+          <ol class="feed" id="sdFeed"></ol>
+        </section>
+      </aside>
       <main id="stage">
         <canvas id="c" width="224" height="320" aria-label="Hockey rink"></canvas>
         <header id="hud">
@@ -340,9 +352,10 @@
               </div>
               <div class="orow">
                 <div><b>Camera</b><span>How close the view follows the play</span></div>
-                <div class="seg two" role="radiogroup" aria-label="Camera zoom" id="camSeg">
+                <div class="seg three" role="radiogroup" aria-label="Camera zoom" id="camSeg">
                   <button role="radio" id="v-close" data-v="close" aria-checked="true">Close</button
-                  ><button role="radio" id="v-wide" data-v="wide" aria-checked="false">Wide</button>
+                  ><button role="radio" id="v-wide" data-v="wide" aria-checked="false">Wide</button
+                  ><button role="radio" id="v-arena" data-v="arena" aria-checked="false">Arena</button>
                 </div>
               </div>
               <div class="orow">
@@ -548,6 +561,21 @@
           </div>
         </div>
       </main>
+      <aside class="side" id="sideR" hidden aria-label="Status">
+        <div class="pennant away" id="sdBan1"></div>
+        <section class="spanel inmatchOnly">
+          <h3>ON THE ICE</h3>
+          <div id="sdCard"></div>
+          <div class="shotm" id="sdShot"><span>SHOT POWER</span><i></i></div>
+          <div class="boost" id="sdBoost"></div>
+        </section>
+        <section class="spanel grow inmatchOnly">
+          <h3>CONTROLS</h3>
+          <ul class="keys now" id="sdNow"></ul>
+          <h4 id="sdAlwaysH">ALWAYS</h4>
+          <ul class="keys" id="sdAlways"></ul>
+        </section>
+      </aside>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>

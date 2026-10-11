@@ -80,24 +80,34 @@ export const padmapHTML = () =>
       t +
       '</span>',
   ).join('');
+/** One key cap: an Xbox button glyph when `padOn`, else a keyboard key. */
+export const kbdHTML = (k, padOn) =>
+  padOn ? '<kbd class="pb pb-' + k.toLowerCase() + '">' + k + '</kbd>' : '<kbd>' + k + '</kbd>';
+/** The context hints of the current moment, also shown in the desktop side panel. */
+export const hintNow = { list: [], pad: false, mode: 'idle' };
 export function setHint(m) {
+  const padOn = pad.active;
+  let list = (HINTS[m] || []).map(h =>
+    padOn
+      ? [PAD_GLYPH[h[0]] || h[0], h[1]]
+      : mouse.on
+        ? [h[0] === 'Space' ? 'L-click' : h[0] === 'Shift' ? 'R-click' : h[0], h[1]]
+        : h,
+  );
+  list = list.concat(
+    padOn
+      ? [['☰', 'Pause']]
+      : [
+          ['P', 'Pause'],
+          ['H', 'Keys'],
+        ],
+  );
+  hintNow.list = list;
+  hintNow.pad = padOn;
+  hintNow.mode = m;
   const el = $('keyhint');
   const show = !touchState.touchUI && !G.demo && !G.watch && G.state !== 'over';
   el.hidden = !show;
   if (!show) return;
-  if (pad.active) {
-    const list = (HINTS[m] || []).map(([k, t]) => [PAD_GLYPH[k] || k, t]).concat([['☰', 'Pause']]);
-    el.innerHTML = list
-      .map(([k, t]) => '<span><kbd class="pb pb-' + k.toLowerCase() + '">' + k + '</kbd>' + t + '</span>')
-      .join('');
-    return;
-  }
-  let list = (HINTS[m] || []).map(h =>
-    mouse.on ? [h[0] === 'Space' ? 'L-click' : h[0] === 'Shift' ? 'R-click' : h[0], h[1]] : h,
-  );
-  list = list.concat([
-    ['P', 'Pause'],
-    ['H', 'Keys'],
-  ]);
-  el.innerHTML = list.map(([k, t]) => '<span><kbd>' + k + '</kbd>' + t + '</span>').join('');
+  el.innerHTML = list.map(([k, t]) => '<span>' + kbdHTML(k, padOn) + t + '</span>').join('');
 }

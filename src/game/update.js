@@ -166,6 +166,7 @@ export function update(dt) {
     hudClock();
   }
   if (G.mom) G.mom.t -= dt;
+  if (G.state === 'play' && puck.owner) G.stats.poss[puck.owner.team] += dt;
   for (const p of players) {
     p.saveT -= dt;
     p.cool -= dt;

@@ -57,7 +57,8 @@ const stage = $('stage');
 export function fit() {
   const r = stage.getBoundingClientRect();
   if (r.width < 20 || r.height < 20) return;
-  const nw = (settings.viewMode === 'close' ? 112 : W) * K,
+  // close follows the play, wide shows the rink from board to board, arena adds the stands on both sides
+  const nw = (settings.viewMode === 'close' ? 112 : settings.viewMode === 'arena' ? W + 2 * M : W) * K,
     nh = clamp(Math.round((nw * r.height) / r.width), 64, 1200);
   if (nw !== view.CW || nh !== view.CH) {
     view.CW = nw;

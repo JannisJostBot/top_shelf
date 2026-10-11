@@ -6,7 +6,7 @@ export const settings: {
   diff: (typeof DIFF)[keyof typeof DIFF];
   colorKey: string;
   cpuKey: string;
-  viewMode: 'close' | 'wide';
+  viewMode: 'close' | 'wide' | 'arena';
   stadiumKey: string;
   muted: boolean;
   vibOn: boolean;

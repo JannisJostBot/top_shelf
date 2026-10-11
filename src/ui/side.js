@@ -1,0 +1,166 @@
+// Desktop side panels: on landscape screens with room beside the rink, a match panel on the left (live stats and a
+// play-by-play feed) and a status panel on the right (your skater, boosts, shot power and the controls), with
+// team banners and an arena backdrop around them. Phones in portrait (and any narrow window) never show them.
+import { $ } from '../core/dom';
+import { clock } from '../core/time';
+import { ORD } from '../data/difficulty';
+import { kit } from '../game/kit';
+import { G } from '../game/world';
+import { hintNow, kbdHTML } from './keyhint';
+import { clockText } from './hud';
+
+const WIDE = matchMedia('(orientation: landscape) and (min-width: 1060px) and (min-height: 560px)');
+export const isWide = () => WIDE.matches;
+
+/* ---------- play-by-play ---------- */
+const FEED_MAX = 40;
+const feedItems = [];
+let feedDirty = true;
+/** Adds a line to the play-by-play: `team` (0, 1 or -1 for neutral) colours its marker. */
+export function feed(text, team = -1) {
+  if (G.demo || G.practice) return;
+  const when = G.period > 3 ? 'OT' : ORD[G.period] + ' ' + clockText(Math.max(0, Math.ceil(G.clock)));
+  feedItems.unshift({ text, team, when });
+  if (feedItems.length > FEED_MAX) feedItems.pop();
+  feedDirty = true;
+}
+export function resetSide() {
+  feedItems.length = 0;
+  feedDirty = true;
+}
+const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+function drawFeed() {
+  feedDirty = false;
+  $('sdFeed').innerHTML = feedItems.length
+    ? feedItems
+        .map(
+          f =>
+            `<li class="${f.team === 0 ? 'home' : f.team === 1 ? 'away' : ''}"><time>${f.when}</time>${esc(f.text)}</li>`,
+        )
+        .join('')
+    : '<li class="empty">The big moments of the game show up here.</li>';
+}
+
+/* ---------- stats ---------- */
+const ROWS = [
+  ['SHOTS', s => s.sog],
+  ['SAVES', s => s.saves],
+  ['HITS', s => s.hits],
+  ['FACEOFFS', s => s.fo],
+];
+function drawStats() {
+  const s = G.stats;
+  let html = '';
+  for (const [label, get] of ROWS) {
+    const [a, b] = get(s),
+      k = a + b ? a / (a + b) : 0.5;
+    html += `<div class="srow"><b>${a}</b><span>${label}</span><b>${b}</b><i class="sbar" style="--k:${k}"></i></div>`;
+  }
+  const pa = s.poss[0],
+    pb = s.poss[1],
+    k = pa + pb ? pa / (pa + pb) : 0.5;
+  html += `<div class="srow"><b>${Math.round(k * 100)}%</b><span>POSSESSION</span><b>${Math.round((1 - k) * 100)}%</b><i class="sbar" style="--k:${k}"></i></div>`;
+  $('sdStats').innerHTML = html;
+}
+
+/* ---------- status: boosts, shot power, controls ---------- */
+function drawBoost() {
+  const m = G.mom,
+    on = m && m.t > 0 && !G.demo;
+  const el = $('sdBoost');
+  if (!on) {
+    el.className = 'boost';
+    el.innerHTML = '<span class="bi off"></span><span>No boost active</span>';
+    return;
+  }
+  const name = m.src === 'fight' ? 'Fight won' : 'Fresh ice';
+  el.className = 'boost ' + (m.team === 0 ? 'home' : 'away') + (m.t < 4 ? ' ending' : '');
+  el.innerHTML =
+    `<span class="bi"></span><span><b>${esc(kit.TEAMS[m.team].name.toUpperCase())} · SPEED</b>` +
+    `<small>${name} · ${Math.ceil(m.t)}s left</small></span><i class="sbar" style="--k:${m.t / (m.dur || 20)}"></i>`;
+}
+const WATCH_KEYS = [
+  ['V', 'Next shot'],
+  ['C', 'Switch camera'],
+  ['P', 'Pause'],
+  ['F', 'Fullscreen'],
+];
+const WATCH_PAD = [
+  ['Y', 'Next shot'],
+  ['X', 'Switch camera'],
+  ['☰', 'Pause'],
+];
+const ALWAYS_KEYS = [
+  ['WASD', 'Skate (or arrows)'],
+  ['F', 'Fullscreen'],
+  ['H', 'All keys'],
+];
+const ALWAYS_PAD = [
+  ['LS', 'Skate'],
+  ['LB', 'Also switch skater'],
+];
+let lastKeys = '';
+function drawKeys() {
+  const padOn = hintNow.pad,
+    now = G.watch ? (padOn ? WATCH_PAD : WATCH_KEYS) : hintNow.list,
+    always = G.watch ? [] : padOn ? ALWAYS_PAD : ALWAYS_KEYS,
+    key = JSON.stringify([now, always, padOn]);
+  if (key === lastKeys) return;
+  lastKeys = key;
+  const row = ([k, t]) => `<li>${kbdHTML(k, padOn)}<span>${t}</span></li>`;
+  $('sdNow').innerHTML = now.map(row).join('');
+  $('sdAlways').innerHTML = always.map(row).join('');
+  $('sdAlwaysH').hidden = !always.length;
+}
+
+/* ---------- banners ---------- */
+function drawBanners() {
+  for (const t of [0, 1]) {
+    const T = kit.TEAMS[t],
+      el = $('sdBan' + t);
+    el.textContent = G.demo
+      ? T.name.toUpperCase()
+      : G.watch || t
+        ? T.name.toUpperCase()
+        : 'YOU · ' + T.name.toUpperCase();
+  }
+}
+
+/* ---------- layout switch and per-frame update ---------- */
+let lastT = 0;
+function applyLayout() {
+  const on = WIDE.matches;
+  document.body.classList.toggle('wide', on);
+  $('sideL').hidden = !on;
+  $('sideR').hidden = !on;
+  // the player card moves from the corner of the rink into the status panel
+  const card = $('pcard');
+  (on ? $('sdCard') : $('stage')).appendChild(card);
+  lastT = 0;
+  lastKeys = '';
+}
+export function initSide() {
+  WIDE.addEventListener('change', applyLayout);
+  applyLayout();
+}
+/** Refreshes the panels a few times a second (the shot meter every frame). Called from the main loop. */
+export function updSide() {
+  if (!WIDE.matches) return;
+  const match = !G.demo;
+  document.body.classList.toggle('inmatch', match);
+  const ch = $('sdShot');
+  const k = G.charging && !G.ai0 ? Math.min(1, G.charge / 0.7) : 0;
+  ch.style.setProperty('--k', String(k));
+  ch.classList.toggle('full', k > 0.95);
+  if (clock.now - lastT < 0.25) return;
+  lastT = clock.now;
+  drawBanners();
+  if (!match) return;
+  drawStats();
+  drawBoost();
+  drawKeys();
+  if (feedDirty) drawFeed();
+  $('sdTeams').innerHTML =
+    `<span class="home">${esc(G.watch ? kit.TEAMS[0].name.toUpperCase() : 'YOU')}</span>` +
+    `<span class="away">${esc(G.watch ? kit.TEAMS[1].name.toUpperCase() : 'CPU')}</span>`;
+}

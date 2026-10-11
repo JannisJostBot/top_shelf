@@ -1,4 +1,5 @@
 import { AC, master, osc } from '../../audio/engine';
+import { feed } from '../../ui/side';
 import { S } from '../../audio/sfx';
 import { H, IH, IW, NETS, RX0, RX1, RY0, RY1, W } from '../../config';
 import { clamp, rnd, toS } from '../../core/math';
@@ -243,6 +244,7 @@ function finishZamboni() {
     pct + '% of the ice polished' + (pct >= 80 && !G.practice ? ' · your team skates faster for 20s' : ''),
   );
   G.bannerT = 2.6;
+  feed('Ice resurfaced · ' + pct + '% polished' + (pct >= 80 ? ' · speed boost 20s' : ''), 0);
   if (pct >= 80) {
     if (!G.practice) G.mom = { team: 0, t: 20, dur: 20, src: 'ice' };
     S('cheer');

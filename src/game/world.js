@@ -23,7 +23,7 @@ export const REC = [],
 
 export const G = {
   /** per team: shots on goal (goals + saves) and saves made, reset each match */
-  stats: { sog: [0, 0], saves: [0, 0] },
+  stats: { sog: [0, 0], saves: [0, 0], hits: [0, 0], fo: [0, 0], poss: [0, 0] },
   lastShooter: null,
   state: 'faceoff',
   demo: true,

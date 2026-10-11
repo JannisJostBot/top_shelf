@@ -1,4 +1,5 @@
 import { S } from '../../audio/sfx';
+import { feed } from '../../ui/side';
 import { GB, GT } from '../../config';
 import { clamp, rnd } from '../../core/math';
 import { GK, SK } from '../players';
@@ -99,6 +100,7 @@ export function goalieCheck() {
           // an opponent's shot stopped: a save, and a shot on goal for the shooting team
           G.stats.saves[g.team]++;
           G.stats.sog[1 - g.team]++;
+          feed(kind + ' · ' + '#' + g.num + ' ' + g.name, g.team);
         }
         g.saveT = 0.32;
         g.saveDir = side;
