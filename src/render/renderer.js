@@ -39,10 +39,30 @@ import { drawPuck, puckGround } from './puck';
 import { drawStands } from './stands';
 import { drawZamHud, drawZamboni } from './zamboni';
 
+// On phones the menu (and the result) show the 3D arena through a window in the program: the view is framed to it
+// (measured every half second, not every frame, as it only moves when the layout does).
+let frameAt = 0;
+function frameMenuWindow() {
+  if (clock.now - frameAt < 0.5) return;
+  frameAt = clock.now;
+  const win = document.querySelector(
+    '#menu:not([hidden]) .ppage.home:not([hidden]) .pwin, #overOv:not([hidden]) .pwin',
+  );
+  if (!win || document.body.classList.contains('wide')) {
+    view.frame = null;
+    return;
+  }
+  const c = cv.getBoundingClientRect(),
+    w = win.getBoundingClientRect(),
+    k = view.CH / (c.height || 1);
+  view.frame = { y0: (w.top - c.top) * k, y1: (w.bottom - c.top) * k };
+}
 export function render() {
   kit.PS = puckStyle();
+  if (!G.demo && !(G.state === 'over' && G.post)) view.frame = null; // matches use the whole view
   // after the final whistle: b-roll of the arena behind the results card, filmed like the menu background
   if (G.state === 'over' && G.post) {
+    frameMenuWindow();
     updDemoCam();
     render3D(false);
     return;
@@ -54,6 +74,7 @@ export function render() {
   }
   // behind the main menu the CPU game is filmed with the 3D broadcast cameras
   if (G.demo) {
+    frameMenuWindow();
     updDemoCam();
     render3D(false);
     return;

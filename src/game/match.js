@@ -42,7 +42,18 @@ import { input } from '../input/state';
 import { reduceMotion, settings } from '../settings';
 
 /* ---------- flow ---------- */
-export const freshStats = () => ({ sog: [0, 0], saves: [0, 0], hits: [0, 0], fo: [0, 0], poss: [0, 0] });
+export const freshStats = () => ({
+  sog: [0, 0],
+  saves: [0, 0],
+  hits: [0, 0],
+  fo: [0, 0],
+  poss: [0, 0],
+  /** goals per period, overtime last: the box score on the results card */
+  gp: [
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
+  ],
+});
 export function teamLabel(t) {
   return G.watch ? kit.TEAMS[t].name.toUpperCase() : t === 0 ? 'YOU' : 'CPU';
 }
@@ -81,6 +92,7 @@ export function goalScored(team, n) {
   const behind = catchUp(1 - team);
   G.score[team]++;
   G.stats.sog[team]++; // every goal is a shot on goal
+  G.stats.gp[team][Math.min(G.period, 4) - 1]++;
   // a computer team falling well behind changes its tactics: say so on the play-by-play
   const now = catchUp(1 - team);
   if (now > behind)

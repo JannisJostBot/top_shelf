@@ -13,6 +13,7 @@ import { mkPal } from '../render/sprites';
 import { buildFans } from '../render/stands';
 import { settings } from '../settings';
 import { setPreviewTeam } from './preview';
+import { updSummary } from './menu';
 
 export function applyColors() {
   const u = COLORS[settings.colorKey],
@@ -37,6 +38,8 @@ export function applyColors() {
   $('cpuLine').textContent =
     (u.special ? u.name + ' is a special jersey. ' : '') + 'CPU plays in ' + cpu.name + '.';
   $('matchLine').textContent = u.name + ' vs ' + cpu.name;
+  $('muHome').textContent = u.name;
+  $('muAway').textContent = cpu.name;
   document
     .querySelectorAll('#swatches button')
     .forEach(b => b.setAttribute('aria-checked', String(b.dataset.c === settings.colorKey)));
@@ -75,7 +78,19 @@ export function setArena(k, preview) {
   settings.stadiumKey = k;
   buildIce();
   const S = STADIUMS[k];
-  document.documentElement.style.setProperty('--kick', S.kick);
+  const rs = document.documentElement.style;
+  rs.setProperty('--kick', S.kick);
+  // the program is printed in the arena's two inks: its blue-line and red-line colours
+  const changed = rs.getPropertyValue('--p1') !== S.lines.blue;
+  rs.setProperty('--p1', S.lines.blue);
+  rs.setProperty('--p2', S.lines.red);
+  const prog = $('prog');
+  if (changed && preview && prog) {
+    prog.classList.remove('reprint');
+    void prog.offsetWidth;
+    prog.classList.add('reprint');
+    setTimeout(() => prog.classList.remove('reprint'), 600);
+  }
   document
     .querySelectorAll('#arenaSeg button')
     .forEach(x => x.setAttribute('aria-checked', String(x.dataset.a === k)));
@@ -83,6 +98,7 @@ export function setArena(k, preview) {
   $('paName').textContent = S.name;
   $('paTeam').textContent = 'Home of the ' + S.team;
   drawThumb(ice, $('pvArena'), k);
+  updSummary();
   if (preview && !settings.muted && audio()) {
     try {
       chime();

@@ -12,6 +12,8 @@ export const view = {
   lastCtl: null,
   ctlFlash: 0,
   lamp: null,
+  /** canvas rows to frame the 3D view in (the menu's window on phones), or null for the whole canvas */
+  frame: /** @type {any} */ (null),
 };
 view.ctx.imageSmoothingEnabled = false;
 export const pvc = $('pv'),

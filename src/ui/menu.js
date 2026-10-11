@@ -2,7 +2,6 @@ import { initLineup, renderLineup } from './lineup';
 import { AC, audio, master } from '../audio/engine';
 import { $ } from '../core/dom';
 import { savePrefs, loadAimBest } from '../core/storage';
-import { DIFF } from '../data/difficulty';
 import { startGame, toMenu, togglePause } from '../game/match';
 import { aimCfg, pcfg, startPractice } from '../game/practice';
 import { G } from '../game/world';
@@ -10,7 +9,9 @@ import { fit, updCam } from '../render/camera';
 import { view } from '../render/canvas';
 import { camToast, resetDirector } from '../render/director';
 import { arenaThumbs } from '../render/ice';
-import { settings } from '../settings';
+import { reduceMotion, settings } from '../settings';
+import { DIFF, LABEL } from '../data/difficulty';
+import { STADIUMS } from '../data/stadiums';
 import { clockText, hudClock, showRec } from './hud';
 
 // menu tabs
@@ -20,12 +21,73 @@ function showSound() {
     .querySelectorAll('#sndSeg button')
     .forEach(x => x.setAttribute('aria-checked', String((x.dataset.v === 'off') === settings.muted)));
 }
+// The menu is a matchday program (see styles/program.css): the home page with the rink, and one page per section.
+// Picking a section slides the puck to its spot on the rink, inks the circle in and grows the page out of it; back,
+// the page shrinks into its circle and the puck returns to centre ice.
+const PAGES = ['play', 'match', 'watch', 'train', 'teams', 'lineup', 'arena', 'options', 'help', 'guide'];
+let page = 'play';
+const spotFor = name => document.querySelector('.rinkmenu [data-goto="' + name + '"]');
+const animated = () => !reduceMotion && !$('menu').hidden;
+/** Slides the rink's puck to a section's spot (or back to the centre dot). */
+function puckTo(btn) {
+  const pk = $('rpuck'),
+    rm = pk.parentElement.getBoundingClientRect(),
+    b = (btn || spotFor('match')).getBoundingClientRect();
+  pk.style.setProperty('--px', b.left + b.width / 2 - rm.left + 'px');
+  pk.style.setProperty('--py', b.top + b.height / 2 - rm.top - 18 + 'px');
+}
+/** The page's grow and shrink start from its spot on the rink (or the top right for the rulebook). */
+function originAt(el, btn) {
+  const st = $('prog').querySelector('.pstack').getBoundingClientRect(),
+    b = btn ? btn.getBoundingClientRect() : { left: st.right - 30, top: st.top, width: 0, height: 0 };
+  el.style.setProperty('--ox', b.left + b.width / 2 - st.left + 'px');
+  el.style.setProperty('--oy', b.top + b.height / 2 - st.top + 'px');
+}
+function play(el, cls, ms, done) {
+  el.classList.add(cls);
+  setTimeout(() => {
+    el.classList.remove(cls);
+    if (done) done();
+  }, ms);
+}
 export function showTab(name) {
-  document
-    .querySelectorAll('.tabs button')
-    .forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
-  for (const t of ['play', 'train', 'teams', 'arena', 'options', 'help', 'guide', 'lineup'])
-    $('p-' + t).hidden = t !== name;
+  if (!PAGES.includes(name)) name = 'play';
+  const from = page,
+    prog = $('prog');
+  if (name === from) return;
+  page = name;
+  prog.dataset.page = name;
+  const fromEl = $('p-' + from),
+    toEl = $('p-' + name),
+    anim = animated();
+  document.querySelectorAll('.rinkmenu .on').forEach(b => b.classList.remove('on'));
+  if (name === 'play') {
+    // back to the rink
+    toEl.hidden = false;
+    originAt(fromEl, spotFor(from));
+    puckTo(null);
+    if (anim) play(fromEl, 'out', 220, () => (fromEl.hidden = true));
+    else fromEl.hidden = true;
+  } else if (from === 'play') {
+    // a section opens from its spot on the rink
+    const spot = spotFor(name);
+    if (spot) spot.classList.add('on');
+    if (spot) puckTo(spot);
+    originAt(toEl, spot);
+    const open = () => {
+      if (page !== name) return;
+      toEl.hidden = false;
+      fromEl.hidden = true;
+      if (anim) play(toEl, 'in', 260);
+      if (document.body.classList.contains('padnav')) toEl.querySelector('.pback').focus();
+    };
+    if (anim && spot) setTimeout(open, 200);
+    else open();
+  } else {
+    // from page to page (keys and guide link to each other)
+    fromEl.hidden = true;
+    toEl.hidden = false;
+  }
   if (name === 'train') {
     let b = 0;
     try {
@@ -38,6 +100,29 @@ export function showTab(name) {
   if (name === 'lineup') renderLineup();
 }
 /** The best one-minute score for the chosen gap (endless rounds keep no best). */
+/** Back to the rink from a section page; true when there was a page to leave. */
+export function menuBack() {
+  if (page === 'play' || $('menu').hidden) return false;
+  showTab('play');
+  return true;
+}
+/** Drop the puck: the ticket stub tears off and the program turns away, then `go` starts the game. */
+function dropPuck(go) {
+  const prog = $('prog');
+  if (!animated()) return go();
+  prog.classList.add('tear');
+  setTimeout(() => {
+    go();
+    prog.classList.remove('tear');
+  }, 420);
+}
+/** The match settings at a glance: on the rink's centre circle and on the ticket. */
+export function updSummary() {
+  const per = clockText(settings.periodLen),
+    lvl = LABEL[settings.diffKey];
+  $('matchSum').textContent = lvl + ' · 3×' + per;
+  $('tkSub').textContent = STADIUMS[settings.stadiumKey].short + ' · ' + lvl + ' · 3 × ' + per;
+}
 function showAimBest() {
   const a = aimCfg.endless ? 0 : loadAimBest(aimCfg.moving);
   $('aimBest').textContent = a ? 'Your best' + (aimCfg.moving ? ' (moving gap): ' : ': ') + a + (a === 1 ? ' goal.' : ' goals.') : '';
@@ -49,6 +134,7 @@ export function setDiff(k) {
     .querySelectorAll('#diffSeg button')
     .forEach(x => x.setAttribute('aria-checked', String(x.dataset.d === k)));
   showRec();
+  updSummary();
 }
 export const PERIOD_LENGTHS = [30, 60, 120, 180, 300];
 export function setPeriodLen(sec) {
@@ -58,6 +144,7 @@ export function setPeriodLen(sec) {
     .forEach(x => x.setAttribute('aria-checked', String(+x.dataset.v === sec)));
   $('kicker').textContent = '3-ON-3 · 3 PERIODS × ' + clockText(sec);
   hudClock();
+  updSummary();
 }
 export function setCpuStyle(v) {
   settings.cpuStyle = v === 'realistic' ? 'realistic' : 'classic';
@@ -139,28 +226,10 @@ function segPick(id, attr, cb) {
     }),
   );
 }
-// The menu title stays put while the content scrolls, but only when that still leaves a useful amount of
-// room for the content; on short screens the whole card scrolls instead.
-const MIN_CONTENT = 300;
-function layoutMenu() {
-  const card = document.querySelector('#menu .mcard'),
-    head = card && card.querySelector('.mhead');
-  if (!head) return;
-  const avail = $('menu').clientHeight - 16,
-    sticky = avail - head.offsetHeight >= MIN_CONTENT;
-  card.classList.toggle('stickyhead', sticky);
-  card.style.setProperty('--headh', head.offsetHeight + 'px');
-}
 export function initMenu() {
   initLineup();
-  layoutMenu();
-  addEventListener('resize', layoutMenu);
-  const ro = new ResizeObserver(layoutMenu);
-  ro.observe($('menu'));
-  ro.observe(document.querySelector('#menu .mhead')); // its height settles once fonts and the logo load
-  document
-    .querySelectorAll('.tabs button')
-    .forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
+  // the puck stays on its spot when the layout changes size
+  addEventListener('resize', () => puckTo(page === 'play' ? null : spotFor(page)));
   document
     .querySelectorAll('[data-goto]')
     .forEach(b => b.addEventListener('click', () => showTab(b.dataset.goto)));
@@ -229,8 +298,8 @@ export function initMenu() {
         } catch (e) {}
     }),
   );
-  $('startBtn').addEventListener('click', () => startGame(false));
-  $('watchBtn').addEventListener('click', () => startGame(true));
+  $('startBtn').addEventListener('click', () => dropPuck(() => startGame(false)));
+  $('watchBtn').addEventListener('click', () => dropPuck(() => startGame(true)));
   $('againBtn').addEventListener('click', () =>
     G.practice ? startPractice(G.practice) : startGame(G.watch),
   );

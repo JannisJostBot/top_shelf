@@ -6,7 +6,9 @@ import { G } from '../game/world';
 import { input } from '../input/state';
 import { knobAt, pad, touchState } from '../input/touch';
 import { fit } from '../render/camera';
-import { hideBanner } from './hud';
+import { clockText, hideBanner } from './hud';
+import { STADIUMS } from '../data/stadiums';
+import { settings } from '../settings';
 
 export function showPad(on) {
   touchState.padWanted = on;
@@ -41,6 +43,21 @@ function matchStats() {
     row('SAVE %', pct(0), pct(1))
   );
 }
+/** The box score: goals by period (overtime only when it was played) and the final. */
+function boxScore() {
+  const gp = G.stats.gp || [
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ],
+    ot = G.period > 3,
+    n = ot ? 4 : 3,
+    row = (cells, cls) => '<div class="r' + (cls ? ' ' + cls : '') + '">' + cells.map(c => '<span>' + c + '</span>').join('') + '</div>';
+  const head = ['', '1', '2', '3', ...(ot ? ['OT'] : []), 'T'];
+  return (
+    row(head, 'hd') +
+    [0, 1].map(t => row([teamLabel(t), ...gp[t].slice(0, n), G.score[t]])).join('')
+  ).replace(/<div class="r/g, '<div style="--cols: ' + n + '" class="r');
+}
 const SCREENS = {
   match({ watch }) {
     $('menu').hidden = true;
@@ -60,6 +77,11 @@ const SCREENS = {
     $('pauseOv').hidden = true;
     $('menu').hidden = false;
     $('pauseBtn').disabled = true;
+    // the program drops in over the arena
+    const prog = $('prog');
+    prog.classList.remove('drop');
+    void prog.offsetWidth;
+    prog.classList.add('drop');
     $('camBtn').hidden = true;
   },
   over(r) {
@@ -70,6 +92,10 @@ const SCREENS = {
     $('overT').style.color = r.winner === 0 ? 'var(--home-ui)' : 'var(--away-ui)';
     $('overS').textContent = r.score;
     $('overStats').innerHTML = matchStats();
+    $('overBox').innerHTML = boxScore();
+    $('overBox').hidden = false;
+    $('overArena').textContent = STADIUMS[settings.stadiumKey].name;
+    $('againSub').textContent = G.watch ? 'Another broadcast' : 'Same teams, fresh roster';
     $('overR').textContent = r.record;
     $('againBtn').textContent = r.again;
     // the result gets its moment before the results card comes up
@@ -98,12 +124,19 @@ const SCREENS = {
     $('overS').textContent = '';
     $('overR').textContent = line;
     $('overStats').innerHTML = ''; // no match stats from an earlier game on a practice card
+    $('overBox').hidden = true;
+    $('overArena').textContent = '';
+    $('againSub').textContent = 'Same drill again';
     $('againBtn').textContent = 'AGAIN';
     $('overOv').hidden = false;
     $('pauseBtn').disabled = true;
   },
   pause(on) {
     $('pauseOv').hidden = !on;
+    if (on)
+      $('pauseLine').textContent = G.practice
+        ? 'Practice'
+        : G.score[0] + ' – ' + G.score[1] + ' · ' + (G.period > 3 ? 'OT' : 'P' + G.period) + ' · ' + clockText(Math.max(0, Math.ceil(G.clock)));
   },
 };
 export function showScreen(name, data) {

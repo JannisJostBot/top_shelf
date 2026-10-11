@@ -7,6 +7,7 @@ import './styles/overlays.css';
 import './styles/pad.css';
 import './styles/motion.css';
 import './styles/side.css';
+import './styles/program.css';
 import { audio } from './audio/engine';
 import { chime, playSong } from './audio/music';
 import { SFX } from './audio/sfx';

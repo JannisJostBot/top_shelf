@@ -5,7 +5,7 @@ import { endReplay, nextAngle } from '../game/replay';
 import { endCelebration } from '../game/states/celebrate';
 import { G } from '../game/world';
 import { input } from './state';
-import { showTab, toggleWatchCam } from '../ui/menu';
+import { menuBack, showTab, toggleWatchCam } from '../ui/menu';
 
 export function initKeyboard() {
   addEventListener('keydown', e => {
@@ -51,6 +51,8 @@ export function initKeyboard() {
       input.swp = true;
       return;
     }
+    // Esc in the menu goes back from a page to the rink
+    if (e.code === 'Escape' && menuBack()) return;
     if (e.code === 'KeyP' || e.code === 'Escape') {
       togglePause();
       return;

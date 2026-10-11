@@ -176,55 +176,55 @@
         </div>
 
         <div class="ov" id="menu">
-          <div class="card mcard">
-            <div class="mhead">
+          <div class="prog" id="prog" data-page="play">
+            <div class="pstack">
+            <section class="ppage home" id="p-play" role="region" aria-label="Main menu">
+              <div class="pmast">
+                <span>Matchday program · <span id="paTeam">Home of the Wolves</span></span>
+                <button class="plink" data-goto="help">Keys · Guide ?</button>
+              </div>
+              <div class="pwin" aria-hidden="true">
+                <span class="pttl">Top<br />Shelf</span>
+                <span class="pkick" id="kicker">3-ON-3 · 3 PERIODS × 1:00</span>
+                <span class="onair"><i></i>Live · <span id="paName">Frost Hollow Arena</span></span>
+              </div>
               <h1 class="sr">Top Shelf</h1>
-              <canvas id="logo" width="168" height="76" aria-hidden="true"></canvas>
-              <p class="kicker" id="kicker">3-ON-3 · 3 PERIODS × 1:00</p>
-              <p class="ainote" role="note">
-                <b>Made with AI.</b> Not to be considered art or a creative work, but rather a test of the
-                current capabilities of AI.
-              </p>
-            </div>
-            <nav class="tabs" role="tablist" aria-label="Menu sections">
-              <button role="tab" id="t-play" data-tab="play" aria-selected="true">Play</button>
-              <button role="tab" id="t-train" data-tab="train" aria-selected="false">Train</button>
-              <button role="tab" id="t-teams" data-tab="teams" aria-selected="false">Teams</button>
-              <button role="tab" id="t-arena" data-tab="arena" aria-selected="false">Arena</button>
-              <button role="tab" id="t-options" data-tab="options" aria-selected="false">Setup</button>
-              <button role="tab" id="t-help" data-tab="help" aria-selected="false">Keys</button>
-              <button
-                role="tab"
-                id="t-guide"
-                data-tab="guide"
-                aria-selected="false"
-                aria-label="Guide"
-                title="Guide"
-              >
-                ?
-              </button>
-            </nav>
-
-            <section class="tabp" id="p-play" role="tabpanel" aria-labelledby="t-play">
-              <button class="matchup" data-goto="teams" aria-label="Change jerseys">
+              <button class="matchup" data-goto="teams" aria-label="Teams and jerseys">
                 <canvas id="pv2" width="140" height="36" aria-hidden="true"></canvas>
-                <span class="mline"
-                  ><span id="matchLine">Blue vs Red</span><span class="go">Jerseys ›</span></span
-                >
+                <span class="mlbls"
+                  ><span><i class="jchip home"></i>You · <span id="muHome">Blue</span></span
+                  ><span><span id="muAway">Navy</span> · CPU<i class="jchip away"></i></span
+                ></span>
               </button>
-              <button class="playlineup" data-goto="lineup" aria-label="Line-up">
-                <span class="mline"
-                  ><span><b>Line-up</b> <span class="lsub">optional: your players and their positions</span></span
-                  ><span class="go">Line-up ›</span></span
-                >
-              </button>
-              <button class="playarena" data-goto="arena" aria-label="Change arena">
-                <canvas id="pvArena" width="120" height="82" aria-hidden="true"></canvas>
-                <span
-                  ><b id="paName">Frost Hollow Arena</b><span id="paTeam">Home of the Wolves</span
-                  ><span class="go">Arena ›</span></span
-                >
-              </button>
+              <nav class="rinkmenu" aria-label="Menu">
+                <span class="rk" aria-hidden="true"
+                  ><i class="crease t"></i><i class="gl t"></i><i class="bl t"></i><i class="cl"></i><i class="bl b"></i
+                  ><i class="gl b"></i><i class="crease b"></i
+                ></span>
+                <button class="fo" data-goto="train" style="--x: 27%; --y: 19%">Train</button>
+                <button class="fo" data-goto="watch" style="--x: 73%; --y: 19%">Watch</button>
+                <button class="fo mid" data-goto="match" style="--x: 50%; --y: 50%">
+                  Match<small id="matchSum">Pro · 3×1:00</small>
+                </button>
+                <button class="fo" data-goto="teams" style="--x: 27%; --y: 81%">Teams</button>
+                <button class="fo" data-goto="arena" style="--x: 73%; --y: 81%">Arena</button>
+                <button class="bench l" data-goto="lineup">Line-up</button>
+                <button class="bench r" data-goto="options">Setup</button>
+                <span class="rpuck" id="rpuck" aria-hidden="true"></span>
+              </nav>
+              <p class="ainote" role="note">
+                <b>Made with AI.</b> Not to be considered art or a creative work, but rather a test of the current
+                capabilities of AI.
+              </p>
+            </section>
+
+            <section class="ppage" id="p-match" role="region" aria-labelledby="h-match" hidden>
+              <header class="phead">
+                <button class="pback" data-goto="play">‹ Rink</button><span class="pno">01 · Centre ice</span>
+              </header>
+              <h2 class="ptitle" id="h-match">Match</h2>
+              <div class="pbody">
+                <p class="pintro">Tonight's game. Watch mode plays by these too.</p>
               <div class="opt">
                 <span class="olbl">CPU LEVEL</span>
                 <div class="seg" role="radiogroup" aria-label="CPU difficulty" id="diffSeg">
@@ -250,29 +250,33 @@
                   <button role="radio" data-v="300" aria-checked="false">5:00</button>
                 </div>
               </div>
-              <button class="btn go" id="startBtn">DROP THE PUCK</button>
-              <button class="btn ghost" id="watchBtn">WATCH CPU VS CPU</button>
-              <p class="small" id="rec"></p>
-            </section>
-
-            <section class="tabp" id="p-lineup" role="tabpanel" aria-label="Line-up" hidden>
-              <div class="luhead">
-                <button class="btn ghost luback" data-goto="play">‹ Back</button>
-                <b>Your line-up</b>
-              </div>
-              <p class="small">
-                These players start your next match. Give each skater a position: the centre takes the face-offs,
-                the wing leads the rush, the defenceman stays back. Ratings stay with the player, so a sharp shooter
-                can play centre too. Skip this and every match rolls a fresh roster.
-              </p>
-              <div id="luRows"></div>
-              <div class="lubtns">
-                <button class="btn ghost" id="luAuto">Auto</button>
-                <button class="btn ghost" id="luRoll">New roster</button>
+                <p class="small" id="rec"></p>
               </div>
             </section>
 
-            <section class="tabp" id="p-train" role="tabpanel" aria-labelledby="t-train" hidden>
+            <section class="ppage" id="p-watch" role="region" aria-labelledby="h-watch" hidden>
+              <header class="phead">
+                <button class="pback" data-goto="play">‹ Rink</button><span class="pno">02 · End zone</span>
+              </header>
+              <h2 class="ptitle" id="h-watch">Watch</h2>
+              <div class="pbody">
+                <p class="pintro">CPU vs CPU, broadcast live from the arena. Sit back; the ticket below starts it.</p>
+              <div class="orow">
+                <div><b>Watch camera</b><span>CPU vs CPU: directed shots or the normal view (C)</span></div>
+                <div class="seg two" role="radiogroup" aria-label="Watch camera" id="wcamSeg">
+                  <button role="radio" data-v="cine" aria-checked="true">Cinematic</button
+                  ><button role="radio" data-v="classic" aria-checked="false">Classic</button>
+                </div>
+              </div>
+              </div>
+            </section>
+
+            <section class="ppage" id="p-train" role="region" aria-labelledby="h-train" hidden>
+              <header class="phead">
+                <button class="pback" data-goto="play">‹ Rink</button><span class="pno">03 · End zone</span>
+              </header>
+              <h2 class="ptitle" id="h-train">Train</h2>
+              <div class="pbody">
               <div class="tcard">
                 <b>Free skate</b
                 ><span
@@ -339,9 +343,15 @@
                 ><span>30 seconds to polish a chewed-up rink. <span id="zamBest"></span></span>
                 <button class="btn ghost" id="pZam">DRIVE THE RESURFACER</button>
               </div>
+              </div>
             </section>
 
-            <section class="tabp" id="p-teams" role="tabpanel" aria-labelledby="t-teams" hidden>
+            <section class="ppage" id="p-teams" role="region" aria-labelledby="h-teams" hidden>
+              <header class="phead">
+                <button class="pback" data-goto="play">‹ Rink</button><span class="pno">04 · End zone</span>
+              </header>
+              <h2 class="ptitle" id="h-teams">Teams</h2>
+              <div class="pbody">
               <canvas id="pv" width="140" height="36" aria-label="Jersey preview"></canvas>
               <div class="seg two teamSeg" role="radiogroup" aria-label="Team to customise" id="teamSeg">
                 <button role="radio" data-t="0" aria-checked="true">
@@ -387,21 +397,46 @@
                 <div class="sw pk" role="radiogroup" aria-label="Puck color" id="puckSwatches"></div>
                 <p class="small" id="puckLine"></p>
               </div>
+              </div>
             </section>
 
-            <section class="tabp" id="p-arena" role="tabpanel" aria-labelledby="t-arena" hidden>
+            <section class="ppage" id="p-lineup" role="region" aria-labelledby="h-lineup" hidden>
+              <header class="phead">
+                <button class="pback" data-goto="play">‹ Rink</button><span class="pno">05 · The bench</span>
+              </header>
+              <h2 class="ptitle" id="h-lineup">Line-up</h2>
+              <div class="pbody">
+              <p class="small">
+                These players start your next match. Give each skater a position: the centre takes the face-offs,
+                the wing leads the rush, the defenceman stays back. Ratings stay with the player, so a sharp shooter
+                can play centre too. Skip this and every match rolls a fresh roster.
+              </p>
+              <div id="luRows"></div>
+              <div class="lubtns">
+                <button class="btn ghost" id="luAuto">Auto</button>
+                <button class="btn ghost" id="luRoll">New roster</button>
+              </div>
+              </div>
+            </section>
+
+            <section class="ppage" id="p-arena" role="region" aria-labelledby="h-arena" hidden>
+              <header class="phead">
+                <button class="pback" data-goto="play">‹ Rink</button><span class="pno">06 · End zone</span>
+              </header>
+              <h2 class="ptitle" id="h-arena">Arena</h2>
+              <div class="pbody">
               <div class="arenas" role="radiogroup" aria-label="Arena" id="arenaSeg"></div>
               <p class="small" id="arenaLine"></p>
+              </div>
             </section>
 
-            <section class="tabp" id="p-options" role="tabpanel" aria-labelledby="t-options" hidden>
-              <div class="orow">
-                <div><b>CPU style</b><span>How CPU skaters move and decide</span></div>
-                <div class="seg two styleSeg" role="radiogroup" aria-label="CPU style" id="styleSeg">
-                  <button role="radio" data-v="classic" aria-checked="true">Classic</button
-                  ><button role="radio" data-v="realistic" aria-checked="false">Realistic</button>
-                </div>
-              </div>
+            <section class="ppage" id="p-options" role="region" aria-labelledby="h-options" hidden>
+              <header class="phead">
+                <button class="pback" data-goto="play">‹ Rink</button><span class="pno">07 · Penalty box</span>
+              </header>
+              <h2 class="ptitle" id="h-options">Setup</h2>
+              <div class="pbody">
+              
               <div class="orow">
                 <div>
                   <b>Fullscreen</b><span id="fsHint">Just the game, without the browser around it (F)</span>
@@ -418,13 +453,7 @@
                   ><button role="radio" data-v="off" aria-checked="false">Off</button>
                 </div>
               </div>
-              <div class="orow">
-                <div><b>Watch camera</b><span>CPU vs CPU: directed shots or the normal view (C)</span></div>
-                <div class="seg two" role="radiogroup" aria-label="Watch camera" id="wcamSeg">
-                  <button role="radio" data-v="cine" aria-checked="true">Cinematic</button
-                  ><button role="radio" data-v="classic" aria-checked="false">Classic</button>
-                </div>
-              </div>
+              
               <div class="orow">
                 <div><b>Camera</b><span>How close the view follows the play</span></div>
                 <div class="seg three" role="radiogroup" aria-label="Camera zoom" id="camSeg">
@@ -468,9 +497,15 @@
                   ><button role="radio" id="vb-off" data-v="off" aria-checked="false">Off</button>
                 </div>
               </div>
+              </div>
             </section>
 
-            <section class="tabp" id="p-help" role="tabpanel" aria-labelledby="t-help" hidden>
+            <section class="ppage" id="p-help" role="region" aria-labelledby="h-help" hidden>
+              <header class="phead">
+                <button class="pback" data-goto="play">‹ Rink</button><span class="pno">08 · Rulebook</span>
+              </header>
+              <h2 class="ptitle" id="h-help">Keys</h2>
+              <div class="pbody">
               <div class="opt" id="touchHelp">
                 <span class="olbl">TOUCH</span>
                 <ul class="how">
@@ -493,8 +528,16 @@
                 The buttons change with the situation: Poke and Check on defense, Punch and Block in a fight,
                 Horn and Finish on the resurfacer.
               </p>
+                <button class="plink" data-goto="guide">Guide: how the game works ›</button>
+              </div>
             </section>
-            <section class="tabp guide" id="p-guide" role="tabpanel" aria-labelledby="t-guide" hidden>
+
+            <section class="ppage guide" id="p-guide" role="region" aria-labelledby="h-guide" hidden>
+              <header class="phead">
+                <button class="pback" data-goto="play">‹ Rink</button><span class="pno">09 · Rulebook</span>
+              </header>
+              <h2 class="ptitle" id="h-guide">Guide</h2>
+              <div class="pbody">
               <h3>The basics</h3>
               <p>
                 Three skaters and a goalie a side. Most goals after three periods wins; a tie goes to
@@ -633,32 +676,43 @@
                 board covers the goal except a small gap that moves after every goal; one minute or endless,
                 with a still or a sliding gap), fight practice and resurfacer practice.
               </p>
+                <button class="plink" data-goto="help">‹ Keys and controls</button>
+              </div>
             </section>
+            </div>
+            <div class="ticket" id="ticket">
+              <canvas id="pvArena" width="120" height="82" aria-hidden="true"></canvas>
+              <span class="tkinfo"><b id="matchLine">Blue vs Navy</b><span id="tkSub">Pro · 3 × 1:00</span></span>
+              <button class="tkgo" id="startBtn">Play</button><button class="tkgo" id="watchBtn">Watch</button>
+            </div>
           </div>
         </div>
 
         <div class="ov" id="pauseOv" hidden>
-          <div class="card">
-            <h2>PAUSED</h2>
-            <div class="row">
-              <button class="btn go" id="resumeBtn">RESUME</button
-              ><button class="btn ghost" id="quitBtn">QUIT</button>
+          <div class="prog night insert">
+            <div class="pmast"><span>Intermission</span><span id="pauseLine"></span></div>
+            <h2 class="ptitle">Paused</h2>
+            <div class="plist">
+              <button class="btn go" id="resumeBtn">Resume ▸</button>
+              <button class="btn ghost" id="quitBtn">Quit to the program</button>
             </div>
             <div class="keymap" id="pauseKeys"></div>
           </div>
         </div>
-
         <div class="ov" id="overOv" hidden>
-          <div class="card">
-            <p class="kicker" id="overK">FINAL</p>
-            <h2 id="overT">YOU WIN</h2>
+          <div class="prog night insert result">
+            <div class="pmast"><span id="overK">FINAL</span><span id="overArena"></span></div>
+            <div class="pwin small" aria-hidden="true"><span class="onair"><i></i>Live</span></div>
+            <h2 class="ptitle" id="overT">YOU WIN</h2>
             <div class="final" id="overS">3 – 2</div>
+            <div class="boxscore" id="overBox"></div>
             <div class="mstats" id="overStats"></div>
             <p class="small" id="overR"></p>
-            <div class="row">
-              <button class="btn go" id="againBtn">REMATCH</button
-              ><button class="btn ghost" id="menuBtn">MENU</button>
+            <div class="ticket">
+              <span class="tkinfo"><b>Rematch</b><span id="againSub">Same teams, fresh roster</span></span>
+              <button class="tkgo" id="againBtn">Again</button>
             </div>
+            <button class="plink" id="menuBtn">‹ Back to the program</button>
           </div>
         </div>
       </main>

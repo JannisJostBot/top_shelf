@@ -11,7 +11,7 @@ import { endReplay, nextAngle } from '../game/replay';
 import { endCelebration } from '../game/states/celebrate';
 import { G } from '../game/world';
 import { input, pad } from './state';
-import { toggleWatchCam } from '../ui/menu';
+import { menuBack, toggleWatchCam } from '../ui/menu';
 
 // standard mapping button indices
 const A = 0,
@@ -109,15 +109,6 @@ function focus(el) {
   el.focus({ focusVisible: true });
   el.scrollIntoView({ block: 'nearest' });
 }
-function switchTab(step) {
-  const tabs = [...document.querySelectorAll('.tabs button')],
-    i = tabs.findIndex(t => t.getAttribute('aria-selected') === 'true'),
-    t = tabs[(i + step + tabs.length) % tabs.length];
-  if (t) {
-    t.click();
-    focus(t);
-  }
-}
 
 function menuInput(root, gp, down, now) {
   const [x, y] = stick(gp),
@@ -144,14 +135,12 @@ function menuInput(root, gp, down, now) {
     else focus(focusables(root)[0]);
   }
   if (down(B) && root.id === 'pauseOv') togglePause();
+  // B leaves a page of the program and goes back to the rink
+  if (down(B) && root.id === 'menu' && menuBack()) focus(document.querySelector('.rinkmenu .fo.mid'));
   if (down(MENU)) {
     if (root.id === 'pauseOv') togglePause();
     else if (root.id === 'menu') $('startBtn').click();
     else if (root.id === 'overOv') $('againBtn').click();
-  }
-  if (root.id === 'menu') {
-    if (down(LB)) switchTab(-1);
-    if (down(RB)) switchTab(1);
   }
 }
 
