@@ -20,7 +20,8 @@
   <body>
     <div id="app">
       <aside class="side" id="sideL" hidden aria-label="Match">
-        <div class="pennant home" id="sdBan0"></div>
+        <div class="pennant home"><span id="sdBan0"></span><span class="pslot" id="sdScore0"></span></div>
+        <div class="sclock inmatchOnly" id="sdClock"></div>
         <section class="spanel inmatchOnly">
           <h3>MATCH STATS</h3>
           <div class="steams" id="sdTeams"></div>
@@ -562,7 +563,8 @@
         </div>
       </main>
       <aside class="side" id="sideR" hidden aria-label="Status">
-        <div class="pennant away" id="sdBan1"></div>
+        <div class="pennant away"><span id="sdBan1"></span><span class="pslot" id="sdScore1"></span></div>
+        <div class="sbtns inmatchOnly" id="sdBtns"></div>
         <section class="spanel inmatchOnly">
           <h3>ON THE ICE</h3>
           <div id="sdCard"></div>

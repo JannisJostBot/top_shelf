@@ -69,8 +69,8 @@ initKeyboard();
 initGamepad();
 initFullscreen();
 initMatch();
-initSide();
 initCamera();
+initSide();
 initCustomize();
 initMenu();
 

@@ -298,3 +298,49 @@ body:not(.inmatch) .inmatchOnly {
     animation: none;
   }
 }
+
+/* ---------- the scoreboard, split over the side columns (the rink gets the whole height) ---------- */
+body.wide #hud {
+  display: none;
+}
+body.wide #rpBar {
+  top: 10px;
+}
+.pennant {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.pslot .score {
+  font-size: 34px;
+  line-height: 1;
+}
+body:not(.inmatch) .pslot {
+  display: none;
+}
+/* period and clock: the solid centre piece of the old scoreboard */
+.sclock {
+  align-self: center;
+}
+.sclock .mid {
+  padding: 8px 22px 9px;
+  gap: 6px;
+  border: 2px solid var(--line);
+  border-bottom: 3px solid #d8343f;
+}
+.sclock #per {
+  font-size: 11px;
+}
+.sclock #clock {
+  font-size: 22px;
+}
+.sbtns {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.sbtns .ibtn {
+  width: 40px;
+  height: 40px;
+  font-size: 10px;
+}
