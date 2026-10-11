@@ -51,8 +51,10 @@ const SIDE_TOP = [
   '.OPpPPPPPO..',
   '..OPPPPPO...',
 ];
-const SIDE_LEGS_A = ['..OLLOLLO...', '..OLLOLLO...', '..OKKOKKO...', '.OKKKKKKKO..', '.BBBBBBBBB..'];
-const SIDE_LEGS_B = ['..OLLO.OLLO.', '.OLLO...OLLO', '.OKKO...OKKO', 'OKKKO..OKKKO', 'BBBB....BBBB'];
+// Side view legs (the skater faces right): the boots point forward, toes ahead of the shin and the heel at the
+// back of it, as skates do. A: gliding with the feet together. B: striding, the back leg pushing off behind.
+const SIDE_LEGS_A = ['..OLLOLLO...', '..OLLOLLO...', '..OKKOKKO...', '..OKKKKKKKO.', '..BBBBBBBBB.'];
+const SIDE_LEGS_B = ['..OLLO.OLLO.', '.OLLO..OLLO.', '.OKKO..OKKO.', '.OKKKO.OKKKO', '..BBBB..BBBB'];
 // side view hockey stop: skates out in front, leaning back against the edges
 const SIDE_LEGS_STOP = ['...OLLOLLO..', '...OLLOLLO..', '....OKKOKKO.', '...OKKKKKKKO', '...BBBBBBBBB'];
 // the raised arm of a sprawled skater: [row, column, pixels] written over the rotated sprite

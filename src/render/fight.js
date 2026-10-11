@@ -22,11 +22,20 @@ export function drawLitter() {
     }
   }
 }
+// The gloves are on the ice (see drawLitter), so the fighters' hands are bare: their palette with skin for the
+// glove colour, made once per palette so the sprite cache can reuse it.
+const bare = new WeakMap();
+function barePal(p) {
+  const base = p.pal || kit.PAL[p.team];
+  let b = bare.get(base);
+  if (!b) bare.set(base, (b = Object.assign({}, base, { G: p.look.skin })));
+  return b;
+}
 export function drawFighter(p) {
   const B = G.br,
     me = p === B.a,
     dir = me ? 1 : -1,
-    pal = p.pal || kit.PAL[p.team],
+    pal = barePal(p),
     set = FACES[p.look.face] || FACES.eyes;
   let sx = toS(p.x),
     sy = toS(p.y);
