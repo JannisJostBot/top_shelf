@@ -29,7 +29,7 @@ function freshMatch() {
     p.vx = p.vy = 0;
     p.benched = true;
   }
-  const me = SK[0][0];
+  const me: any = SK[0][0];
   Object.assign(me, { benched: false, cool: 0, down: 0, stun: 0, checkT: 0, x: 80, y: 150, vx: 0, vy: 0 });
   G.controlled = me;
   return me;
@@ -66,9 +66,9 @@ describe('standing still with the puck', () => {
       startGame(false);
       run(3);
       G.state = 'play';
-      const me = SK[0][0];
+      const me: any = SK[0][0];
       // you hold the puck at centre ice, facing your own net, and do nothing
-      for (const p of SK[1]) Object.assign(p, { x: p.x, y: Math.min(p.y, 80) });
+      for (const p of SK[1] as any[]) Object.assign(p, { x: p.x, y: Math.min(p.y, 80) });
       Object.assign(me, { x: 80, y: 150, vx: 0, vy: 0, fx: 0, fy: 1, cool: 0, down: 0, stun: 0, imm: 0 });
       G.controlled = me;
       puck.owner = me;
