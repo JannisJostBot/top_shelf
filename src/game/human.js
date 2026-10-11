@@ -12,6 +12,8 @@ import { hud, pop, S, vib } from './fx';
 import { CY } from '../data/colors';
 
 /* ---------- human ---------- */
+// share of the stick input taken over by the receiving assist while a pass is on its way
+const RECEIVE_ASSIST = 0.18;
 export function autoSwitch(dt) {
   G.switchLock -= dt;
   const o = puck.owner;
@@ -46,9 +48,24 @@ export function humanUpdate(dt) {
   const p = G.controlled;
   if (!p) return;
   readStick();
-  const jx = input.jx,
-    jy = input.jy,
-    m = Math.hypot(jx, jy),
+  let jx = input.jx,
+    jy = input.jy;
+  // Receiving a pass: control has just jumped to this skater, and the stick is often still held the way the
+  // passer was going, which would carry the receiver off the puck's line. While the pass is on its way, the
+  // stick input is blended with a pull toward where the puck will cross the receiver's path, and the blade
+  // turns to face it. Steering hard away from the pass can still lose it.
+  const receiving = puck.passTo === p && !puck.owner && p.down <= 0;
+  if (receiving) {
+    const vv = puck.vx * puck.vx + puck.vy * puck.vy || 1,
+      tc = Math.max(0, ((p.x - puck.x) * puck.vx + (p.y - puck.y) * puck.vy) / vv),
+      ix = puck.x + puck.vx * tc - p.x,
+      iy = puck.y + puck.vy * tc - p.y,
+      il = Math.hypot(ix, iy),
+      pull = Math.min(1, il / 6);
+    jx = jx * (1 - RECEIVE_ASSIST) + (il ? (ix / il) * pull : 0) * RECEIVE_ASSIST;
+    jy = jy * (1 - RECEIVE_ASSIST) + (il ? (iy / il) * pull : 0) * RECEIVE_ASSIST;
+  }
+  const m = Math.hypot(jx, jy),
     mx = maxSpd(p, 1);
   if (p.down > 0) {
     accelTo(p, 0, 0, dt, 70);
@@ -68,7 +85,8 @@ export function humanUpdate(dt) {
   }
   if (p.checkT <= 0) {
     accelTo(p, jx * mx, jy * mx, dt, m > 0.1 ? (p.boost > 0 ? ACC * 2 : ACC) : 150);
-    if (input.aim) faceTo(p, p.x + input.aim.x, p.y + input.aim.y, 0.45);
+    if (receiving) faceTo(p, puck.x, puck.y, 0.35);
+    else if (input.aim) faceTo(p, p.x + input.aim.x, p.y + input.aim.y, 0.45);
     else if (m > 0.2) faceTo(p, p.x + jx, p.y + jy, 0.45);
     const sp = Math.hypot(p.vx, p.vy);
     if (sp > 38 && m > 0.3 && (p.vx * jx + p.vy * jy) / sp < -0.4 && p.sprayCd <= 0) {
