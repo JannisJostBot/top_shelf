@@ -826,6 +826,148 @@
         background: #06080d;
         padding: 10px 0;
       }
+
+      /* ---------- revised: live b-roll windows and visible selections ---------- */
+      .win {
+        position: absolute;
+        overflow: hidden;
+        border: 3px solid var(--p1);
+        z-index: 2;
+        background: #0a0f1e;
+      }
+      /* the live 3D arena (a real frame from the game here), drifting slowly as the broadcast camera does */
+      .win .live {
+        position: absolute;
+        inset: -8%;
+        background: center / cover no-repeat;
+        image-rendering: pixelated;
+        animation: drift 14s ease-in-out infinite alternate;
+      }
+      @keyframes drift {
+        from {
+          transform: translateX(-4%) scale(1.04);
+        }
+        to {
+          transform: translateX(4%) scale(1.1);
+        }
+      }
+      .win .tt {
+        position: absolute;
+        left: 10px;
+        top: 8px;
+        font-family: var(--display);
+        font-size: 26px;
+        line-height: 0.95;
+        color: #fff;
+        text-shadow:
+          2px 2px 0 var(--p2),
+          4px 4px 0 #0b0f1a;
+      }
+      .win .onair {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        font-family: var(--display);
+        font-size: 7px;
+        background: var(--p1);
+        color: var(--paper);
+        padding: 5px 8px;
+      }
+      .win .onair i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--p2);
+        animation: rec 1s steps(2) infinite;
+      }
+      @keyframes rec {
+        50% {
+          opacity: 0.2;
+        }
+      }
+      .matchup {
+        position: absolute;
+        z-index: 3;
+        border: 3px solid var(--p1);
+        background: #e8f0f7;
+        display: grid;
+        grid-template-rows: auto auto;
+      }
+      .matchup img {
+        width: 100%;
+        display: block;
+        image-rendering: pixelated;
+      }
+      .matchup .lbls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        font-size: 8px;
+        background: var(--paper);
+        border-top: 2px solid var(--p1);
+      }
+      .matchup .lbls span {
+        padding: 4px 6px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .matchup .lbls span:last-child {
+        justify-content: flex-end;
+        border-left: 2px solid var(--p1);
+      }
+      .matchup .lbls i {
+        width: 12px;
+        height: 12px;
+        background: var(--c);
+        clip-path: polygon(22% 0, 38% 0, 50% 12%, 62% 0, 78% 0, 100% 20%, 88% 36%, 80% 30%, 80% 100%, 20% 100%, 20% 30%, 12% 36%, 0 20%);
+      }
+      .rink.sm {
+        top: auto;
+      }
+      .rink.sm .c {
+        width: 50px;
+        height: 50px;
+        font-size: 6px;
+      }
+      .rink.sm .c.mid {
+        width: 66px;
+        height: 66px;
+      }
+      .stubthumb {
+        width: 54px;
+        image-rendering: pixelated;
+        border-right: 2px solid var(--p2);
+        object-fit: cover;
+        height: 100%;
+      }
+      .sheetcard {
+        position: absolute;
+        z-index: 3;
+        box-shadow:
+          0 0 0 1px rgba(0, 0, 0, 0.2),
+          12px 14px 0 rgba(0, 0, 0, 0.45);
+      }
+      .tkimg {
+        width: 64px;
+        height: 100%;
+        object-fit: cover;
+        image-rendering: pixelated;
+        border-left: 2px dashed var(--b);
+      }
+      .tk .sel {
+        position: absolute;
+        right: 70px;
+        top: 50%;
+        transform: translateY(-50%) rotate(-8deg);
+        font-family: var(--display);
+        font-size: 7px;
+        color: var(--b);
+        border: 2px solid var(--b);
+        padding: 3px 4px;
+      }
     </style>
   </head>
   <body>
@@ -844,6 +986,155 @@
       </p>
     </header>
 
+
+    <!-- ============ revised ============ -->
+    <section class="block">
+      <h2>REVISED · LIVE ARENA AND VISIBLE PICKS</h2>
+      <p>
+        <b style="color: #eaf0ff">Home:</b> the cover is now a die-cut window in the paper showing the live 3D arena
+        (the broadcast b-roll; here a real frame from the game, drifting like the camera), with the title printed over
+        it and "LIVE · arena" on its frame. Under it, the game's own matchup preview shows both teams in the jerseys,
+        sticks and puck you picked; the ticket shows the arena's rink. On a desktop the arena fills the screen and the
+        program is a sheet in front of it. <b style="color: #eaf0ff">Result:</b> the box score sits under the same live
+        window, now showing the winners celebrating; on a desktop the result card stands over the full-screen b-roll.
+        <b style="color: #eaf0ff">Teams and Arena</b> pages show the current pick the same way (the matchup preview, the
+        rink of each arena on its ticket, "YOURS" stamped on the chosen one).
+      </p>
+      <div class="row">
+        <div class="shot">
+          <div class="phone print">
+            <div class="mast"><span>MATCHDAY PROGRAM · No. 07</span><span>KEYS · GUIDE ?</span></div>
+            <div class="win" style="left: 14px; right: 14px; top: 36px; height: 132px">
+              <div class="live" style="background-image: url(assets/broll-home.jpg)"></div>
+              <div class="tt">TOP<br />SHELF</div>
+              <div class="onair"><i></i>LIVE · FROST HOLLOW ARENA</div>
+            </div>
+            <div class="matchup" style="left: 14px; right: 14px; top: 176px">
+              <img src="assets/matchup.png" alt="" />
+              <div class="lbls"><span><i style="--c: #3d7bff"></i>YOU · BLUE</span><span>NAVY · CPU<i style="--c: #1b2d6b"></i></span></div>
+            </div>
+            <div class="rink sm" style="left: 26px; right: 26px; top: 266px; bottom: 98px">
+              <div class="c" style="left: 27%; top: 19%">TRAIN</div>
+              <div class="c" style="left: 73%; top: 19%">WATCH</div>
+              <div class="bl" style="top: 33%"></div>
+              <div class="cl"></div>
+              <div class="c mid" style="left: 50%; top: 50%">MATCH<small>Pro · 3×1:00</small></div>
+              <div class="bl" style="top: 67%"></div>
+              <div class="c" style="left: 27%; top: 81%">TEAMS</div>
+              <div class="c" style="left: 73%; top: 81%">ARENA</div>
+              <div class="bench" style="left: -14px; top: 38%; height: 24%">LINE-UP</div>
+              <div class="bench" style="right: -14px; top: 41%; height: 18%">SETUP</div>
+              <div class="puck" style="left: 50%; top: 50%"></div>
+            </div>
+            <div class="stub" style="grid-template-columns: auto 1fr auto"><img class="stubthumb" src="assets/arena-frost.png" alt="" /><div><b>BLUE vs NAVY</b>Frost Hollow · Pro · 3 × 1:00</div><div class="go">PLAY</div></div>
+            <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div><div class="cap"><b>HOME · PHONE</b>Live arena window, your matchup in its jerseys, the rink menu, the ticket with the arena.</div></div>
+        
+          <div style="flex: 1 1 560px; max-width: 840px">
+            <div style="position: relative; aspect-ratio: 16 / 9; border: 6px solid #1d2233; border-radius: 8px; overflow: hidden; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5)">
+              <div class="win" style="inset: 0; border: 0"><div class="live" style="background-image: url(assets/broll-home.jpg)"></div>
+                <div class="onair" style="left: 22px; bottom: 22px"><i></i>LIVE · FROST HOLLOW ARENA</div></div>
+              <div class="print sheetcard" style="right: 4%; top: 6%; bottom: 6%; width: 40%">
+                <div class="mast"><span>MATCHDAY PROGRAM · No. 07</span><span>KEYS · GUIDE ?</span></div>
+                <div style="position: absolute; left: 14px; top: 36px; font-family: var(--display); font-size: 22px; line-height: 0.95; color: var(--p1); text-shadow: 2px 2px 0 var(--p2); z-index: 3">TOP<br />SHELF</div>
+                <div class="matchup" style="left: 14px; right: 14px; top: 90px"><img src="assets/matchup.png" alt="" /><div class="lbls"><span><i style="--c: #3d7bff"></i>YOU · BLUE</span><span>NAVY · CPU<i style="--c: #1b2d6b"></i></span></div></div>
+                <div class="rink sm" style="left: 22px; right: 22px; top: 170px; bottom: 92px">
+                  <div class="c" style="left: 27%; top: 19%">TRAIN</div><div class="c" style="left: 73%; top: 19%">WATCH</div>
+                  <div class="bl" style="top: 33%"></div><div class="cl"></div>
+                  <div class="c mid" style="left: 50%; top: 50%">MATCH<small>Pro · 3×1:00</small></div>
+                  <div class="bl" style="top: 67%"></div>
+                  <div class="c" style="left: 27%; top: 81%">TEAMS</div><div class="c" style="left: 73%; top: 81%">ARENA</div>
+                  <div class="bench" style="left: -14px; top: 38%; height: 24%">LINE-UP</div><div class="bench" style="right: -14px; top: 41%; height: 18%">SETUP</div>
+                </div>
+                <div class="stub" style="grid-template-columns: auto 1fr auto"><img class="stubthumb" src="assets/arena-frost.png" alt="" /><div><b>BLUE vs NAVY</b>Frost Hollow · Pro · 3 × 1:00</div><div class="go">PLAY</div></div>
+                <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+                <div class="grain"></div>
+              </div>
+            </div>
+          </div>
+      </div>
+      <div class="row" style="margin-top: 24px">
+        <div class="shot">
+          <div class="phone print night">
+            <div class="mast"><span>FINAL · PRO</span><span>FROST HOLLOW</span></div>
+            <div class="win" style="left: 14px; right: 14px; top: 36px; height: 196px; border-color: #e8f0f7">
+              <div class="live" style="background-image: url(assets/broll-result.jpg)"></div>
+              <div class="tt" style="font-size: 20px">YOU<br />WIN</div>
+              <div class="onair" style="background: #e8f0f7; color: #0f1730"><i></i>LIVE · BLUE CELEBRATES</div>
+            </div>
+            <div class="pg" style="top: 242px">
+              <p class="intro" style="margin-bottom: 6px">Blue 4 – 2 Navy · Record vs Pro 5 W – 2 L</p>
+              <div class="box">
+                <div class="r hd"><span>TEAM</span><span>1</span><span>2</span><span>3</span><span>T</span></div>
+                <div class="r"><span>BLUE</span><span>1</span><span>2</span><span>1</span><span>4</span></div>
+                <div class="r"><span>NAVY</span><span>0</span><span>1</span><span>1</span><span>2</span></div>
+              </div>
+              <div class="box" style="margin-top: 6px">
+                <div class="r" style="grid-template-columns: 1fr 50px 50px"><span>Shots</span><span>14</span><span>9</span></div>
+                <div class="r" style="grid-template-columns: 1fr 50px 50px"><span>Save %</span><span>.778</span><span>.714</span></div>
+              </div>
+            </div>
+            <div class="stub"><div><b>REMATCH</b>Same teams, fresh roster</div><div class="go">AGAIN</div></div>
+            <div class="ai" style="color: #a9b8da"><span style="color: #ffc845">‹ PROGRAM</span> &nbsp; back to the menu</div>
+            <div class="grain"></div>
+          </div><div class="cap"><b>RESULT · PHONE</b>The celebration live in the window, the box score below, the rematch ticket.</div></div>
+        
+          <div style="flex: 1 1 560px; max-width: 840px">
+            <div style="position: relative; aspect-ratio: 16 / 9; border: 6px solid #1d2233; border-radius: 8px; overflow: hidden; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5)">
+              <div class="win" style="inset: 0; border: 0"><div class="live" style="background-image: url(assets/broll-result.jpg)"></div>
+                <div class="onair" style="left: 22px; bottom: 22px"><i></i>LIVE · BLUE CELEBRATES</div></div>
+              <div class="print night sheetcard" style="right: 4%; top: 8%; bottom: 8%; width: 38%">
+                <div class="mast"><span>FINAL · PRO</span><span>FROST HOLLOW</span></div>
+                <div class="pg">
+                  <span class="no">BOX SCORE</span>
+                  <h3>YOU WIN</h3>
+                  <p class="intro">Blue 4 – 2 Navy · Record vs Pro 5 W – 2 L</p>
+                  <div class="box">
+                    <div class="r hd"><span>TEAM</span><span>1</span><span>2</span><span>3</span><span>T</span></div>
+                    <div class="r"><span>BLUE</span><span>1</span><span>2</span><span>1</span><span>4</span></div>
+                    <div class="r"><span>NAVY</span><span>0</span><span>1</span><span>1</span><span>2</span></div>
+                  </div>
+                </div>
+                <div class="stub"><div><b>REMATCH</b>Same teams, fresh roster</div><div class="go">AGAIN</div></div>
+                <div class="ai" style="color: #a9b8da"><span style="color: #ffc845">‹ PROGRAM</span> &nbsp; back to the menu</div>
+                <div class="grain"></div>
+              </div>
+            </div>
+          </div>
+      </div>
+      <div class="row" style="margin-top: 24px">
+        <div class="shot">
+          <div class="phone print">
+            <div class="mast"><span class="back">‹ RINK</span><span>KEYS · GUIDE ?</span></div>
+            <div class="pg">
+              <span class="no">04 · END ZONE</span>
+              <h3>TEAMS</h3>
+              <div class="matchup" style="position: relative; margin-bottom: 10px"><img src="assets/matchup.png" alt="" /><div class="lbls"><span><i style="--c: #3d7bff"></i>YOU · BLUE</span><span>NAVY · CPU<i style="--c: #1b2d6b"></i></span></div></div>
+              <div class="teamtabs"><span class="on">YOUR TEAM</span><span>CPU TEAM</span></div>
+              <div class="opt"><span>JERSEY · BLUE</span>
+                <div class="jerseys"><i class="jersey on" style="--c: #3d7bff"></i><i class="jersey" style="--c: #e0414a"></i><i class="jersey" style="--c: #1f8a4c"></i><i class="jersey" style="--c: #f2b632"></i><i class="jersey" style="--c: #7a3fd1"></i></div>
+              </div>
+              <div class="opt"><span>STICKS · WOOD</span><div class="chips"><i class="on">Wood</i><i>Carbon</i><i>Retro</i></div></div>
+              <div class="opt"><span>PUCK · CLASSIC</span><div class="chips"><i class="on">Classic</i><i>Snowball</i><i>Fire</i></div></div>
+            </div>
+            <div class="stub" style="grid-template-columns: auto 1fr auto"><img class="stubthumb" src="assets/arena-frost.png" alt="" /><div><b>BLUE vs NAVY</b>Frost Hollow · Pro</div><div class="go">PLAY</div></div>
+            <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div><div class="cap"><b>TEAMS</b>The matchup preview on top shows exactly what you are changing; each option names its current pick.</div></div>
+        <div class="shot">
+          <div class="phone print">
+            <div class="mast"><span class="back">‹ RINK</span><span>KEYS · GUIDE ?</span></div>
+            <div class="pg">
+              <span class="no">06 · END ZONE</span>
+              <h3>ARENA</h3>
+              <div class="tickets"><div class="tk on" style="--a: #2f6bd8; --b: #e0414a; position: relative; grid-template-columns: 1fr auto"><div><b>FROST HOLLOW ARENA</b>Wolves</div><span class="sel">YOURS</span><img class="tkimg" src="assets/arena-frost.png" alt="" /></div><div class="tk" style="--a: #13897f; --b: #e0573c; position: relative; grid-template-columns: 1fr auto"><div><b>HARBOR DOME</b>Krakens</div><img class="tkimg" src="assets/arena-harbor.png" alt="" /></div><div class="tk" style="--a: #1b2333; --b: #f08a12; position: relative; grid-template-columns: 1fr auto"><div><b>PACK ICE PAVILION</b>Penguins</div><img class="tkimg" src="assets/arena-penguin.png" alt="" /></div><div class="tk" style="--a: #22b8e6; --b: #ff3fb4; position: relative; grid-template-columns: 1fr auto"><div><b>NEON COLISEUM</b>Comets</div><img class="tkimg" src="assets/arena-neon.png" alt="" /></div><div class="tk" style="--a: #1f6b3a; --b: #b5482a; position: relative; grid-template-columns: 1fr auto"><div><b>TIMBERLINE LODGE</b>Lumberjacks</div><img class="tkimg" src="assets/arena-timber.png" alt="" /></div><div class="tk" style="--a: #3a4250; --b: #d1361b; position: relative; grid-template-columns: 1fr auto"><div><b>IRONWORKS GARDEN</b>Smelters</div><img class="tkimg" src="assets/arena-iron.png" alt="" /></div></div>
+            </div>
+            <div class="ai"><b>Made with AI.</b> A test of current AI capabilities.</div>
+            <div class="grain"></div>
+          </div><div class="cap"><b>ARENA</b>Every ticket shows that arena's real rink; "YOURS" is stamped on the current one.</div></div>
+      </div>
+    </section>
     <!-- ============ transitions ============ -->
     <section class="block">
       <h2>1 · HOW IT MOVES</h2>
