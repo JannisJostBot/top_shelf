@@ -12,6 +12,7 @@ import { buildIce, drawThumb, ice } from '../render/ice';
 import { mkPal } from '../render/sprites';
 import { buildFans } from '../render/stands';
 import { settings } from '../settings';
+import { setPreviewTeam } from './preview';
 
 export function applyColors() {
   const u = COLORS[settings.colorKey],
@@ -96,6 +97,7 @@ export function showTeam(t) {
     .forEach(b => b.setAttribute('aria-checked', String(+b.dataset.t === t)));
   $('tm0').hidden = t !== 0;
   $('tm1').hidden = t !== 1;
+  setPreviewTeam(t);
 }
 export function initCustomize() {
   document
