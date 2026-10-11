@@ -48,6 +48,8 @@ export const G = {
   practice: null,
   flash: 0,
   stillT: 0,
+  holdT: 0, // seconds the puck carrier has stood still
+  holder: null,
   hype: 0,
   fightP: 0.15,
   cam3: null,

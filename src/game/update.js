@@ -174,6 +174,11 @@ export function update(dt) {
   }
   if (G.mom) G.mom.t -= dt;
   if (G.state === 'play' && puck.owner) G.stats.poss[puck.owner.team] += dt;
+  // how long the puck carrier has been standing (nearly) still: the defence closes in on a dawdling carrier
+  const c = puck.owner;
+  if (c && c.role === 'S' && c === G.holder && Math.hypot(c.vx, c.vy) < 14) G.holdT += dt;
+  else G.holdT = 0;
+  G.holder = c;
   for (const p of players) {
     p.saveT -= dt;
     p.cool -= dt;

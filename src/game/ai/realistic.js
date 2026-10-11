@@ -19,7 +19,7 @@ import { GK, SK, live } from '../players';
 import { bestMate, passTo, shoot } from '../puck';
 import { G, puck } from '../world';
 import { settings } from '../../settings';
-import { nearest, teamMul } from './team';
+import { DOUBLE_AFTER, PRESS_AFTER, nearest, teamMul } from './team';
 
 const wrap = a => ((a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
 
@@ -268,7 +268,9 @@ export function teamAIRealistic(t, dt) {
         gy = oG - o.y,
         gl = Math.hypot(gx, gy) || 1,
         gap = lerp(4, 14, clamp(gl / 140, 0, 1)); // tighter the closer to our net
-      skate(chaser, o.x + (gx / gl) * gap + o.vx * 0.2, o.y + (gy / gl) * gap + o.vy * 0.2, dt, mul, 1);
+      // a carrier who stands still gets no room: the gap closes and the chaser goes for the puck itself
+      if (G.holdT > PRESS_AFTER) skate(chaser, puck.x, puck.y, dt, mul, 1);
+      else skate(chaser, o.x + (gx / gl) * gap + o.vx * 0.2, o.y + (gy / gl) * gap + o.vy * 0.2, dt, mul, 1);
       faceTo(chaser, o.x, o.y, 0.25);
       const rate = G.practice && G.practice.opp === 'easy' ? 0 : t === 1 && !G.ai0 ? settings.diff.chk : 0.3;
       if (
@@ -277,13 +279,25 @@ export function teamAIRealistic(t, dt) {
         o.down <= 0 &&
         o.imm <= 0 &&
         dist(chaser, o) < 20 &&
-        Math.random() < rate * dt
+        Math.random() < rate * (G.holdT > PRESS_AFTER ? 2 : 1) * dt
       )
         startCheck(chaser, o);
     }
     const marks = SK[1 - t].filter(q => q !== o && live(q));
+    // after a while a second skater leaves their man to help against a carrier who is waiting it out
+    let helper = null;
+    if (chaser && G.holdT > DOUBLE_AFTER) {
+      helper = nearest(
+        avail.filter(p => p !== chaser),
+        o,
+      );
+      if (helper) {
+        skate(helper, o.x - (puck.x - o.x), o.y - (puck.y - o.y), dt, mul, 1);
+        faceTo(helper, o.x, o.y, 0.25);
+      }
+    }
     for (const p of avail) {
-      if (p === chaser) continue;
+      if (p === chaser || p === helper) continue;
       // mark the nearest free opponent from the goal side; without one, cover the front of the net
       let m = null,
         md = 1e9;

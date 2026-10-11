@@ -126,8 +126,16 @@ export function grab(g) {
   puck.lastTeam = g.team;
   puck.trail.length = 0;
 }
+// Above this speed a pickup can fail: the skater fumbles the puck and may not try again right away.
+const FUMBLE_SPEED = 115;
 export function pickupCheck() {
   const sp = Math.hypot(puck.vx, puck.vy);
+  // A fumble only rules a skater out while the puck is still fast and close to them. Once it has slowed down
+  // (slow pucks are always picked up) or they have moved away, they may go for it again; otherwise a puck that
+  // came to rest beside the skaters who fumbled it could not be picked up by anyone.
+  if (puck.miss.size)
+    for (const p of puck.miss)
+      if (sp <= FUMBLE_SPEED || Math.hypot(puck.x - p.x, puck.y - p.y) > 14) puck.miss.delete(p);
   let best = null,
     bd = 1e9;
   for (const p of SKATERS) {
@@ -141,7 +149,7 @@ export function pickupCheck() {
     }
   }
   if (!best) return false;
-  if (best !== puck.passTo && sp > 115) {
+  if (best !== puck.passTo && sp > FUMBLE_SPEED) {
     const ch = (best.team === puck.lastTeam ? 0.5 : 0.3) * best.st.hnd;
     if (Math.random() > ch) {
       puck.miss.add(best);

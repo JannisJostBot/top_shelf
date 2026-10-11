@@ -8,6 +8,9 @@ import { G, puck } from '../world';
 import { settings } from '../../settings';
 
 /* ---------- AI ---------- */
+// a puck carrier standing still this long gets pressed (and double-teamed a bit later)
+export const PRESS_AFTER = 0.6,
+  DOUBLE_AFTER = 2;
 export function teamMul(t) {
   if (G.practice && t === 1 && G.practice.opp === 'easy') return 0.55;
   return t === 1 ? settings.diff.spd : G.demo ? 0.94 : 0.95;
@@ -146,8 +149,17 @@ export function teamAI(t, dt) {
         const gx = 80 - o.x,
           gy = oG - o.y,
           gl = Math.hypot(gx, gy) || 1;
-        steer(ch, o.x + (gx / gl) * 4 + o.vx * 0.15, o.y + (gy / gl) * 4 + o.vy * 0.15, dt, mul, false);
+        // a carrier who stands still gets no room: the chaser goes straight for the puck on their stick, and
+        // after a while a second skater comes to help (otherwise everyone would just wait it out)
+        if (G.holdT > PRESS_AFTER) steer(ch, puck.x, puck.y, dt, mul, false);
+        else steer(ch, o.x + (gx / gl) * 4 + o.vx * 0.15, o.y + (gy / gl) * 4 + o.vy * 0.15, dt, mul, false);
         faceTo(ch, o.x, o.y, 0.3);
+        if (G.holdT > DOUBLE_AFTER && rest.length) {
+          const help = nearest(rest, o);
+          rest = rest.filter(p => p !== help);
+          steer(help, o.x - (puck.x - o.x), o.y - (puck.y - o.y), dt, mul, false);
+          faceTo(help, o.x, o.y, 0.3);
+        }
         // AI defenders throw the occasional body check
         const rate =
           G.practice && G.practice.opp === 'easy' ? 0 : t === 1 && !G.ai0 ? settings.diff.chk : 0.3;
@@ -157,7 +169,7 @@ export function teamAI(t, dt) {
           o.down <= 0 &&
           o.imm <= 0 &&
           dist(ch, o) < 22 &&
-          Math.random() < rate * dt
+          Math.random() < rate * (G.holdT > PRESS_AFTER ? 2 : 1) * dt
         )
           startCheck(ch, o);
       }
