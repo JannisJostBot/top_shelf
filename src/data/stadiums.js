@@ -98,7 +98,7 @@ export const STADIUMS = {
     kick: '#d1361b',
     glass: '#22252b',
     arena: '#0e0f12',
-    logo: 'anvil',
+    logo: 'wolf',
     lines: { red: '#d1361b', blue: '#3a4250' },
     lc: ['#2b2f36', '#ffffff', '#ff5a1f'],
     roof: { kind: 'girders', base: '#1a1c20', alt: '#212429', line: '#7c2a16', light: '#ffa64d' },
