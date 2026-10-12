@@ -181,7 +181,10 @@
             <section class="ppage home" id="p-play" role="region" aria-label="Main menu">
               <div class="pmast">
                 <span>Matchday program · <span id="paTeam">Home of the Wolves</span></span>
-                <button class="plink" data-goto="help">Keys · Guide ?</button>
+                <span class="plinks"
+                  ><button class="plink" data-goto="help">Keys</button> ·
+                  <button class="plink" data-goto="guide">Guide ?</button></span
+                >
               </div>
               <div class="pwin" aria-hidden="true">
                 <span class="pttl">Top<br />Shelf</span>
@@ -619,6 +622,10 @@
                 take over whoever has the puck or is receiving your pass, otherwise the skater nearest the
                 puck. Switch jumps to the nearest one yourself.
               </p>
+              <p>
+                A match opens with a short fly-through of the arena; any button skips it. Pause any time (P,
+                Esc or the II button); the game also pauses when you switch to another tab.
+              </p>
               <figure class="demo">
                 <canvas data-demo="switch" width="128" height="56" aria-hidden="true"></canvas>
                 <figcaption>
@@ -691,6 +698,12 @@
                   <kbd>Space</kbd><kbd class="pb pb-a">A</kbd>Draw the moment the puck drops
                 </figcaption>
               </figure>
+              <h3>Periods, overtime and a frozen puck</h3>
+              <p>
+                Three periods of 0:30 to 5:00 each (Match page). A tie after the third goes to overtime with no
+                clock (SD on the scoreboard): the next goal wins. A loose puck nobody touches for five seconds
+                is frozen and faced off again at centre ice.
+              </p>
               <h3>Goalies</h3>
               <p>
                 Goalies react to the shot and can catch and hold it. Hard shots and the far corner beat them
@@ -701,33 +714,39 @@
                 SPD skating speed, SHT shot power, HND puck handling (stealing and keeping the puck), CHK
                 checking. Wingers shoot harder and skate faster, centers have the best hands, defensemen check
                 hardest but are slower. Every match rolls a fresh roster, unless you set your line-up first
-                (Play tab, Line-up): it shows your players' ratings and lets you pick who plays centre, wing
-                and defence.
+                (the Line-up bench on the left of the rink): it shows your players' ratings and lets you pick
+                who plays centre, wing and defence. The centre takes the face-offs.
               </p>
               <h3>Momentum</h3>
               <p>
                 Winning a fight (25 s) or polishing at least half of the ice between periods (20 s) makes your
-                team skate 6% faster.
+                team skate 6% faster; a bolt and the seconds left show next to the team's score. Online, the
+                resurfacing boost goes to whoever polished the bigger share of their half.
               </p>
               <h3>Ice wear and the resurfacer</h3>
               <p>
                 Skates chew up the ice as the period goes on, and worn ice drags on the puck so passes and
-                shots slow down sooner. Between periods you drive the resurfacer for 30 seconds: cover as much
-                ice as you can (half earns the speed boost). Clean ice plays fast again.
+                shots slow down sooner. Between periods you drive the resurfacer for 30 seconds: steer with the
+                stick and cover as much ice as you can (half earns the speed boost). Shoot sounds the horn,
+                Pass finishes early. The boards guide the machine along instead of stopping it, and it fits
+                behind the nets. Clean ice plays fast again. Turn the resurfacing off in Setup.
               </p>
               <h3>Fights</h3>
               <p>
                 After you score, a sore loser may drop the gloves: at most once a match, more likely with
                 every goal until it happens (turn it off in Setup). Punch to hit; Block when they wind up and the red !
-                shows. Punching drains stamina, so tired punches are weak; it recovers when you wait. Higher
-                CPU levels block and counter more. Online, a fight can follow either side's goal (the host's
+                shows. Punch late in their wind-up to interrupt it and land a big hit; a punch into their
+                guard gets blocked and may be countered. Punching drains stamina, so tired punches are weak;
+                it recovers when you wait. Higher CPU levels wind up faster, block and counter more. The winner's
+                team skates faster for 25 s; after 22 s without a knockout the refs break it up. Online, a fight can follow either side's goal (the host's
                 Fights setting, once a match) and you face the other player: every punch winds up with the red !
                 first, so a block in time stops it; a blocked or interrupted fighter is left open.
               </p>
               <h3>CPU level and style</h3>
               <p>
                 The level raises the CPU's skating speed, stealing, goalie skill, shooting accuracy,
-                reactions, face-off speed and checking. The style (in Setup) changes how skaters play: Classic
+                reactions, face-off speed, checking and how often its carriers dodge a check, and makes the puck
+                harder for you to steal. The style (on the Match page) changes how skaters play: Classic
                 is the original arcade AI; Realistic skaters react with a short delay, skate in arcs, keep
                 their positions, mark a man on defence, deke and wind up before they shoot.
               </p>
@@ -736,15 +755,23 @@
                 (harder against a carrier at speed), and back off to reset when they cannot win the puck.
                 Keep your feet moving. A carrier who just stands still gets pressed, and then double-teamed.
               </p>
-              <h3>Replays</h3>
               <p>
-                Every goal gets a replay from changing camera angles. Next angle or skip from the Keys tab.
+                Two goals behind, the CPU changes its tactics: it presses sooner and longer, shoots from
+                further out and sends its defenceman forward, and plays a touch faster and harder. Three or more
+                behind, twice as much. Your own CPU teammates never do this.
+              </p>
+              <h3>Celebrations and replays</h3>
+              <p>
+                After a goal the scorers celebrate (turn it off in Setup), then the goal is replayed from
+                changing camera angles, some of them in 3D. The camera button, V or Y on a controller shows the
+                next angle; the skip button, Enter, View, a click or a tap skips ahead.
               </p>
               <h3>Watching</h3>
               <p>
                 Watch CPU vs CPU plays a match by itself, filmed like a broadcast: Cinematic cuts between
                 the top-down view and 3D shots from the ice, the nets and the stands; Classic keeps the
-                top-down view. Switch with the camera button in the bottom corner.
+                top-down view. Switch with the camera button in the bottom right corner, C, or X on a
+                controller; V or Y cuts to the next shot.
               </p>
               <h3>Online</h3>
               <p>
@@ -755,7 +782,15 @@
                 faster than 0.1 s counts as jumping the draw. Between periods you both resurface your own half
                 (20 s, a slower machine) and the bigger share wins the boost. Each side checks what the other
                 reports (face-off times, goals, resurfacing) and notes anything that does not add up. Fights are
-                between the two of you.
+                between the two of you. Your own skater moves the moment you steer, on your screen; the rest of
+                the match reaches the guest a moment later. Either player can pause or resume, a rematch needs
+                both of you, and leaving ends the match for both. The invite code works for one guest, once.
+              </p>
+              <h3>Arenas and looks</h3>
+              <p>
+                Six arenas, each with its own home team, ice, lines, roof and goal song. Jerseys, sticks and pucks
+                (Teams page) are looks only: they never change how anyone plays. The camera (Setup) follows the
+                play close up, shows the rink from board to board, or adds the stands.
               </p>
               <h3>Training</h3>
               <p>

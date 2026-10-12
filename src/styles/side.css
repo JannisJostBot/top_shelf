@@ -407,21 +407,6 @@ body.wide #rpBar {
   font-size: 10px;
 }
 
-/* Teams: jersey colours and sticks next to each other, swatches in longer rows */
-body.wide .tgroup {
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-  column-gap: 18px;
-  align-items: start;
-}
-body.wide .tgroup .sw {
-  grid-template-columns: repeat(8, 1fr);
-}
-body.wide .tgroup .sw.stk {
-  grid-template-columns: repeat(6, 1fr);
-}
-body.wide #p-teams .sw.pk {
-  grid-template-columns: repeat(14, 1fr);
-}
 body.wide #pv {
   max-height: 190px;
 }

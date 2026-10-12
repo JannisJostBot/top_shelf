@@ -94,6 +94,13 @@
   padding-inline: 0;
   box-shadow: 0 -20px 0 6px var(--paper); /* the paper above it, up to the edge */
 }
+/* the masthead's Keys · Guide links stay on one line; the program's name gives way (it ends in …) */
+.plinks {
+  flex: none;
+  white-space: nowrap;
+  color: var(--p2);
+  font-size: 7px;
+}
 .plink {
   font: inherit;
   font-family: var(--display);
@@ -471,12 +478,18 @@
 .pbody {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden auto;
   overscroll-behavior: contain; /* (scrolling to its end does not drag the page around it) */
+  /* a scrollbar takes its own strip instead of covering the right-hand column */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--p1) transparent;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 2px 2px 8px;
+  /* room for the ring around a picked swatch (it sits 5px outside it), without moving the page's edges */
+  padding: 6px 6px 8px;
+  margin-inline: -6px;
 }
 .pintro {
   margin: 0;
@@ -517,6 +530,11 @@
   color: var(--paper);
   border-color: var(--p1);
   box-shadow: none;
+}
+/* swatches keep a sensible size: wider pages get more of them per row, not bigger ones (so the puck row is not
+   pushed far below the fold) */
+.prog .sw {
+  grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
 }
 .prog .sw button {
   border-color: #0b0f1a;
@@ -900,6 +918,14 @@ body.wide .prog.insert:not(.result) {
   border: 2px solid var(--p2);
   padding: 3px 4px;
 }
+/* on the narrowest phones a long name wraps rather than pushing the row past the page */
+.prog .lurow {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.prog .lurow .luname {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .prog .lurow .lustats,
 .prog .lurow .lustats .stat {
   color: var(--ink-soft);
@@ -1069,6 +1095,11 @@ body.wide .prog.insert:not(.result) {
   }
   .prog .matchup canvas {
     max-height: 16vh;
+  }
+  /* the jersey preview on Teams too, so the swatches and pucks are not pushed out of sight */
+  .prog #pv {
+    max-height: 22vh;
+    object-fit: contain;
   }
   /* the result's window gives up height first */
   .prog.result > .pwin {
