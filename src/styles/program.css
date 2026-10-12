@@ -446,20 +446,43 @@
   align-items: center;
   gap: 10px;
   border-bottom: 3px solid var(--p1);
-  padding-bottom: 5px;
+  padding-bottom: 8px;
   font-size: 9px;
   text-transform: uppercase;
 }
 .pback {
+  /* back to the rink: a real button, easy to spot and to hit (about 36px tall, a printed arrow on the left) */
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 12px 0 10px;
   font: inherit;
   font-family: var(--display);
-  font-size: 8px;
-  color: var(--p2);
-  background: none;
-  border: 0;
-  padding: 4px 0;
-  cursor: pointer;
+  font-size: 9px;
   text-transform: uppercase;
+  color: var(--p2);
+  background: var(--paper);
+  border: 2px solid var(--p2);
+  box-shadow: 3px 3px 0 var(--p2);
+  cursor: pointer;
+}
+.pback::before {
+  content: '';
+  width: 7px;
+  height: 10px;
+  background: currentColor;
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+.pback:hover,
+.pback:focus-visible {
+  background: var(--p2);
+  color: var(--paper);
+  outline: none;
+}
+.pback:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
 }
 .pno {
   font-family: var(--display);
@@ -1095,6 +1118,11 @@ body.wide .prog.insert:not(.result) {
   }
   .prog .matchup canvas {
     max-height: 16vh;
+  }
+  /* page titles a size smaller, so the page under the back button keeps its room */
+  .ptitle {
+    font-size: 18px;
+    margin: 6px 0 4px;
   }
   /* the jersey preview on Teams too, so the swatches and pucks are not pushed out of sight */
   .prog #pv {
