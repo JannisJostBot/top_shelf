@@ -41,7 +41,7 @@ import { drawZamHud, drawZamboni } from './zamboni';
 
 // On phones the menu (and the result) show the 3D arena through a window in the program: the view is framed to it
 // (measured every half second, not every frame, as it only moves when the layout does).
-let frameAt = 0;
+let frameAt = -Infinity;
 function frameMenuWindow() {
   if (clock.now - frameAt < 0.5) return;
   frameAt = clock.now;

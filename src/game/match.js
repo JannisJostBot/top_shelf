@@ -34,7 +34,7 @@ import { kit } from './kit';
 import { SK, players } from './players';
 import { practiceGoal, resetRosterFlags } from './practice';
 import { faceoff } from './states/faceoff';
-import { startIntro } from './states/intro';
+import { endIntro, startIntro } from './states/intro';
 import { startPost } from './states/post';
 import { stopEngine } from './states/zamboni';
 import { G, REC, parts, puck } from './world';
@@ -287,6 +287,11 @@ export function toMenu() {
 }
 export function togglePause() {
   if (G.demo) return;
+  // the arena intro is not paused: pause skips it, straight to the face-off
+  if (G.state === 'intro') {
+    endIntro();
+    return;
+  }
   if (G.state === 'paused') {
     G.state = G.resume;
     screen('pause', false);

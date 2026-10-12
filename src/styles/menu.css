@@ -1,40 +1,3 @@
-/* tabbed menu */
-.mcard {
-  max-width: 380px;
-  padding: 0;
-  gap: 0;
-}
-.mhead {
-  padding: 14px 14px 10px;
-  display: grid;
-  gap: 6px;
-}
-.mcard h1 {
-  font-size: 18px;
-}
-.tabs {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  background: var(--panel);
-  border-block: 2px solid var(--line);
-}
-.tabs button {
-  font-family: var(--pixel);
-  font-size: 10px;
-  padding: 10px 1px 8px;
-  background: none;
-  border: 0;
-  border-bottom: 3px solid transparent;
-  color: var(--muted);
-  cursor: pointer;
-}
-.tabs button[aria-selected='true'] {
-  color: var(--led);
-  border-bottom-color: var(--led);
-}
 .tabp {
   padding: 14px;
   display: flex;
@@ -66,41 +29,6 @@
   image-rendering: crisp-edges;
   image-rendering: pixelated;
   background: #e8f0f7;
-}
-.mline {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 11px;
-}
-.go {
-  color: var(--led);
-  font-size: 10px;
-  white-space: nowrap;
-}
-.playarena {
-  display: grid;
-  grid-template-columns: 110px 1fr;
-  gap: 10px;
-  align-items: center;
-}
-.playarena canvas {
-  width: 110px;
-  height: auto;
-  aspect-ratio: 120/82;
-  image-rendering: pixelated;
-  display: block;
-}
-.playarena > span {
-  display: grid;
-  gap: 4px;
-  font-size: 10px;
-  color: var(--muted);
-}
-.playarena b {
-  color: var(--ink);
-  font-size: 12px;
-  font-weight: 700;
 }
 .arenas {
   display: grid;
@@ -253,45 +181,6 @@ kbd {
   clip-path: inset(50%);
   white-space: nowrap;
 }
-.mcard {
-  border: 4px solid var(--boards);
-  border-bottom: 8px solid var(--kick);
-  border-radius: 18px;
-  background: rgba(10, 15, 30, 0.94);
-  box-shadow:
-    0 0 0 3px var(--shadow),
-    0 6px 0 3px var(--shadow),
-    inset 0 2px 0 rgba(255, 255, 255, 0.12);
-}
-/* scoreboard-style header holding the animated title */
-.mhead {
-  padding: 10px 12px 8px;
-  gap: 6px;
-  background: #0d1426;
-}
-#logo {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 168/76;
-  image-rendering: pixelated;
-  border: 2px solid #1b2744;
-}
-.mhead .kicker {
-  color: #dbe9f6;
-  text-align: center;
-}
-/* tab bar marked like the ice: a blue line above, the red centre line below */
-.tabs {
-  border-top: 3px solid var(--home);
-  border-bottom: 3px solid #d8343f;
-  background: #0d1426;
-}
-.tabs button[aria-selected='true'] {
-  color: #ffffff;
-  border-bottom-color: #d8343f;
-  background: rgba(255, 255, 255, 0.06);
-}
 /* section labels look like the small plates on the scoreboard */
 .tabp .olbl {
   justify-self: start;
@@ -304,19 +193,6 @@ kbd {
   border-radius: 4px;
   background: #d8343f;
   color: #ffffff;
-}
-/* selected options: ice white instead of scoreboard amber */
-.mcard .seg button[aria-checked='true'],
-.mcard .acard[aria-checked='true'] {
-  border-color: #dbe9f6;
-  color: #ffffff;
-  box-shadow: inset 0 -3px 0 #d8343f;
-}
-.mcard .sw button[aria-checked='true'] {
-  outline-color: #ffffff;
-}
-.mcard .go {
-  color: #9fc0e2;
 }
 .ainote {
   margin: 2px 0 0;
@@ -385,21 +261,6 @@ body.padnav button:focus {
   line-height: 1.5;
 }
 
-#t-guide {
-  font-family: var(--display);
-  font-size: 12px;
-}
-
-/* with enough height the title stays at the top of the menu and only the content below it scrolls */
-.mcard.stickyhead .mhead {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-}
-.mcard.stickyhead .tabs {
-  top: var(--headh);
-}
-
 /* animated action demos in the Guide */
 .demo {
   margin: 2px 0 4px;
@@ -448,24 +309,6 @@ body.padnav button:focus {
 .tgroup {
   display: grid;
   gap: inherit;
-}
-
-/* ---------- line-up manager ---------- */
-.lsub {
-  color: var(--muted);
-  font-size: 10px;
-}
-.luhead {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.luhead b {
-  font-family: var(--display);
-  font-size: 11px;
-}
-.luback {
-  padding: 6px 10px;
 }
 #luRows {
   display: grid;

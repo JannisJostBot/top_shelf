@@ -544,7 +544,7 @@
 .prog .btn::before {
   display: none; /* the hover stick of the old menu */
 }
-.prog kbd {
+.prog kbd:not(.pb) {
   background: var(--paper);
   color: var(--p1);
   border-color: var(--p1);
@@ -841,4 +841,53 @@ body.wide .prog.insert:not(.result) {
 .ppage.home > .matchup,
 .ppage.home > .ainote {
   flex: none;
+}
+/* option rows in the drill cards: the label above, the choices across the full width below */
+.prog .tcard .orow {
+  grid-template-columns: 1fr;
+  gap: 5px;
+}
+.prog .orow .seg {
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+.prog .orow .seg button {
+  padding-inline: 4px;
+}
+/* the chosen arena is stamped */
+.prog .acard {
+  position: relative;
+}
+.prog .acard[aria-checked='true']::after {
+  content: 'Yours';
+  position: absolute;
+  right: 8px;
+  top: 12px;
+  transform: rotate(-8deg);
+  font-family: var(--display);
+  font-size: 7px;
+  text-transform: uppercase;
+  color: var(--p2);
+  background: var(--paper);
+  border: 2px solid var(--p2);
+  padding: 3px 4px;
+}
+.prog .lurow .lustats,
+.prog .lurow .lustats .stat {
+  color: var(--ink-soft);
+}
+.prog .lubtns .btn {
+  text-transform: uppercase;
+}
+.prog .how b,
+.prog .keymap b {
+  color: var(--p1);
+}
+.rinkmenu .bench {
+  min-height: 74px;
+}
+/* the scoreboard stays out of the result's window, as it does in the menu */
+#stage:has(> #overOv:not([hidden])) #hud {
+  visibility: hidden;
 }

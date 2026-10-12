@@ -21,6 +21,7 @@ export function startIntro() {
   const S = STADIUMS[settings.stadiumKey] || STADIUMS.frost;
   faceoff(); // the players line up for the opening draw, and the intro films them there
   G.state = 'intro';
+  input.sp = input.pp = input.swp = input.sr = false;
   G.intro = { t: 0, t0: clock.now, key: settings.stadiumKey };
   G.bannerT = 0;
   banner(S.name.toUpperCase(), 'alert', 'Home of the ' + S.team);
@@ -32,7 +33,8 @@ export function startIntro() {
 export function introStep(dt) {
   const I = G.intro;
   I.t += dt;
-  const skip = input.sp || input.pp || input.swp;
+  // (the click or key that started the match must not skip its intro: input only counts after a moment)
+  const skip = I.t > 0.4 && (input.sp || input.pp || input.swp);
   input.sp = input.pp = input.swp = input.sr = false;
   if (skip || I.t >= INTRO_LEN) endIntro();
 }
