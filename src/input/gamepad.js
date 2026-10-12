@@ -151,6 +151,7 @@ function gameInput(gp, down, now) {
   if (shoot && !shootHeld) {
     input.shootHeld = true;
     input.sp = true;
+    input.spAt = performance.now();
   } else if (!shoot && shootHeld) {
     input.shootHeld = false;
     input.sr = true;

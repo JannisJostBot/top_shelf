@@ -6,6 +6,7 @@ import { clock } from '../core/time';
 import { ORD } from '../data/difficulty';
 import { kit } from '../game/kit';
 import { G } from '../game/world';
+import { nameOf } from '../game/online';
 import { hintNow, kbdHTML } from './keyhint';
 import { clockText } from './hud';
 import { fit } from '../render/camera';
@@ -130,9 +131,11 @@ function drawBanners() {
       el = $('sdBan' + t);
     const txt = G.demo
       ? T.name.toUpperCase()
-      : G.watch || t
-        ? T.name.toUpperCase()
-        : 'YOU · ' + T.name.toUpperCase();
+      : G.net && t
+        ? nameOf(t) + ' · ' + T.name.toUpperCase()
+        : G.watch || t
+          ? T.name.toUpperCase()
+          : 'YOU · ' + T.name.toUpperCase();
     if (el.textContent !== txt) el.textContent = txt;
   }
 }
@@ -199,6 +202,6 @@ export function updSide() {
   setHTML(
     $('sdTeams'),
     `<span class="home">${esc(G.watch ? kit.TEAMS[0].name.toUpperCase() : 'YOU')}</span>` +
-      `<span class="away">${esc(G.watch ? kit.TEAMS[1].name.toUpperCase() : 'CPU')}</span>`,
+      `<span class="away">${esc(G.watch ? kit.TEAMS[1].name.toUpperCase() : G.net ? nameOf(1) : 'CPU')}</span>`,
   );
 }

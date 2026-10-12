@@ -1,6 +1,6 @@
 # Top Shelf
 
-3-on-3 pixel-art arcade hockey for the browser: Canvas 2D rendering, synthesized Web Audio, keyboard/mouse/touch and Xbox-controller support. The in-game **?** tab explains the mechanics.
+3-on-3 pixel-art arcade hockey for the browser: Canvas 2D rendering, synthesized Web Audio, keyboard/mouse/touch and Xbox-controller support, and online play against a friend (browser to browser over WebRTC via [Trystero](https://github.com/dmotz/trystero), no game server). The in-game **?** tab explains the mechanics.
 
 > **This project is vibe coded.** It was built almost entirely by an AI coding assistant, prompted by a person, as an
 > experiment. Treat it as a playground, not as production software: the code has not been carefully reviewed,
@@ -40,7 +40,11 @@ src/
     states/           faceoff, celebrate, brawl, zamboni
     match.js          start/end game, goals, periods, pause
     practice.js       training modes
+    online.js         online play, the simulation's side: team 1's human seat, who is steered by whom
     update.js         per-tick state dispatch
+  net/                online play (loaded only when you host or join): Trystero rooms and their privacy
+                      rules (session.js), the host's frames and the guest's playback (match.js),
+                      snapshots (snap.js), message checks and the mirror between the two views (proto.js)
   render/             canvas drawing: sprites, ice, stands, players, puck, effects, mode-7 replay cam
   audio/              Web Audio engine, procedural skate sounds, synth voices, SFX table, goal songs
   input/              shared input state + keyboard, mouse, touch, game controller, haptics

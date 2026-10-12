@@ -5,6 +5,7 @@ import { grab, openness, passTo } from '../puck';
 import { G, puck } from '../world';
 import { settings } from '../../settings';
 import { feed, pop, S } from '../fx';
+import { cpuSide } from '../online';
 
 export function goalieAI(g, dt) {
   if (g.benched) return;
@@ -44,14 +45,14 @@ export function goalieAI(g, dt) {
     if (tt > 0 && tt < 1.2) tx = puck.x + puck.vx * tt;
   }
   tx = clamp(tx, 71, 89);
-  const sp = t ? (G.ai0 ? 50 : settings.diff.react) : 50;
+  const sp = cpuSide(t) ? settings.diff.react : 50;
   g.vx = clamp((tx - g.x) * 8, -sp, sp);
   g.vy = (gy - g.y) * 6;
 }
 export function goalieCheck() {
   for (const g of GK) {
     if (g.benched || g.cool > 0 || (g.passCd > 0 && puck.lastTeam === g.team)) continue;
-    const skill = g.dummy ? 0.45 : (g.team === 1 && !G.ai0 ? settings.diff.goalie : 0.76) * g.st.glove,
+    const skill = g.dummy ? 0.45 : (cpuSide(g.team) ? settings.diff.goalie : 0.76) * g.st.glove,
       reach = 6.5 + 3 * skill;
     const dx = puck.x - g.x,
       dy = puck.y - (g.y - 2);

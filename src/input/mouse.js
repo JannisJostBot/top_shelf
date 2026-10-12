@@ -27,6 +27,7 @@ export function initMouse() {
     if (e.button === 0) {
       input.shootHeld = true;
       input.sp = true;
+      input.spAt = performance.now();
     } else if (e.button === 2) input.pp = true;
     else if (e.button === 1) {
       e.preventDefault();

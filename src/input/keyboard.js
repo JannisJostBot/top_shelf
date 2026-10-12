@@ -8,7 +8,10 @@ import { input } from './state';
 import { menuBack, showTab, toggleWatchCam } from '../ui/menu';
 
 export function initKeyboard() {
+  // typing a name or an invite code is not playing
+  const typing = e => e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
   addEventListener('keydown', e => {
+    if (typing(e)) return;
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
     if (e.repeat) return;
     audio();
@@ -41,6 +44,7 @@ export function initKeyboard() {
     if (e.code === 'Space' || e.code === 'KeyJ') {
       input.shootHeld = true;
       input.sp = true;
+      input.spAt = performance.now();
       return;
     }
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyK' || e.code === 'KeyX') {
@@ -60,6 +64,7 @@ export function initKeyboard() {
     input.keys.add(e.code);
   });
   addEventListener('keyup', e => {
+    if (typing(e)) return;
     if (e.code === 'Space' || e.code === 'KeyJ') {
       input.shootHeld = false;
       input.sr = true;

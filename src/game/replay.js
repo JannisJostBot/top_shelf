@@ -1,11 +1,28 @@
-import { H, W } from '../config';
-import { lerp, rnd } from '../core/math';
+import { H, NETS, W } from '../config';
+import { lerp, pick, rnd } from '../core/math';
+import { clock } from '../core/time';
 import { endGame } from './match';
-import { players } from './players';
+import { SKATERS, players } from './players';
 import { faceoff } from './states/faceoff';
 import { G, PF, REC, REC_MAX, parts, puck, ref } from './world';
 import { input } from '../input/state';
-import { clearFx, clearGoalFx, goalLamp, hideBanner, resetCloth, uiShow, upd3D, updCam, zoom } from './fx';
+import { settings } from '../settings';
+import {
+  S,
+  clearFx,
+  clearGoalFx,
+  goalLamp,
+  hideBanner,
+  netHit,
+  pop,
+  resetCloth,
+  startGoalFx,
+  uiShow,
+  upd3D,
+  updCam,
+  zoom,
+} from './fx';
+import { net } from './online';
 
 /* ---------- replay recorder ---------- */
 export function recFrame() {
@@ -50,6 +67,8 @@ export const ANGLES = [
   { name: 'FAN CAM 3D', z: 1, spd: 0.5, mode7: 'guest' },
 ];
 let angleIdx = -1;
+/** The camera angle the replay is filmed from (online, the guest is told so both see the same shot). */
+export const replayAngle = () => angleIdx;
 export function applyFrame(fi) {
   const i0 = Math.floor(fi),
     a = REC[i0],
@@ -111,12 +130,14 @@ export function applyFrame(fi) {
     ref.vy = -ref.vy;
   }
 }
-export function startReplay() {
+/** Starts the goal replay; `angle` picks the camera angle (online, the guest films it like the host). */
+export function startReplay(angle) {
   if (REC.length < 40) {
-    afterGoal();
+    if (G.net !== 'guest') afterGoal();
     return;
   }
-  angleIdx = (angleIdx + 1 + Math.floor(rnd(0, 2))) % ANGLES.length;
+  angleIdx =
+    angle >= 0 && angle < ANGLES.length ? angle : (angleIdx + 1 + Math.floor(rnd(0, 2))) % ANGLES.length;
   const i0 = Math.max(0, REC.length - 1 - 190);
   G.state = 'replay';
   G.rp = { i0, i: i0, end: REC.length - 1, angle: ANGLES[angleIdx] };
@@ -128,6 +149,47 @@ export function startReplay() {
   uiShow('pcard', false);
   input.sp = input.pp = input.swp = input.sr = false;
   beginAngle();
+}
+/** One step of the replay. */
+export function replayStep(dt) {
+  G.rp.i += G.rp.angle.spd;
+  if (G.rp.i >= G.rp.end) {
+    // online, the guest holds the last frame until the host says the replay is over
+    if (G.net !== 'guest') {
+      endReplay();
+      return;
+    }
+    G.rp.i = G.rp.end;
+  }
+  if (G.rp.fart !== null && (G.rp.i - G.rp.i0) / Math.max(1, G.rp.end - G.rp.i0) >= G.rp.fart) {
+    G.rp.fart = null;
+    S('fart');
+    const v = pick(SKATERS);
+    pop(v.x, v.y, 'PFFRRT', '#a07a3a');
+  }
+  if (!G.rp.netHit && G.lastNet && G.rp.i >= G.goalFrame) {
+    G.rp.netHit = true;
+    const fl = G.rp.angle.flip,
+      tn = fl ? NETS[G.lastNet === NETS[0] ? 1 : 0] : G.lastNet;
+    netHit(tn, fl ? W - G.goalX : G.goalX, 1.5);
+    startGoalFx(settings.puckKey, fl ? W - G.goalX : G.goalX, tn.top ? tn.y0 + 3 : tn.y1 - 3, tn.top);
+    goalLamp({ n: tn, until: clock.now + 2.6 });
+  }
+  applyFrame(G.rp.i);
+  updCam(dt, false);
+  upd3D(false);
+  for (const p of SKATERS) {
+    const sp = Math.hypot(p.vx, p.vy);
+    if (sp > 46 && p.down <= 0 && Math.random() < 0.3)
+      parts.push({
+        x: p.x + rnd(-2, 2),
+        y: p.y + rnd(0, 1),
+        vx: -p.vx * 0.25 + rnd(-12, 12),
+        vy: -p.vy * 0.25 + rnd(-12, 12),
+        life: rnd(0.25, 0.5),
+        c: '#ffffff',
+      });
+  }
 }
 export function beginAngle() {
   G.rp.netHit = false;
@@ -142,12 +204,23 @@ export function beginAngle() {
   upd3D(true);
 }
 export function nextAngle() {
+  // online, the guest asks the host, whose match it is
+  if (G.net === 'guest') {
+    if (net.send) net.send({ t: 'angle' });
+    return;
+  }
   if (G.state !== 'replay') return;
   angleIdx = (angleIdx + 1) % ANGLES.length;
   G.rp.angle = ANGLES[angleIdx];
   beginAngle();
+  if (G.net === 'host') net.stateDirty = true; // the guest switches to the same angle
 }
 export function endReplay() {
+  // online, the guest asks the host, whose match it is
+  if (G.net === 'guest') {
+    if (net.send) net.send({ t: 'skip' });
+    return;
+  }
   if (G.state !== 'replay') return;
   zoom(1);
   uiShow('rpBar', false);

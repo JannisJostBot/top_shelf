@@ -8,6 +8,7 @@ import { reduceMotion, settings } from '../../settings';
 import { banner, hideBanner, setCrowd, uiShow } from '../fx';
 import { faceoff } from './faceoff';
 import { G } from '../world';
+import { net } from '../online';
 
 /** Length of an arena intro, in seconds. */
 export const INTRO_LEN = 4.2;
@@ -39,6 +40,11 @@ export function introStep(dt) {
   if (skip || I.t >= INTRO_LEN) endIntro();
 }
 export function endIntro() {
+  // online, the guest asks the host, whose match it is
+  if (G.net === 'guest') {
+    if (net.send) net.send({ t: 'skip' });
+    return;
+  }
   if (G.state !== 'intro') return;
   G.intro = null;
   hideBanner();

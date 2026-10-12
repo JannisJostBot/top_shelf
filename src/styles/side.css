@@ -425,16 +425,9 @@ body.wide #p-teams .sw.pk {
 body.wide #pv {
   max-height: 190px;
 }
-/* Arena cards three across, Setup rows and Guide demos in two columns */
+/* Arena cards three across, Guide demos not too wide */
 body.wide .arenas {
   grid-template-columns: repeat(3, 1fr);
-}
-body.wide #p-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 22px;
-  row-gap: 4px;
-  align-items: start;
 }
 body.wide #p-guide .demo {
   max-width: 420px;

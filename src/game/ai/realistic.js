@@ -19,6 +19,7 @@ import { GK, SK, live } from '../players';
 import { bestMate, passTo, shoot } from '../puck';
 import { G, puck } from '../world';
 import { settings } from '../../settings';
+import { cpuSide, ctlOf } from '../online';
 import { DOUBLE_AFTER, PRESS_AFTER, catchUp, easingOff, nearest, openLane, readCarrier, teamMul } from './team';
 
 const wrap = a => ((a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
@@ -44,7 +45,7 @@ function brain(p) {
 /** Seconds between decisions: faster for better CPU teams, a little random every time. */
 function reaction(p) {
   const base =
-    p.team === 1 && !G.ai0 ? { rookie: 0.34, pro: 0.26, allstar: 0.2 }[settings.diffKey] || 0.26 : 0.26;
+    cpuSide(p.team) ? { rookie: 0.34, pro: 0.26, allstar: 0.2 }[settings.diffKey] || 0.26 : 0.26;
   return base * rnd(0.8, 1.3);
 }
 
@@ -192,7 +193,7 @@ function carrier(o, t, dt) {
         x: 80 + off,
         y: aG + dir * 2,
         v: rnd(190, 260) * o.st.sht,
-        err: (t === 1 && !G.ai0 ? settings.diff.err : 5) * o.st.acc * 1.1,
+        err: (cpuSide(t) ? settings.diff.err : 5) * o.st.acc * 1.1,
       };
       b.shotAt = now + rnd(0.16, 0.3); // the wind-up the defence can read
       return;
@@ -217,7 +218,7 @@ export function teamAIRealistic(t, dt) {
     oG = t ? GT : GB,
     mul = teamMul(t),
     now = clock.now;
-  const hum = t === 0 && !G.ai0 ? G.controlled : null,
+  const hum = ctlOf(t),
     o = puck.owner;
   for (const p of sk)
     if (p.dummy) {
@@ -279,7 +280,7 @@ export function teamAIRealistic(t, dt) {
       else if (G.holdT > PRESS_AFTER * (1 - 0.3 * catchUp(t))) skate(chaser, puck.x, puck.y, dt, mul, 1);
       else skate(chaser, s.x + (gx / gl) * gap + s.vx * 0.2, s.y + (gy / gl) * gap + s.vy * 0.2, dt, mul, 1);
       faceTo(chaser, o.x, o.y, 0.25);
-      const rate = G.practice && G.practice.opp === 'easy' ? 0 : t === 1 && !G.ai0 ? settings.diff.chk : 0.3;
+      const rate = G.practice && G.practice.opp === 'easy' ? 0 : cpuSide(t) ? settings.diff.chk : 0.3;
       if (
         !ease &&
         chaser.down <= 0 &&

@@ -14,6 +14,7 @@ const JUMP2 = 20 * 20;
 function list() {
   const l = [cam, puck, ref, ...players];
   if (G.zam) l.push(G.zam);
+  if (G.zam2) l.push(G.zam2); // online: the other player's resurfacer
   // the 3D camera is moved by the simulation only in goal replays (elsewhere it is aimed while drawing)
   if (G.cam3 && G.state === 'replay') l.push(G.cam3);
   return l;
@@ -24,7 +25,7 @@ export function beforeStep() {
     e._ix = e.x;
     e._iy = e.y;
     if (e === puck) e._iz = e.z;
-    if (e === G.zam) e._ia = e.a;
+    if (e === G.zam || e === G.zam2) e._ia = e.a;
     if (e === G.cam3) e._iyaw = e.yaw;
   }
 }
@@ -42,7 +43,7 @@ export function blendIn(alpha) {
     e.x = e._ix + dx * alpha;
     e.y = e._iy + dy * alpha;
     if (e === puck && e._iz !== undefined) e.z = e._iz + (e.z - e._iz) * alpha;
-    if (e === G.zam && e._ia !== undefined) e.a = e._ia + (e.a - e._ia) * alpha;
+    if ((e === G.zam || e === G.zam2) && e._ia !== undefined) e.a = e._ia + (e.a - e._ia) * alpha;
     if (e === G.cam3 && e._iyaw !== undefined) {
       const d = ((e.yaw - e._iyaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
       e.yaw = e.yaw - d * (1 - alpha);
@@ -55,7 +56,7 @@ export function blendOut() {
     b.e.x = b.x;
     b.e.y = b.y;
     if (b.e === puck) b.e.z = b.z;
-    if (b.e === G.zam) b.e.a = b.a;
+    if (b.e === G.zam || b.e === G.zam2) b.e.a = b.a;
     if (b.e === G.cam3) b.e.yaw = b.yaw;
   }
   blended = [];

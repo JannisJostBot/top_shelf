@@ -41,7 +41,8 @@ export function initFullscreen() {
     }),
   );
   addEventListener('keydown', e => {
-    if (e.code === 'KeyF' && !e.repeat && !e.metaKey && !e.ctrlKey) toggleFullscreen();
+    if (e.code === 'KeyF' && !e.repeat && !e.metaKey && !e.ctrlKey && !(e.target instanceof HTMLInputElement))
+      toggleFullscreen();
   });
   document.addEventListener('fullscreenchange', show);
   document.addEventListener('webkitfullscreenchange', show);

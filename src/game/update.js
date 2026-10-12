@@ -1,7 +1,4 @@
 import { teamAIRealistic } from './ai/realistic';
-import { NETS, W } from '../config';
-import { pick, rnd } from '../core/math';
-import { clock } from '../core/time';
 import { goalieAI } from './ai/goalie';
 import { refAI } from './ai/referee';
 import { teamAI } from './ai/team';
@@ -15,7 +12,7 @@ import { practiceReset } from './practice';
 import { introStep } from './states/intro';
 import { postStep } from './states/post';
 import { aimTick } from './aim';
-import { applyFrame, endReplay, recFrame, startReplay } from './replay';
+import { endReplay, recFrame, replayStep, startReplay } from './replay';
 import { brawlStep, startBrawl } from './states/brawl';
 import { celebrateStep, endCelebration, startCelebration } from './states/celebrate';
 import { faceoff, foUpdate } from './states/faceoff';
@@ -23,24 +20,23 @@ import { startZamboni, zamStep } from './states/zamboni';
 import { G, parts, puck } from './world';
 import { input } from '../input/state';
 import { settings } from '../settings';
-import {
-  banner,
-  clothStep,
-  goalLamp,
-  hideBanner,
-  hud,
-  hudClock,
-  netHit,
-  pop,
-  S,
-  startGoalFx,
-  strideSounds,
-  upd3D,
-  updCam,
-} from './fx';
+import { banner, clothStep, hideBanner, hud, hudClock, S, strideSounds, updCam } from './fx';
+import { isHuman, net, rinput } from './online';
 
 /* ---------- update ---------- */
+/** One fixed simulation step. Online, the host also talks to the guest around it, and the guest (which runs
+ * no simulation) shows the host's match instead (src/net/match.js). */
 export function update(dt) {
+  if (G.net === 'guest') {
+    if (net.guestStep) net.guestStep(dt);
+    return;
+  }
+  if (G.net === 'host' && net.pre) net.pre(dt);
+  step(dt);
+  if (G.net === 'host' && net.post) net.post(dt);
+}
+/** Moves the loose particles (sparks, snow, confetti). */
+export function stepParts(dt) {
   for (let i = parts.length - 1; i >= 0; i--) {
     const p = parts[i];
     p.x += p.vx * dt;
@@ -50,6 +46,9 @@ export function update(dt) {
     p.life -= dt;
     if (p.life <= 0) parts.splice(i, 1);
   }
+}
+function step(dt) {
+  stepParts(dt);
   G.shake = Math.max(0, G.shake - dt);
   G.flash = Math.max(0, G.flash - dt);
   G.boardCd -= dt;
@@ -70,40 +69,7 @@ export function update(dt) {
       endReplay();
       return;
     }
-    G.rp.i += G.rp.angle.spd;
-    if (G.rp.i >= G.rp.end) {
-      endReplay();
-      return;
-    }
-    if (G.rp.fart !== null && (G.rp.i - G.rp.i0) / Math.max(1, G.rp.end - G.rp.i0) >= G.rp.fart) {
-      G.rp.fart = null;
-      S('fart');
-      const v = pick(SKATERS);
-      pop(v.x, v.y, 'PFFRRT', '#a07a3a');
-    }
-    if (!G.rp.netHit && G.lastNet && G.rp.i >= G.goalFrame) {
-      G.rp.netHit = true;
-      const fl = G.rp.angle.flip,
-        tn = fl ? NETS[G.lastNet === NETS[0] ? 1 : 0] : G.lastNet;
-      netHit(tn, fl ? W - G.goalX : G.goalX, 1.5);
-      startGoalFx(settings.puckKey, fl ? W - G.goalX : G.goalX, tn.top ? tn.y0 + 3 : tn.y1 - 3, tn.top);
-      goalLamp({ n: tn, until: clock.now + 2.6 });
-    }
-    applyFrame(G.rp.i);
-    updCam(dt, false);
-    upd3D(false);
-    for (const p of SKATERS) {
-      const sp = Math.hypot(p.vx, p.vy);
-      if (sp > 46 && p.down <= 0 && Math.random() < 0.3)
-        parts.push({
-          x: p.x + rnd(-2, 2),
-          y: p.y + rnd(0, 1),
-          vx: -p.vx * 0.25 + rnd(-12, 12),
-          vy: -p.vy * 0.25 + rnd(-12, 12),
-          life: rnd(0.25, 0.5),
-          c: '#ffffff',
-        });
-    }
+    replayStep(dt);
     return;
   }
   if (st === 'brawl') {
@@ -128,10 +94,11 @@ export function update(dt) {
     if (G.timer <= 0) endCelebration();
     return;
   }
-  if (st !== 'play' && st !== 'faceoff') {
-    input.sp = input.pp = input.swp = false;
-    if (!input.shootHeld) input.sr = false;
-  }
+  if (st !== 'play' && st !== 'faceoff')
+    for (const inp of [input, rinput]) {
+      inp.sp = inp.pp = inp.swp = false;
+      if (!inp.shootHeld) inp.sr = false;
+    }
   if (st === 'over' && G.post) {
     postStep(dt);
     return;
@@ -189,7 +156,7 @@ export function update(dt) {
   // how long the puck carrier has been standing (nearly) still: the defence closes in on a dawdling carrier
   const c = puck.owner;
   // (a human carrier pushing the stick is trying to get away, not waiting it out)
-  if (c && c.role === 'S' && c === G.holder && Math.hypot(c.vx, c.vy) < 14 && !(c === G.controlled && c.pushing))
+  if (c && c.role === 'S' && c === G.holder && Math.hypot(c.vx, c.vy) < 14 && !(isHuman(c) && c.pushing))
     G.holdT += dt;
   else G.holdT = 0;
   G.holder = c;
@@ -208,6 +175,11 @@ export function update(dt) {
   if (!G.ai0) {
     autoSwitch(dt);
     humanUpdate(dt);
+  }
+  // online, the guest steers team 1
+  if (G.net === 'host') {
+    autoSwitch(dt, 1);
+    humanUpdate(dt, 1);
   }
   // CPU skaters (and your AI teammates) use the behaviour chosen in Setup
   const ai = settings.cpuStyle === 'realistic' ? teamAIRealistic : teamAI;

@@ -6,6 +6,7 @@ import { GK, SK, live } from '../players';
 import { bestMate, passTo, shoot } from '../puck';
 import { G, puck } from '../world';
 import { settings } from '../../settings';
+import { cpuSide, ctlOf } from '../online';
 
 /* ---------- AI ---------- */
 // a puck carrier standing still this long gets pressed (and double-teamed a bit later)
@@ -121,13 +122,13 @@ export function openLane(p, s, o, t, dt) {
 // further out, its defenceman joins the attack) and digs in a little (a touch faster, sharper with the stick,
 // more checks); three or more behind, twice as much. Never your own AI teammates, never in practice.
 export function catchUp(t) {
-  if (G.practice || G.demo || (t === 0 && !G.ai0)) return 0;
+  if (G.practice || G.demo || G.net || (t === 0 && !G.ai0)) return 0;
   const d = G.score[1 - t] - G.score[t];
   return d >= 3 ? 2 : d >= 2 ? 1 : 0;
 }
 export function teamMul(t) {
   if (G.practice && t === 1 && G.practice.opp === 'easy') return 0.55;
-  return (t === 1 ? settings.diff.spd : G.demo ? 0.94 : 0.95) * (1 + 0.03 * catchUp(t));
+  return (t === 1 && !G.net ? settings.diff.spd : G.demo ? 0.94 : 0.95) * (1 + 0.03 * catchUp(t));
 }
 export function nearest(list, tg) {
   let b = null,
@@ -192,7 +193,7 @@ function carrierAI(o, t, dt) {
         80 + off,
         aG + dir * 2,
         rnd(190, 260) * o.st.sht,
-        (t === 1 && !G.ai0 ? settings.diff.err : 5) * o.st.acc,
+        (cpuSide(t) ? settings.diff.err : 5) * o.st.acc,
       );
       return;
     }
@@ -215,7 +216,7 @@ export function teamAI(t, dt) {
     aG = t ? GB : GT,
     oG = t ? GT : GB,
     mul = teamMul(t);
-  const hum = t === 0 && !G.ai0 ? G.controlled : null,
+  const hum = ctlOf(t),
     o = puck.owner;
   // training dummies stand where they were put and just watch the puck
   for (const p of sk)
@@ -285,7 +286,7 @@ export function teamAI(t, dt) {
         }
         // AI defenders throw the occasional body check
         const rate =
-          G.practice && G.practice.opp === 'easy' ? 0 : t === 1 && !G.ai0 ? settings.diff.chk : 0.3;
+          G.practice && G.practice.opp === 'easy' ? 0 : cpuSide(t) ? settings.diff.chk : 0.3;
         if (
           !ease &&
           ch.down <= 0 &&

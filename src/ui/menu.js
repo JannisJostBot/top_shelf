@@ -5,6 +5,8 @@ import { savePrefs, loadAimBest } from '../core/storage';
 import { startGame, toMenu, togglePause } from '../game/match';
 import { aimCfg, pcfg, startPractice } from '../game/practice';
 import { G } from '../game/world';
+import { net } from '../game/online';
+import { leaveRoom } from './online';
 import { fit, updCam } from '../render/camera';
 import { view } from '../render/canvas';
 import { camToast, resetDirector } from '../render/director';
@@ -24,7 +26,7 @@ function showSound() {
 // The menu is a matchday program (see styles/program.css): the home page with the rink, and one page per section.
 // Picking a section slides the puck to its spot on the rink, inks the circle in and grows the page out of it; back,
 // the page shrinks into its circle and the puck returns to centre ice.
-const PAGES = ['play', 'match', 'watch', 'train', 'teams', 'lineup', 'arena', 'options', 'help', 'guide'];
+const PAGES = ['play', 'match', 'watch', 'train', 'teams', 'lineup', 'arena', 'options', 'help', 'guide', 'online'];
 let page = 'play';
 const spotFor = name => document.querySelector('.rinkmenu [data-goto="' + name + '"]');
 const animated = () => !reduceMotion && !$('menu').hidden;
@@ -32,9 +34,11 @@ const animated = () => !reduceMotion && !$('menu').hidden;
 function puckTo(btn) {
   const pk = $('rpuck'),
     rm = pk.parentElement.getBoundingClientRect(),
-    b = (btn || spotFor('match')).getBoundingClientRect();
+    b = (btn || spotFor('match')).getBoundingClientRect(),
+    // at centre ice it rests low in the circle, under the match summary rather than on it
+    k = btn ? 0.5 : 0.8;
   pk.style.setProperty('--px', b.left + b.width / 2 - rm.left + 'px');
-  pk.style.setProperty('--py', b.top + b.height / 2 - rm.top - 18 + 'px');
+  pk.style.setProperty('--py', b.top + b.height * k - rm.top - 18 + 'px');
 }
 /** The page's grow and shrink start from its spot on the rink (or the top right for the rulebook). */
 function originAt(el, btn) {
@@ -230,6 +234,7 @@ export function initMenu() {
   initLineup();
   // the puck stays on its spot when the layout changes size
   addEventListener('resize', () => puckTo(page === 'play' ? null : spotFor(page)));
+  new ResizeObserver(() => puckTo(page === 'play' ? null : spotFor(page))).observe(document.querySelector('.rinkmenu'));
   document
     .querySelectorAll('[data-goto]')
     .forEach(b => b.addEventListener('click', () => showTab(b.dataset.goto)));
@@ -298,17 +303,18 @@ export function initMenu() {
         } catch (e) {}
     }),
   );
-  $('startBtn').addEventListener('click', () => dropPuck(() => startGame(false)));
-  $('watchBtn').addEventListener('click', () => dropPuck(() => startGame(true)));
+  // (a single-player game closes an online room left open)
+  $('startBtn').addEventListener('click', () => dropPuck(() => (leaveRoom(), startGame(false))));
+  $('watchBtn').addEventListener('click', () => dropPuck(() => (leaveRoom(), startGame(true))));
   $('againBtn').addEventListener('click', () =>
-    G.practice ? startPractice(G.practice) : startGame(G.watch),
+    G.net ? net.again && net.again() : G.practice ? startPractice(G.practice) : startGame(G.watch),
   );
   segPick('opSeg', 'v', v => (pcfg.opp = v));
   segPick('tmSeg', 'v', v => (pcfg.mates = v === 'on'));
   segPick('gkSeg', 'v', v => (pcfg.goalie = v));
-  $('pFree').addEventListener('click', () => startPractice(Object.assign({ mode: 'free' }, pcfg)));
-  $('pFight').addEventListener('click', () => startPractice({ mode: 'fight' }));
-  $('pZam').addEventListener('click', () => startPractice({ mode: 'zam' }));
+  $('pFree').addEventListener('click', () => (leaveRoom(), startPractice(Object.assign({ mode: 'free' }, pcfg))));
+  $('pFight').addEventListener('click', () => (leaveRoom(), startPractice({ mode: 'fight' })));
+  $('pZam').addEventListener('click', () => (leaveRoom(), startPractice({ mode: 'zam' })));
   segPick('aimLenSeg', 'v', v => {
     aimCfg.endless = v === 'endless';
     showAimBest();
@@ -317,7 +323,7 @@ export function initMenu() {
     aimCfg.moving = v === 'moving';
     showAimBest();
   });
-  $('pAim').addEventListener('click', () => startPractice(Object.assign({ mode: 'aim' }, aimCfg)));
+  $('pAim').addEventListener('click', () => (leaveRoom(), startPractice(Object.assign({ mode: 'aim' }, aimCfg))));
   $('menuBtn').addEventListener('click', toMenu);
   $('resumeBtn').addEventListener('click', togglePause);
   $('quitBtn').addEventListener('click', toMenu);

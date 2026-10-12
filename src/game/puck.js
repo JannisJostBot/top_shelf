@@ -4,8 +4,8 @@ import { clamp, dist, rnd } from '../core/math';
 import { blade, burst } from './physics/motion';
 import { SK, SKATERS } from './players';
 import { G, parts, puck } from './world';
-import { input } from '../input/state';
 import { S } from './fx';
+import { inputOf, isHuman, seat } from './online';
 import { AMB } from '../data/colors';
 
 /* ---------- puck actions ---------- */
@@ -20,7 +20,7 @@ export function take(p) {
   p.imm = 0.45;
   p.ai.lane = rnd(-22, 22);
   p.ai.dec = 0.2;
-  if (p === G.controlled && input.shootHeld) G.ignoreRelease = true;
+  if (isHuman(p) && inputOf(p.team).shootHeld) seat(p.team).ignoreRelease = true;
   S('tick');
 }
 function release(p, vx, vy) {
@@ -142,7 +142,7 @@ export function pickupCheck() {
     if (p.cool > 0 || p.down > 0 || p.benched || p.dummy || puck.miss.has(p)) continue;
     const b = blade(p);
     const d = Math.min(Math.hypot(puck.x - b.x, puck.y - b.y), Math.hypot(puck.x - p.x, puck.y - (p.y - 1)));
-    const R = p === puck.passTo ? 7 : p.boost > 0 && p === G.controlled ? 7 : 5;
+    const R = p === puck.passTo ? 7 : p.boost > 0 && isHuman(p) ? 7 : 5;
     if (d < R && d < bd) {
       bd = d;
       best = p;

@@ -5,10 +5,10 @@ import { G } from '../game/world';
 import { view } from './canvas';
 import { R } from './pixels';
 import { settings } from '../settings';
-import { ZAM } from '../game/states/zamboni';
+import { ZAM, ZAM_ONLINE } from '../game/states/zamboni';
+import { nameOf } from '../game/online';
 
-export function drawZamboni() {
-  const z = G.zam;
+export function drawZamboni(z = G.zam) {
   if (!z) return;
   const S = STADIUMS[settings.stadiumKey],
     x = toS(z.x),
@@ -92,9 +92,14 @@ export function drawZamboni() {
 export function drawZamHud() {
   const z = G.zam;
   if (!z) return;
+  const len = (G.net ? ZAM_ONLINE : ZAM).time;
   if (z.phase === 'count') drawCountdown(z.cd, 0);
-  // GO! for the first moment of driving (the run starts at its full length, ZAM.time)
-  else if (z.phase === 'drive' && z.t > ZAM.time - 0.7) drawCountdown(0, (ZAM.time - z.t) / 0.7);
+  // GO! for the first moment of driving (the run starts at its full length)
+  else if (z.phase === 'drive' && z.t > len - 0.7) drawCountdown(0, (len - z.t) / 0.7);
+  if (G.zam2) {
+    drawDuelHud(z, G.zam2);
+    return;
+  }
   const pct = z.count / Math.max(1, z.total),
     w = Math.floor(view.CW * 0.5),
     x0 = (view.CW - w) >> 1,
@@ -113,6 +118,38 @@ export function drawZamHud() {
   view.ctx.textAlign = 'left';
 }
 
+/** Online: both players' shares of their halves, yours on top in your colour, and your seconds left. */
+function drawDuelHud(z, r) {
+  const w = Math.floor(view.CW * 0.5),
+    x0 = (view.CW - w) >> 1,
+    y = 10 + view.topInset,
+    bar = (yy, k, c) => {
+      R(x0 - 2, yy - 2, w + 4, 8, '#0b0f1a');
+      R(x0, yy, Math.round(w * k), 4, c);
+    },
+    mine = z.count / Math.max(1, z.total),
+    theirs = r.count / Math.max(1, r.total);
+  bar(y, mine, '#7fe3ff');
+  bar(y + 8, theirs, '#9aa6c4');
+  view.ctx.font = '6px "Press Start 2P", monospace';
+  view.ctx.textBaseline = 'top';
+  view.ctx.textAlign = 'center';
+  view.ctx.fillStyle = '#ffffff';
+  view.ctx.fillText(
+    'YOU ' +
+      Math.round(mine * 100) +
+      '% · ' +
+      nameOf(1) +
+      ' ' +
+      Math.round(theirs * 100) +
+      '% · ' +
+      Math.max(0, Math.ceil(z.t)) +
+      's',
+    view.CW / 2,
+    y + 18,
+  );
+  view.ctx.textAlign = 'left';
+}
 /** Big 3, 2, 1, GO! in the middle of the screen: each number pops in large and settles. */
 function drawCountdown(count, goAge) {
   const g = view.ctx,

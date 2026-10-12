@@ -27,6 +27,8 @@ export const G = {
   stats: { sog: [0, 0], saves: [0, 0], hits: [0, 0], fo: [0, 0], poss: [0, 0] },
   lastShooter: /** @type {any} */ (null),
   state: 'faceoff',
+  /** online match: null, 'host' (runs the match) or 'guest' (shows the host's match), see game/online.js */
+  net: /** @type {null | 'host' | 'guest'} */ (null),
   demo: true,
   watch: false,
   ai0: true,
@@ -55,6 +57,8 @@ export const G = {
   mom: /** @type {any} */ (null),
   /** the resurfacer minigame while it runs */
   zam: /** @type {any} */ (null),
+  /** online: the other player's resurfacer, shown from what they send */
+  zam2: /** @type {any} */ (null),
   hype: 0,
   fightP: 0.15,
   /** whether this match has had its fight (there is at most one per match) */

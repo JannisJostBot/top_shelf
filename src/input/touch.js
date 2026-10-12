@@ -146,6 +146,7 @@ export function initTouch() {
     () => {
       input.shootHeld = true;
       input.sp = true;
+      input.spAt = performance.now();
     },
     () => {
       input.shootHeld = false;

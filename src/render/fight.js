@@ -59,10 +59,12 @@ export function drawFighter(p) {
       R(x - 1, y - 1, 5, 5, '#0b0f1a');
       R(x, y, 3, 3, skin);
     };
-  const sh = sy - 14 - jy,
-    punching = me ? B.me.punchT > 0 : B.opp.punchT > 0,
-    winding = !me && (B.opp.st === 'wind' || B.opp.st === 'feint'),
-    blocking = me ? B.me.blockT > 0 : B.opp.blockT > 0;
+  // (against the CPU only its side winds up; between two players both do)
+  const f = me ? B.me : B.opp,
+    sh = sy - 14 - jy,
+    punching = f.punchT > 0,
+    winding = f.st === 'wind' || f.st === 'feint',
+    blocking = f.blockT > 0;
   if (B.phase !== 'fight' && B.phase !== 'end') {
     fist(sx + dir * 5 - 1, sh - 2);
     fist(sx + dir * 3 - 1, sh + 2);

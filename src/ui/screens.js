@@ -2,6 +2,7 @@
 // controls. The game announces screen changes (game/fx.js `screen`, `showPad`, `uiShow`); this shows them.
 import { $ } from '../core/dom';
 import { teamLabel, togglePause } from '../game/match';
+import { net } from '../game/online';
 import { G } from '../game/world';
 import { input } from '../input/state';
 import { knobAt, pad, touchState } from '../input/touch';
@@ -9,6 +10,8 @@ import { fit } from '../render/camera';
 import { clockText, hideBanner } from './hud';
 import { STADIUMS } from '../data/stadiums';
 import { settings } from '../settings';
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 export function showPad(on) {
   touchState.padWanted = on;
@@ -34,9 +37,9 @@ function matchStats() {
       '<span>' + a + '</span><span class="lbl">' + label + '</span><span>' + b + '</span>';
   return (
     '<span class="team">' +
-    teamLabel(0) +
+    esc(teamLabel(0)) +
     '</span><span></span><span class="team">' +
-    teamLabel(1) +
+    esc(teamLabel(1)) +
     '</span>' +
     row('SHOTS ON GOAL', s.sog[0], s.sog[1]) +
     row('SAVES', s.saves[0], s.saves[1]) +
@@ -55,7 +58,7 @@ function boxScore() {
   const head = ['', '1', '2', '3', ...(ot ? ['OT'] : []), 'T'];
   return (
     row(head, 'hd') +
-    [0, 1].map(t => row([teamLabel(t), ...gp[t].slice(0, n), G.score[t]])).join('')
+    [0, 1].map(t => row([esc(teamLabel(t)), ...gp[t].slice(0, n), G.score[t]])).join('')
   ).replace(/<div class="r/g, '<div style="--cols: ' + n + '" class="r');
 }
 const SCREENS = {
@@ -95,9 +98,14 @@ const SCREENS = {
     $('overBox').innerHTML = boxScore();
     $('overBox').hidden = false;
     $('overArena').textContent = STADIUMS[settings.stadiumKey].name;
-    $('againSub').textContent = G.watch ? 'Another broadcast' : 'Same teams, fresh roster';
+    $('againSub').textContent = G.watch
+      ? 'Another broadcast'
+      : G.net
+        ? 'Same opponent, fresh rosters. Both have to agree.'
+        : 'Same teams, fresh roster';
     $('overR').textContent = r.record;
     $('againBtn').textContent = r.again;
+    $('againBtn').disabled = false;
     // the result gets its moment before the results card comes up
     setTimeout(() => {
       if (G.state !== 'over') return;
@@ -128,11 +136,16 @@ const SCREENS = {
     $('overArena').textContent = '';
     $('againSub').textContent = 'Same drill again';
     $('againBtn').textContent = 'AGAIN';
+    $('againBtn').disabled = false;
     $('overOv').hidden = false;
     $('pauseBtn').disabled = true;
   },
   pause(on) {
+    // online: { on, by } (who paused)
+    const by = on && typeof on === 'object' ? on.by : '';
+    if (on && typeof on === 'object') on = on.on;
     $('pauseOv').hidden = !on;
+    $('pauseBy').textContent = by ? 'Paused by ' + by + '. Either player can resume.' : '';
     if (on)
       $('pauseLine').textContent = G.practice
         ? 'Practice'
@@ -145,6 +158,10 @@ export function showScreen(name, data) {
 export function initScreens() {
   // leaving the tab pauses a match
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && !G.demo && G.state !== 'paused' && G.state !== 'over') togglePause();
+    if (document.hidden && !G.demo && G.state !== 'paused' && G.state !== 'over') {
+      togglePause();
+      // online host: a hidden tab stops running the match, so the guest is told about the pause right away
+      if (G.net === 'host' && net.post) net.post(0, true);
+    }
   });
 }

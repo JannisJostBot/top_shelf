@@ -65,6 +65,7 @@ import {
 } from './ui/menu';
 import { drawPreview } from './ui/preview';
 import { initReplayBar } from './ui/replayBar';
+import { initOnline } from './ui/online';
 
 // the presentation listens to the simulation's events before anything can happen
 bindPresentation();
@@ -79,6 +80,7 @@ initCamera();
 initSide();
 initCustomize();
 initMenu();
+initOnline();
 
 const pr = loadPrefs();
 if (pr.color && COLORS[pr.color]) settings.colorKey = pr.color;

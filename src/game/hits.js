@@ -4,21 +4,26 @@ import { blade, burst, faceTo } from './physics/motion';
 import { nearBoards } from './physics/rink';
 import { G, puck } from './world';
 import { reduceMotion, settings } from '../settings';
-import { feed, pop, ring, S, vib } from './fx';
+import { feed, flash, persp, pop, ring, S, SKIP, vib } from './fx';
 import { AMB } from '../data/colors';
+import { cpuSide, isHuman, mine } from './online';
+
+/** Rumble for whoever steers p (here, or online on the other player's screen). */
+export function feel(p, pattern) {
+  vib(persp(v => (mine(p, v) ? pattern : SKIP)));
+}
 
 /* ---------- body checks (human and AI share this) ---------- */
 export function startCheck(p, c) {
-  p.checkCd = p === G.controlled && !G.ai0 ? 1.4 : 1.8;
+  p.checkCd = isHuman(p) ? 1.4 : 1.8;
   p.checkT = 0.38;
   p.checkTgt = c;
   c.ai.dodged = false;
   p.checkSpd = BASE * rnd(1.3, 1.62) * p.st.spd;
-  const humanVictim = c === G.controlled && !G.ai0;
-  c.ai.dodge =
-    !humanVictim && Math.random() < (c.team === 1 && !G.ai0 ? settings.diff.dodge : 0.3) * c.st.hnd;
+  const humanVictim = isHuman(c);
+  c.ai.dodge = !humanVictim && Math.random() < (cpuSide(c.team) ? settings.diff.dodge : 0.3) * c.st.hnd;
   S('charge', { by: p });
-  if (isMe(p)) vib([12]);
+  feel(p, [12]);
 }
 export function checkStep(p, dt) {
   const c = p.checkTgt;
@@ -49,12 +54,11 @@ export function checkStep(p, dt) {
     p.stun = 0.55;
     S('miss');
     pop(p.x, p.y, c.ai.dodged ? 'DODGED' : 'MISSED', '#9aa6c4');
-    if (isMe(p)) vib([12]);
+    feel(p, [12]);
   }
 }
 // Not every check lands clean: strength, angle and a bit of luck decide between a flattening hit,
 // a stumble that may jar the puck loose, or the carrier shrugging the checker off.
-const isMe = p => !G.ai0 && p === G.controlled;
 function resolveHit(by, c, nx, ny) {
   const closing = clamp(Math.hypot(by.vx, by.vy) / (BASE * 1.45), 0.6, 1.1);
   const power = (by.st.chk / c.st.chk) * rnd(0.6, 1.2) * closing;
@@ -106,9 +110,8 @@ function knockDown(c, nx, ny, by, power) {
   G.stats.hits[by.team]++;
   feed('BIG HIT · ' + '#' + by.num + ' ' + by.name + ' on ' + '#' + c.num + ' ' + c.name, by.team);
   G.hype = Math.max(G.hype, 0.5);
-  if (isMe(by)) vib([35, 25, 70]);
-  else if (isMe(c)) vib([90, 40, 140]);
-  if (isMe(by) || isMe(c)) G.flash = 0.12;
+  vib(persp(v => (mine(by, v) ? [35, 25, 70] : mine(c, v) ? [90, 40, 140] : SKIP)));
+  flash(persp(v => (mine(by, v) || mine(c, v) ? 0.12 : SKIP)));
   if (!reduceMotion) G.shake = Math.max(G.shake, 0.22);
 }
 function stumble(c, nx, ny, by) {
@@ -125,7 +128,7 @@ function stumble(c, nx, ny, by) {
   burst(c.x, c.y - 5, 7, '#ffffff', 42);
   ring(c.x, c.y, '#ffffff', 0.8);
   pop(c.x, c.y, puck.owner === c ? 'STUMBLE' : 'JARRED LOOSE', '#ffffff');
-  if (isMe(by) || isMe(c)) vib([40]);
+  vib(persp(v => (mine(by, v) || mine(c, v) ? [40] : SKIP)));
   if (!reduceMotion) G.shake = Math.max(G.shake, 0.1);
 }
 function bounceOff(by, c, nx, ny) {
@@ -140,6 +143,5 @@ function bounceOff(by, c, nx, ny) {
   burst(by.x, by.y - 5, 5, '#ffffff', 30);
   ring(by.x, by.y, '#ff6b71', 0.7);
   pop(by.x, by.y, 'BOUNCED OFF', '#ff8a80');
-  if (isMe(by)) vib([20, 30, 20]);
-  else if (isMe(c)) vib([15]);
+  vib(persp(v => (mine(by, v) ? [20, 30, 20] : mine(c, v) ? [15] : SKIP)));
 }

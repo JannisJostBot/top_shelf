@@ -199,10 +199,11 @@
               <nav class="rinkmenu" aria-label="Menu">
                 <span class="rk" aria-hidden="true"
                   ><i class="crease t"></i><i class="gl t"></i><i class="bl t"></i><i class="cl"></i><i class="bl b"></i
-                  ><i class="gl b"></i><i class="crease b"></i
+                  ><i class="gl b"></i><i class="crease b"></i><i class="nzd"></i
                 ></span>
                 <button class="fo" data-goto="train" style="--x: 27%; --y: 19%">Train</button>
                 <button class="fo" data-goto="watch" style="--x: 73%; --y: 19%">Watch</button>
+                <button class="fo nz" data-goto="online" style="--x: 82%; --y: 50%">Online</button>
                 <button class="fo mid" data-goto="match" style="--x: 50%; --y: 50%">
                   Match<small id="matchSum">Pro · 3×1:00</small>
                 </button>
@@ -343,6 +344,79 @@
                 ><span>30 seconds to polish a chewed-up rink. <span id="zamBest"></span></span>
                 <button class="btn ghost" id="pZam">DRIVE THE RESURFACER</button>
               </div>
+              </div>
+            </section>
+
+            <section class="ppage" id="p-online" role="region" aria-labelledby="h-online" hidden>
+              <header class="phead">
+                <button class="pback" data-goto="play">‹ Rink</button><span class="pno">10 · Neutral zone</span>
+              </header>
+              <h2 class="ptitle" id="h-online">Online</h2>
+              <div class="pbody">
+                <p class="pintro">
+                  Play a friend, browser to browser. No accounts and no game server: one of you hosts and sends the
+                  invite code, the other joins with it.
+                </p>
+                <div class="opt">
+                  <label class="olbl" for="olName">YOUR NAME</label>
+                  <input
+                    class="olin"
+                    id="olName"
+                    maxlength="12"
+                    autocomplete="nickname"
+                    spellcheck="false"
+                    placeholder="2–12 letters or digits"
+                  />
+                </div>
+                <div id="olSetup" class="olsetup">
+                  <div class="tcard">
+                    <b>Host a match</b
+                    ><span
+                      >You get a code to send your friend. The match uses your settings: period length, arena,
+                      puck, celebrations and resurfacing.</span
+                    >
+                    <button class="btn go" id="olHost">HOST A ROOM</button>
+                  </div>
+                  <div class="tcard">
+                    <b>Join a match</b><span>Paste the code (or open the link) your friend sent you.</span>
+                    <input
+                      class="olin code"
+                      id="olCode"
+                      maxlength="64"
+                      autocomplete="off"
+                      spellcheck="false"
+                      placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+                      aria-label="Invite code"
+                    />
+                    <button class="btn ghost" id="olJoin">JOIN</button>
+                  </div>
+                </div>
+                <div id="olRoom" class="olroom" hidden>
+                  <div class="olcode" id="olCodeBox" hidden>
+                    <span class="olbl">INVITE CODE · WORKS ONCE</span>
+                    <output id="olCodeTxt"></output>
+                    <div class="olcopy">
+                      <button class="btn ghost" id="olCopy">Copy code</button
+                      ><button class="btn ghost" id="olLink">Copy link</button>
+                    </div>
+                  </div>
+                  <div class="ollobby" id="olLobby" hidden>
+                    <span class="olvs"
+                      ><b class="home" id="olMe"></b><i>vs</i><b class="away" id="olPeer"></b
+                    ></span>
+                    <span class="small" id="olWho"></span>
+                  </div>
+                  <p class="small olstat" id="olStatus" role="status" aria-live="polite"></p>
+                  <button class="btn ghost" id="olLeave">Leave the room</button>
+                </div>
+                <p class="small olerr" id="olErr" role="alert" hidden></p>
+                <p class="small">
+                  <b>Privacy.</b> You connect directly to the other player, so they can see your IP address, as
+                  with any direct connection. The public relays that help you find each other and one STUN server
+                  (Cloudflare's) see your address like any website does, but not who you play: the code encrypts
+                  what passes through them. A room lets in one guest only, and the code stops working once your
+                  friend is in. Nothing connects anywhere until you host or join.
+                </p>
               </div>
             </section>
 
@@ -646,7 +720,9 @@
                 After you score, a sore loser may drop the gloves: at most once a match, more likely with
                 every goal until it happens (turn it off in Setup). Punch to hit; Block when they wind up and the red !
                 shows. Punching drains stamina, so tired punches are weak; it recovers when you wait. Higher
-                CPU levels block and counter more.
+                CPU levels block and counter more. Online, a fight can follow either side's goal (the host's
+                Fights setting, once a match) and you face the other player: every punch winds up with the red !
+                first, so a block in time stops it; a blocked or interrupted fighter is left open.
               </p>
               <h3>CPU level and style</h3>
               <p>
@@ -670,6 +746,17 @@
                 the top-down view and 3D shots from the ice, the nets and the stands; Classic keeps the
                 top-down view. Switch with the camera button in the bottom corner.
               </p>
+              <h3>Online</h3>
+              <p>
+                Host a room on the Online page and send your friend the code, or join with theirs. The host's
+                browser runs the match with the host's settings; the guest sees it from their own end, so both
+                attack up the screen, and each of you steers one skater with CPU teammates. Face-offs are timed
+                on each screen from the moment the puck drops there, so the connection does not slow anyone down;
+                faster than 0.1 s counts as jumping the draw. Between periods you both resurface your own half
+                (20 s, a slower machine) and the bigger share wins the boost. Each side checks what the other
+                reports (face-off times, goals, resurfacing) and notes anything that does not add up. Fights are
+                between the two of you.
+              </p>
               <h3>Training</h3>
               <p>
                 The Train tab has free skate (pick opponents, teammates and their goalie), the aim trainer (a
@@ -683,7 +770,8 @@
             <div class="ticket" id="ticket">
               <canvas id="pvArena" width="120" height="82" aria-hidden="true"></canvas>
               <span class="tkinfo"><b id="matchLine">Blue vs Navy</b><span id="tkSub">Pro · 3 × 1:00</span></span>
-              <button class="tkgo" id="startBtn">Play</button><button class="tkgo" id="watchBtn">Watch</button>
+              <button class="tkgo" id="startBtn">Play</button><button class="tkgo" id="watchBtn">Watch</button
+              ><button class="tkgo" id="olStart" disabled>Play</button>
             </div>
           </div>
         </div>
@@ -692,6 +780,7 @@
           <div class="prog night insert">
             <div class="pmast"><span>Intermission</span><span id="pauseLine"></span></div>
             <h2 class="ptitle">Paused</h2>
+            <p class="small" id="pauseBy"></p>
             <div class="plist">
               <button class="btn go" id="resumeBtn">Resume ▸</button>
               <button class="btn ghost" id="quitBtn">Quit to the program</button>

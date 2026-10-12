@@ -62,7 +62,8 @@
 .ppage.home {
   background: none;
   padding: 0;
-  overflow: hidden;
+  /* (it all fits on any screen this was laid out for; if one is too small, the page scrolls instead of cutting off) */
+  overflow: hidden auto;
 }
 .ppage.home > * {
   position: relative;
@@ -132,6 +133,15 @@
   text-shadow:
     3px 2px 0 var(--p2),
     5px 5px 0 #0b0f1a;
+}
+/* (the ticket says the same, so a window too small for both the title and this leaves it out) */
+.pwin {
+  container-type: inline-size;
+}
+@container (max-width: 340px) {
+  .pkick {
+    display: none;
+  }
 }
 .pkick {
   position: absolute;
@@ -301,8 +311,9 @@
   bottom: 7%;
   border-bottom: 0;
 }
+/* the circles also scale with the width, so on narrow phones they do not run into each other */
 .rinkmenu .fo {
-  --d: clamp(52px, 11vh, 76px);
+  --d: clamp(44px, min(11vh, 15vw), 76px);
   position: absolute;
   left: calc(26px + (100% - 52px) * var(--x) / 100%);
   top: calc(10px + (100% - 18px) * var(--y) / 100%);
@@ -337,10 +348,19 @@
   background: var(--p2);
 }
 .rinkmenu .fo.mid {
-  --d: clamp(70px, 15vh, 100px);
+  --d: clamp(60px, min(15vh, 20vw), 100px);
   border-color: var(--p1);
   background: radial-gradient(circle, color-mix(in srgb, var(--p1) 16%, transparent) 0 1.4px, transparent 1.7px) 0 0 / 5px 5px, var(--paper);
   color: var(--p2);
+}
+/* the match summary is printed on the ticket too: a centre circle too small for it leaves it out */
+.rinkmenu .fo.mid {
+  container-type: inline-size;
+}
+@container (max-width: 76px) {
+  .rinkmenu .fo.mid small {
+    display: none;
+  }
 }
 .rinkmenu .fo small {
   display: block;
@@ -452,6 +472,7 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain; /* (scrolling to its end does not drag the page around it) */
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -667,9 +688,15 @@
   color: #e8f0f7;
   margin-inline: 14px;
 }
+/* the inserts scroll when the screen is too short for them, rather than cutting off their buttons */
 .prog.insert {
   gap: 10px;
   padding-bottom: 12px;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+}
+.prog.insert > :not(.pwin) {
+  flex-shrink: 0;
 }
 .prog.insert > :not(.pmast):not(.pwin):not(.ticket) {
   margin-inline: 14px;
@@ -890,4 +917,171 @@ body.wide .prog.insert:not(.result) {
 /* the scoreboard stays out of the result's window, as it does in the menu */
 #stage:has(> #overOv:not([hidden])) #hud {
   visibility: hidden;
+}
+
+/* ---------- the Online page ---------- */
+/* its spot is a neutral-zone dot, a little smaller than the end-zone circles; a plain dot mirrors it on the left */
+.rk .nzd {
+  left: 18%;
+  right: auto;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--p2);
+}
+.rinkmenu .fo.nz {
+  --d: clamp(46px, min(9vh, 13vw), 62px);
+  font-size: 7px;
+}
+.prog .olin {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  font-family: var(--display);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--p1);
+  background: var(--paper);
+  border: 2px solid var(--p1);
+  border-radius: 0;
+  outline: none;
+}
+.prog .olin:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--p2) 45%, transparent);
+}
+.prog .olin.code {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+}
+.prog .olin::placeholder {
+  color: var(--rule);
+}
+.prog .olin:disabled {
+  opacity: 0.6;
+}
+.olsetup,
+.olroom {
+  display: grid;
+  gap: 12px;
+}
+.olcode {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 2px dashed var(--p2);
+}
+.olcode output {
+  font-family: var(--display);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--p1);
+  overflow-wrap: anywhere; /* (lines break after a dash, between the groups) */
+  user-select: all;
+}
+.olroom .btn {
+  text-transform: uppercase;
+}
+.olcopy {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ollobby {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 2px solid var(--p1);
+}
+.olvs {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-family: var(--display);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.olvs b.home {
+  color: var(--p1);
+}
+.olvs b.away {
+  color: var(--p2);
+}
+.olvs i {
+  font-style: normal;
+  font-size: 8px;
+  color: var(--ink-soft);
+}
+.prog .olerr {
+  color: var(--p2);
+  font-weight: 700;
+}
+/* the ticket on the Online page: the host starts the match from it once the guest is in */
+.prog #olStart {
+  display: none;
+}
+.prog[data-page='online'] #startBtn {
+  display: none;
+}
+.prog[data-page='online'][data-ol='host'] #olStart,
+.prog[data-page='online'][data-ol='guest'] #olStart {
+  display: block;
+}
+.prog #olStart:disabled {
+  cursor: default;
+  filter: saturate(0.4);
+}
+
+/* ---------- short screens: a phone on its side, a small laptop window ---------- */
+/* the home page puts the live window and the matchup beside the rink, so the rink keeps its height */
+@media (orientation: landscape) and (max-height: 540px) {
+  .ppage.home {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'mast mast'
+      'win rink'
+      'mu rink'
+      'note rink';
+  }
+  .ppage.home > .pmast {
+    grid-area: mast;
+  }
+  .ppage.home > .pwin {
+    grid-area: win;
+    min-height: 56px;
+    max-height: none;
+  }
+  .ppage.home > .matchup {
+    grid-area: mu;
+  }
+  .ppage.home > .ainote {
+    grid-area: note;
+  }
+  .ppage.home > .rinkmenu {
+    grid-area: rink;
+    min-height: 0;
+    margin: 6px 0 0 !important;
+  }
+  .prog .matchup canvas {
+    max-height: 16vh;
+  }
+  /* the result's window gives up height first */
+  .prog.result > .pwin {
+    flex-basis: 56px;
+    min-height: 56px;
+  }
+}
+/* small phones held upright: the live window and the matchup give up a little height before anything scrolls */
+@media (orientation: portrait) and (max-height: 640px) {
+  .pwin {
+    min-height: 76px;
+  }
+  .prog .matchup canvas {
+    max-height: 11vh;
+  }
 }

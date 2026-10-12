@@ -16,6 +16,7 @@ import { clearIceDrawing, drawChewedIce, drawPolish, drawScuffs } from './render
 import { upd3D } from './render/mode7';
 import { clothStep, netHit, resetCloth } from './render/net';
 import { settings } from './settings';
+import { G } from './game/world';
 import { banner, hideBanner, hud, hudClock, showRec } from './ui/hud';
 import { showTab } from './ui/menu';
 import { showScreen, showPad, uiShow } from './ui/screens';
@@ -38,6 +39,7 @@ export function bindPresentation() {
   on('haptic', vib);
   on('zamEngine', zamEngine);
   on('zamHorn', zamHorn);
+  on('flash', f => (G.flash = f));
   // effects on the ice
   on('pop', pop);
   on('ring', ring);

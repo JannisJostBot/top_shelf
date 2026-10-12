@@ -8,6 +8,7 @@ import { startReplay } from '../replay';
 import { G, parts } from '../world';
 import { input } from '../../input/state';
 import { uiShow } from '../fx';
+import { net } from '../online';
 
 /* ---------- goal celebrations ---------- */
 
@@ -30,6 +31,11 @@ export function startCelebration() {
   input.sp = input.pp = input.swp = input.sr = false;
 }
 export function endCelebration() {
+  // online, the guest asks the host, whose match it is
+  if (G.net === 'guest') {
+    if (net.send) net.send({ t: 'skip' });
+    return;
+  }
   if (G.state !== 'celebrate') return;
   for (const p of players) {
     p.jump = 0;

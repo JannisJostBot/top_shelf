@@ -8,6 +8,7 @@ import { FIRE } from '../data/pucks';
 import { COLORS } from '../data/teams';
 import {
   S,
+  SKIP,
   audio,
   banner,
   bubble,
@@ -17,6 +18,7 @@ import {
   hideBanner,
   hud,
   netHit,
+  persp,
   resetDirector,
   resetSide,
   screen,
@@ -31,7 +33,8 @@ import {
 } from './fx';
 import { clearIceWear } from './iceWear';
 import { kit } from './kit';
-import { SK, players } from './players';
+import { SK, genRoster, players } from './players';
+import { nameOf, net, resetSeats } from './online';
 import { practiceGoal, resetRosterFlags } from './practice';
 import { faceoff } from './states/faceoff';
 import { endIntro, startIntro } from './states/intro';
@@ -55,6 +58,7 @@ export const freshStats = () => ({
   ],
 });
 export function teamLabel(t) {
+  if (G.net) return nameOf(t);
   return G.watch ? kit.TEAMS[t].name.toUpperCase() : t === 0 ? 'YOU' : 'CPU';
 }
 export function confetti(team) {
@@ -103,17 +107,16 @@ export function goalScored(team, n) {
     );
   hud();
   G.timer = 1.8;
-  if (team === 0 || G.watch) {
-    S('horn');
-    goalMusic(team);
-  } else {
-    S('groan');
-    S('buzzer');
-  }
-  if (!G.ai0) vib(team === 0 ? [60, 40, 60, 40, 180] : [120]);
+  // (online, each player hears it from their own side: v is the viewer's team)
+  const ours = v => v === team || G.watch;
+  S(persp(v => (ours(v) ? 'horn' : 'groan')));
+  goalMusic(persp(v => (ours(v) ? team : SKIP)));
+  S(persp(v => (ours(v) ? SKIP : 'buzzer')));
+  vib(persp(v => (G.ai0 ? SKIP : v === team ? [60, 40, 60, 40, 180] : [120])));
   // fights get likelier with every goal that passes without one, so they turn up about once a game (and never twice)
+  // (against the CPU only after your goals, its enforcer's answer; online after either side's, the host's setting)
   G.brawlNext = false;
-  if (!G.ai0 && team === 0 && settings.fightsOn && !G.fought) {
+  if (!G.ai0 && (G.net === 'host' || (!G.net && team === 0)) && settings.fightsOn && !G.fought) {
     if (Math.random() < G.fightP) {
       G.brawlNext = true;
       G.fightP = 0.1;
@@ -130,8 +133,16 @@ export function goalScored(team, n) {
   if (!reduceMotion) G.shake = 0.4;
   const scorer = G.lastShooter;
   banner(
-    G.watch ? teamLabel(team) + ' SCORES' : team === 0 ? 'GOAL!' : 'CPU SCORES',
-    team === 0 ? 'home' : 'away',
+    persp(v =>
+      G.watch
+        ? teamLabel(team) + ' SCORES'
+        : v === team
+          ? 'GOAL!'
+          : G.net
+            ? net.names[team] + ' SCORES'
+            : 'CPU SCORES',
+    ),
+    persp(v => (v === team ? 'home' : 'away')),
     scorer && scorer.team === team ? '#' + scorer.num + ' ' + scorer.name : '',
     true,
   );
@@ -170,8 +181,10 @@ export function endPeriod() {
     G.clock = settings.periodLen;
     G.state = 'inter';
     G.timer = 2;
+    hud(); // the scoreboard shows the new period (and its lamp) from here
   } else if (G.score[0] === G.score[1]) {
     G.period = 4;
+    hud();
     G.state = 'inter';
     G.timer = 2.4;
     banner('OVERTIME', 'small', 'Next goal wins');
@@ -188,13 +201,19 @@ export function endGame() {
   startPost(w); // the winners celebrate behind the results card
   if (G.watch) {
     S('horn');
-  } else if (w === 0) {
-    S('organ');
-    S('cheer');
-  } else S('groan');
+  } else {
+    S(persp(v => (v === w ? 'organ' : 'groan')));
+    S(persp(v => (v === w ? 'cheer' : SKIP)));
+  }
   setCrowd(0.015);
   let record;
   if (G.watch) record = 'CPU vs CPU exhibition. Your record is unchanged.';
+  else if (G.net)
+    record = net.disputes
+      ? net.disputes +
+        (net.disputes === 1 ? ' call' : ' calls') +
+        ' this side could not confirm (see the play-by-play).'
+      : 'Online match. Every face-off, goal and resurfacing checked out on this screen.';
   else {
     const r = loadRec();
     r[settings.diffKey] = r[settings.diffKey] || { w: 0, l: 0 };
@@ -209,23 +228,38 @@ export function endGame() {
       r[settings.diffKey].l +
       ' L';
   }
-  const title = G.watch ? teamLabel(w) + ' WINS' : w === 0 ? 'YOU WIN' : 'CPU WINS';
+  // (v: the viewer's team; online the guest sees its own team on the left)
+  const title = v =>
+      G.watch ? teamLabel(w) + ' WINS' : v === w ? 'YOU WIN' : G.net ? net.names[w] + ' WINS' : 'CPU WINS',
+    score = v => (v ? G.score[1] + ' – ' + G.score[0] : G.score[0] + ' – ' + G.score[1]);
   // the results card (filled in now, shown after the result has had its moment)
-  screen('over', {
-    kicker:
-      'FINAL' +
-      (G.period > 3 ? ' / OT' : '') +
-      (G.watch ? ' · EXHIBITION' : ' · ' + LABEL[settings.diffKey].toUpperCase()),
-    title,
-    winner: w,
-    score: G.score[0] + ' – ' + G.score[1],
-    record,
-    again: G.watch ? 'WATCH AGAIN' : 'REMATCH',
-  });
-  banner(title, w === 0 ? 'home' : 'away', G.score[0] + ' – ' + G.score[1], true);
+  screen(
+    'over',
+    persp(v => ({
+      kicker:
+        'FINAL' +
+        (G.period > 3 ? ' / OT' : '') +
+        (G.watch ? ' · EXHIBITION' : G.net ? ' · ONLINE' : ' · ' + LABEL[settings.diffKey].toUpperCase()),
+      title: title(v),
+      winner: v ? 1 - w : w,
+      score: score(v),
+      record: G.net && v === 1 ? '' : record,
+      again: G.watch ? 'WATCH AGAIN' : 'REMATCH',
+    })),
+  );
+  banner(
+    persp(title),
+    persp(v => (v === w ? 'home' : 'away')),
+    persp(score),
+    true,
+  );
   showPad(false);
 }
-export function startGame(watch) {
+/** Starts a match: against the CPU, CPU vs CPU (`watch`), or online as the host (`online`). */
+export function startGame(watch, online = false) {
+  G.net = online ? 'host' : null;
+  net.disputes = 0;
+  resetSeats();
   G.practice = null;
   G.post = null;
   G.aim = null;
@@ -245,7 +279,11 @@ export function startGame(watch) {
   G.clock = settings.periodLen;
   G.ignoreRelease = false;
   screen('match', { watch: G.watch });
-  rosterForMatch(); // the line-up you set (if you did), otherwise a fresh roster
+  // the line-up you set (if you did), otherwise a fresh roster; online always a fresh one for both teams
+  if (online) {
+    genRoster();
+    G.rosterReady = false;
+  } else rosterForMatch();
   for (const p of players) {
     p.stride = p.lastStride = 0;
   }
@@ -261,13 +299,15 @@ export function startGame(watch) {
   startIntro(); // a short flight through the arena, then the opening face-off
 }
 export function toMenu() {
+  if (G.net && net.onMenu) net.onMenu(); // leaving an online match ends it for both
+  G.net = null;
   stopEngine();
   showTab('play');
   G.practice = null;
   G.post = null;
   G.aim = null;
   resetRosterFlags();
-  G.zam = null;
+  G.zam = G.zam2 = null;
   clearIceWear();
   G.demo = true;
   G.watch = false;
@@ -285,8 +325,13 @@ export function toMenu() {
   hud();
   faceoff();
 }
-export function togglePause() {
+export function togglePause(by) {
   if (G.demo) return;
+  // online, either player may pause; the host's match is what stops
+  if (G.net === 'guest') {
+    if (net.send) net.send({ t: 'pause' });
+    return;
+  }
   // the arena intro is not paused: pause skips it, straight to the face-off
   if (G.state === 'intro') {
     endIntro();
@@ -299,7 +344,7 @@ export function togglePause() {
   } else if (G.state !== 'over') {
     G.resume = G.state;
     G.state = 'paused';
-    screen('pause', true);
+    screen('pause', G.net ? { on: true, by: by === 1 ? net.names[1] : by === -1 ? '' : net.names[0] } : true);
     setCrowd(0.012);
     input.shootHeld = false;
     G.charging = false;

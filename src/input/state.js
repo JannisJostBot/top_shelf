@@ -14,6 +14,8 @@ export const input = {
   keys: new Set(),
   shootHeld: false,
   sp: false,
+  /** when shoot was last pressed (performance.now()), for timing the online face-off to the millisecond */
+  spAt: 0,
   sr: false,
   pp: false,
   swp: false,

@@ -196,7 +196,8 @@ export function render() {
   }
   if (G.state === 'zamboni') {
     drawn = true;
-    if (G.zam) at(G.zam, drawZamboni);
+    if (G.zam2) at(G.zam2, () => drawZamboni(G.zam2));
+    if (G.zam) at(G.zam, () => drawZamboni(G.zam));
     if (G.zam && G.zam.phase === 'drive')
       for (const sp of SPARK) {
         if (frostAt(sp.x, sp.y) > 0) continue;
