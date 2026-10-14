@@ -128,7 +128,7 @@ const PADMAP = [
     'Online replay: emotes (✚ up hyped, right nice, down nooo, left grrr · L3 LOL · R3 what?!)',
   ],
   [['☰'], 'Pause'],
-  [['✚', 'A'], 'In menus: move and press · LB / RB change tab · B resume'],
+  [['✚', 'A'], 'In menus: move and press · LB / RB previous / next page · B back to the rink or resume'],
 ];
 export const padmapHTML = () =>
   PADMAP.map(
