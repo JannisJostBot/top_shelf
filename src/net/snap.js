@@ -7,6 +7,8 @@ import { seat1 } from '../game/online';
 import { G, puck, ref } from '../game/world';
 import { fin, mirrorIdx } from './proto';
 
+const SAVE_KINDS = ['pad', 'glove', 'block']; // a goalie's save, for the guest's animation (render/players.js)
+
 const NP = 18, // numbers per player
   NK = 7, // puck
   NR = 7, // referee
@@ -41,7 +43,8 @@ export function packSnap() {
       (p.stickUp ? 1 : 0) | (p.benched ? 2 : 0),
       pos((p.followUntil || 0) - clock.now),
       pos(p.saveT),
-      p.saveDir < 0 ? -1 : 1,
+      // the save's side and kind in one number: ±1 pad, ±2 glove, ±3 blocker
+      (p.saveDir < 0 ? -1 : 1) * (1 + SAVE_KINDS.indexOf(p.saveKind || 'pad')),
       pos(p.checkCd),
       pos(p.checkT),
       pos(p.hurtT),
@@ -162,7 +165,9 @@ export function applySnap(a, b, k) {
     p.benched = !!(c[o + 11] & 2);
     p.followUntil = c[o + 12] > 0 ? clock.now + c[o + 12] : 0;
     p.saveT = c[o + 13];
-    p.saveDir = -c[o + 14];
+    const sd = -c[o + 14];
+    p.saveDir = sd < 0 ? -1 : 1;
+    p.saveKind = SAVE_KINDS[Math.abs(sd) - 1] || 'pad';
     p.checkCd = c[o + 15];
     p.checkT = c[o + 16];
     p.hurtT = c[o + 17];

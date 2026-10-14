@@ -103,6 +103,8 @@ export function goalieCheck() {
         }
         g.saveT = 0.32;
         g.saveDir = side;
+        // how the save looks (render/players.js): the glove, the blocker for a deflection, the butterfly for a pad save
+        g.saveKind = kind === 'GLOVE SAVE' ? 'glove' : kind === 'DEFLECTED' ? 'block' : 'pad';
         S('save', { kind: kind === 'GLOVE SAVE' ? 'glove' : kind === 'DEFLECTED' ? 'deflect' : 'pad' });
         if (sp > 200) S('ooh');
         if (sp > 170) pop(g.x, g.y, kind, '#ffffff');

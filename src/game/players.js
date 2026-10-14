@@ -18,6 +18,7 @@ function mk(team, role, slot) {
     vy: 0,
     saveT: 0,
     saveDir: 1,
+    saveKind: 'pad',
     jump: 0,
     stickUp: false,
     fx: 0,

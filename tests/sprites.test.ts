@@ -31,3 +31,27 @@ describe('jersey numbers', () => {
     expect(withNumber(back, 9)).toBe(withNumber(back, 9));
   });
 });
+
+describe('remastered skater frames', () => {
+  for (const face of ['eyes', 'visor', 'cage'] as const) {
+    const set = (FACES as any)[face];
+    it(`${face}: every stride frame is 12 wide and at least 20 tall`, () => {
+      for (const k of ['frontStride', 'backStride', 'sideStride', 'frontStart', 'backStart', 'sideStart']) {
+        const frames: string[][] = set[k];
+        expect(frames.length).toBe(k.endsWith('Start') ? 4 : 12);
+        for (const m of frames) {
+          expect(m.length).toBeGreaterThanOrEqual(20);
+          for (const row of m) expect(row.length).toBe(12);
+        }
+      }
+    });
+  }
+  it('keeps the face style in the new frames', () => {
+    expect((FACES as any).visor.frontStride[0][4]).toBe((FACES as any).visor.frontA[4]);
+    expect((FACES as any).cage.sideStride[3][3]).toBe((FACES as any).cage.sideA[3]);
+  });
+  it('numbers the back-view stride like the old back view', () => {
+    const m = withNumber((FACES as any).eyes.backStride[3], 17);
+    expect(digitCells(m)).toBeGreaterThan(0);
+  });
+});
