@@ -17,11 +17,17 @@ import { STADIUMS } from '../data/stadiums';
 import { clockText, hudClock, showRec } from './hud';
 
 // menu tabs
-// the Setup tab's Sound row mirrors the scoreboard's SFX button (which is hidden while the menu is open)
-function showSound() {
+// sound on/off lives in two places: the Setup tab's Sound row and the pause menu's Sound button
+function setMuted(m) {
+  settings.muted = m;
   document
     .querySelectorAll('#sndSeg button')
-    .forEach(x => x.setAttribute('aria-checked', String((x.dataset.v === 'off') === settings.muted)));
+    .forEach(x => x.setAttribute('aria-checked', String((x.dataset.v === 'off') === m)));
+  const pb = $('pSndBtn');
+  pb.setAttribute('aria-pressed', String(m));
+  pb.textContent = 'Sound: ' + (m ? 'off' : 'on');
+  audio();
+  if (master) master.gain.setTargetAtTime(m ? 0 : 0.9, AC.currentTime, 0.02);
 }
 // The menu is a matchday program (see styles/program.css): the home page with the rink, and one page per section.
 // Picking a section slides the puck to its spot on the rink, inks the circle in and grows the page out of it; back,
@@ -328,16 +334,8 @@ export function initMenu() {
   $('resumeBtn').addEventListener('click', togglePause);
   $('quitBtn').addEventListener('click', toMenu);
   $('pauseBtn').addEventListener('click', togglePause);
-  document.querySelectorAll('#sndSeg button').forEach(b =>
-    b.addEventListener('click', () => {
-      if ((b.dataset.v === 'off') !== settings.muted) $('muteBtn').click();
-    }),
-  );
-  $('muteBtn').addEventListener('click', () => {
-    settings.muted = !settings.muted;
-    $('muteBtn').setAttribute('aria-pressed', String(settings.muted));
-    showSound();
-    audio();
-    if (master) master.gain.setTargetAtTime(settings.muted ? 0 : 0.9, AC.currentTime, 0.02);
-  });
+  document
+    .querySelectorAll('#sndSeg button')
+    .forEach(b => b.addEventListener('click', () => setMuted(b.dataset.v === 'off')));
+  $('pSndBtn').addEventListener('click', () => setMuted(!settings.muted));
 }

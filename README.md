@@ -45,8 +45,10 @@ src/
     online.js         online play, the simulation's side: team 1's human seat, who is steered by whom
     update.js         per-tick state dispatch
   net/                online play (loaded only when you host or join): Trystero rooms and their privacy
-                      rules (session.js), the host's frames and the guest's playback (match.js),
-                      snapshots (snap.js), message checks and the mirror between the two views (proto.js)
+                      rules, a reliable channel plus a fast one for snapshots and the stick (session.js), the
+                      host's frames and the guest's playback (match.js), the guest's frame buffer and its
+                      adaptive delay (buffer.js), snapshots (snap.js), the guest's own skater predicted
+                      (predict.js), message checks and the mirror between the two views (proto.js)
   render/             canvas drawing: sprites, ice, stands, players, puck, effects, mode-7 replay cam
   audio/              Web Audio engine, procedural skate sounds, synth voices, SFX table, goal songs
   input/              shared input state + keyboard, mouse, touch, game controller, haptics

@@ -201,19 +201,6 @@
   top: calc(100% + 6px);
   right: 0;
 }
-/* the sound button shows a speaker, crossed out when muted */
-.spk {
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
-}
-.spk-off,
-#muteBtn[aria-pressed='true'] .spk-on {
-  display: none;
-}
-#muteBtn[aria-pressed='true'] .spk-off {
-  display: block;
-}
 .fsi {
   width: 16px;
   height: 16px;

@@ -30,11 +30,14 @@ import {
   packInput,
   readConfig,
   readInput,
+  readInputs,
+  IN_KEEP,
   mirrorIdx,
   relayed,
   sameName,
 } from '../src/net/proto';
 import { SCORE_AT, SNAP_LEN, applySnap, packSnap, snapOk } from '../src/net/snap';
+import { HOLD, LAG_MAX, LAG_MIN, addFrame, advance, frameBuffer, nextFrame } from '../src/net/buffer';
 
 const G: any = world; // (inferred from plain JS, which knows nothing of the online fields)
 
@@ -166,6 +169,77 @@ describe('messages from the other player', () => {
     t = 1;
     for (let i = 0; i < 100; i++) if (b.take()) n++;
     expect(n).toBe(10);
+  });
+});
+
+describe('the network in between', () => {
+  it('repeats the last input packets, so a lost or late message loses no press', () => {
+    const pk = (sp: boolean) =>
+      packInput(
+        { jx: 0.5, jy: 0, aim: null, shootHeld: false, sp, sr: false, pp: false, swp: false, touch: false },
+        false,
+      );
+    // steps 3..6, newest first; step 4 had the shot press
+    const msg = [pk(false), pk(false), pk(true), pk(false)];
+    expect(IN_KEEP).toBe(4);
+    let got = readInputs(msg, 6, 2)!;
+    expect(got.map((p: any) => p.n)).toEqual([3, 4, 5, 6]);
+    expect(got.map(p => p.sp)).toEqual([false, true, false, false]);
+    expect(got[0].jx).toBe(-0.5); // (in the host's view)
+    // steps 3 and 4 already came in: only the newer ones
+    got = readInputs(msg, 6, 4)!;
+    expect(got.map((p: any) => p.n)).toEqual([5, 6]);
+    // an old message that turns up late brings nothing new
+    expect(readInputs(msg, 6, 9)).toEqual([]);
+    expect(readInputs([], 6, 0)).toBeNull();
+    expect(readInputs([...msg, pk(false)], 7, 0)).toBeNull();
+    expect(readInputs(msg, 0, 0)).toBeNull();
+    expect(readInputs([pk(false), [1, 2, 3]], 6, 0)).toBeNull();
+  });
+  it('plays snapshots in order, never ahead of the reliable frame they follow', () => {
+    const b = frameBuffer(),
+      f = (ts: number, r: number) => ({ ts, r });
+    expect(addFrame(b, f(0.0, 0), false, 1)).toBe('ok');
+    // the goal (reliable frame 1) is held up, the snapshots after it came over the fast channel, out of order
+    expect(addFrame(b, f(0.1, 1), false, 1.1)).toBe('ok');
+    expect(addFrame(b, f(0.067, 1), false, 1.1)).toBe('ok');
+    expect(b.q.map((x: any) => x.ts)).toEqual([0, 0.067, 0.1]);
+    expect(nextFrame(b, 0.2)!.f.ts).toBe(0);
+    expect(nextFrame(b, 0.2)).toBeNull(); // (waits for frame 1)
+    expect(addFrame(b, f(0.033, 1), true, 1.15)).toBe('ok');
+    expect(nextFrame(b, 0.2)!.f.ts).toBe(0.033);
+    expect(nextFrame(b, 0.2)!.f.ts).toBe(0.067);
+    expect(nextFrame(b, 0.2)!.f.ts).toBe(0.1);
+    // a snapshot older than the one on screen is dropped; a reliable one still counts, at once
+    expect(addFrame(b, f(0.09, 1), false, 1.2)).toBe('drop');
+    expect(addFrame(b, f(0.095, 2), true, 1.2)).toBe('late');
+    // a reliable frame that never comes holds the snapshots after it up for HOLD at most
+    addFrame(b, f(0.133, 5), false, 1.25);
+    expect(nextFrame(b, 0.133 + HOLD / 2)).toBeNull();
+    const n = nextFrame(b, 0.133 + HOLD + 0.01)!;
+    expect(n.early).toBe(true);
+    expect(b.rel).toBe(5);
+  });
+  it('plays further behind on a jittery connection and closer on a steady one', () => {
+    const steady = frameBuffer();
+    for (let i = 0; i < 400; i++) addFrame(steady, { ts: i / 30, r: 0 }, false, 5 + i / 30);
+    expect(steady.lag).toBeCloseTo(LAG_MIN, 2);
+    const shaky = frameBuffer();
+    for (let i = 0; i < 400; i++)
+      addFrame(shaky, { ts: i / 30, r: 0 }, false, 5 + i / 30 + (i % 7 === 0 ? 0.12 : 0));
+    expect(shaky.lag).toBeGreaterThan(0.15);
+    expect(shaky.lag).toBeLessThanOrEqual(LAG_MAX);
+    // the playback clock settles at the lag behind the newest frame (frames every other step)
+    const live = frameBuffer();
+    let t = null as number | null,
+      behind = 0;
+    for (let i = 0; i < 1200; i++) {
+      if (i % 2 === 0) addFrame(live, { ts: i / 60, r: 0 }, false, 5 + i / 60);
+      if (i > 1000) behind += (live.newest! - t!) / 199;
+      t = advance(live, t, 1 / 60);
+      while (nextFrame(live, t!));
+    }
+    expect(behind).toBeCloseTo(live.lag, 2);
   });
 });
 
