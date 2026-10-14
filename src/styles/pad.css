@@ -68,7 +68,7 @@
   border: 0;
   border-radius: 50%;
   font-family: var(--display);
-  cursor: pointer;
+  cursor: var(--cur-hand);
   touch-action: none;
   padding: 0;
   opacity: 0.88;
