@@ -109,7 +109,7 @@
   background: none;
   border: 0;
   padding: 4px 0;
-  cursor: pointer;
+  cursor: var(--cur-hand);
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -196,7 +196,7 @@
   display: grid;
   border: 3px solid var(--p1);
   background: #e8f0f7 !important;
-  cursor: pointer;
+  cursor: var(--cur-hand);
   color: var(--p1);
   font-family: var(--pixel);
 }
@@ -337,7 +337,7 @@
   font-size: clamp(6px, round(down, (var(--d) - 10px) / 6, 1px), 8px);
   text-transform: uppercase;
   line-height: 1.5;
-  cursor: pointer;
+  cursor: var(--cur-hand);
   display: grid;
   place-content: center;
   padding: 0;
@@ -405,7 +405,7 @@
   padding: 6px 0;
   display: grid;
   place-items: center;
-  cursor: pointer;
+  cursor: var(--cur-hand);
 }
 .rinkmenu .bench.l {
   left: 14px;
@@ -467,7 +467,7 @@
   background: var(--paper);
   border: 2px solid var(--p2);
   box-shadow: 3px 3px 0 var(--p2);
-  cursor: pointer;
+  cursor: var(--cur-hand);
 }
 .pback::before {
   content: '';
@@ -690,7 +690,7 @@
   background: var(--p2);
   color: var(--paper);
   padding: 0 18px;
-  cursor: pointer;
+  cursor: var(--cur-hand);
   transform-origin: 0 100%;
 }
 .tkgo:hover,
@@ -1093,7 +1093,7 @@ body.wide .prog.result > .pwin {
   z-index: 1;
 }
 button.lutok {
-  cursor: pointer;
+  cursor: var(--cur-hand);
 }
 .lutok b {
   font-size: 7px;
@@ -1265,7 +1265,7 @@ button.lutok:focus-visible i {
   display: grid;
 }
 .prog #olStart:disabled {
-  cursor: default;
+  cursor: var(--cur);
   filter: saturate(0.4);
 }
 
@@ -1401,7 +1401,7 @@ button.lutok:focus-visible i {
   align-items: center;
   gap: 10px;
   font-size: 12px;
-  cursor: pointer;
+  cursor: var(--cur-hand);
 }
 .inever input {
   width: 18px;

@@ -12,7 +12,7 @@
   color: var(--ink);
   background: var(--arena);
   border: 2px solid var(--line);
-  cursor: pointer;
+  cursor: var(--cur-hand);
   text-align: left;
   padding: 6px;
 }
@@ -41,7 +41,7 @@
   padding: 6px;
   background: var(--arena);
   border: 2px solid var(--line);
-  cursor: pointer;
+  cursor: var(--cur-hand);
   text-align: left;
   color: var(--ink);
   font-family: var(--pixel);
