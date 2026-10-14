@@ -176,6 +176,19 @@ body.wide #keyhint {
   color: #ffd25e;
   text-shadow: 0 0 3px rgba(255, 190, 60, 0.7);
 }
+/* a drill's own numbers in practice: the label on the left, the value on the right */
+.srow.one {
+  grid-template-columns: 1fr auto;
+}
+.srow.one span {
+  text-align: left;
+}
+.dnote {
+  margin: 4px 0 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--muted);
+}
 .srow b:last-of-type {
   text-align: right;
 }

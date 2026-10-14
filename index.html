@@ -26,14 +26,19 @@
       <aside class="side" id="sideL" hidden aria-label="Match">
         <div class="pennant home"><span id="sdBan0"></span></div>
         <div class="jumbo" id="sdBoard"></div>
-        <section class="spanel inmatchOnly">
+        <section class="spanel inmatchOnly" id="sdMatch">
           <h3>MATCH STATS</h3>
           <div class="steams" id="sdTeams"></div>
           <div class="sstats" id="sdStats"></div>
         </section>
-        <section class="spanel grow inmatchOnly">
+        <section class="spanel grow inmatchOnly" id="sdPbp">
           <h3>PLAY-BY-PLAY</h3>
           <ol class="feed" id="sdFeed"></ol>
+        </section>
+        <section class="spanel grow inmatchOnly" id="sdDrill" hidden>
+          <h3 id="sdDrillH">PRACTICE</h3>
+          <div class="sstats" id="sdDrillStats"></div>
+          <p class="dnote" id="sdDrillNote"></p>
         </section>
       </aside>
       <main id="stage">
@@ -779,7 +784,8 @@
               </p>
               <h3>Online</h3>
               <p>
-                Host a room on the Online page and send your friend the code, or join with theirs. The host's
+                Host a room on the Online page and send your friend the code, or join with theirs; once you are
+                both in, the host drops the puck with the ticket at the bottom of the page. The host's
                 browser runs the match with the host's settings; the guest sees it from their own end, so both
                 attack up the screen, and each of you steers one skater with CPU teammates. Face-offs are timed
                 on each screen from the moment the puck drops there, so the connection does not slow anyone down;
@@ -800,7 +806,9 @@
               <p>
                 The Train tab has free skate (pick opponents, teammates and their goalie), the aim trainer (a
                 board covers the goal except a small gap that moves after every goal; one minute or endless,
-                with a still or a sliding gap), fight practice and resurfacer practice.
+                with a still or a sliding gap), fight practice and resurfacer practice. On a wide screen the
+                left panel keeps the drill's own numbers (goals, shots, accuracy, time, your best) in place of
+                the match stats.
               </p>
                 <button class="plink" data-goto="help">‹ Keys and controls</button>
               </div>
@@ -809,6 +817,7 @@
             <div class="ticket" id="ticket">
               <canvas id="pvArena" width="120" height="82" aria-hidden="true"></canvas>
               <span class="tkinfo"><b id="matchLine">Blue vs Navy</b><span id="tkSub">Pro · 3 × 1:00</span></span>
+              <span class="tkinfo ol"><b id="olTkLine">You vs a friend</b><span id="olTkSub">Host or join a room above</span></span>
               <button class="tkgo" id="startBtn">Play</button><button class="tkgo" id="watchBtn">Watch</button
               ><button class="tkgo" id="olStart" disabled>Play</button>
             </div>
@@ -821,7 +830,7 @@
             <h2 class="ptitle">Paused</h2>
             <p class="small" id="pauseBy"></p>
             <div class="plist">
-              <button class="btn go" id="resumeBtn">Resume ▸</button>
+              <button class="btn go" id="resumeBtn">Resume ›</button>
               <button class="btn ghost" id="quitBtn">Quit to the program</button>
             </div>
             <div class="keymap" id="pauseKeys"></div>

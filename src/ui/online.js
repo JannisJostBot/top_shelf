@@ -36,7 +36,14 @@ function stage(s) {
     $('olLobby').hidden = true;
     ready('');
     status('');
+    ticket('Host or join a room above');
   }
+}
+/** The ticket on this page: you against your friend, and what the match is waiting for. */
+function ticket(sub, peer) {
+  const me = cleanName($('olName').value) || 'You';
+  $('olTkLine').textContent = me + ' vs ' + (peer || 'a friend');
+  $('olTkSub').textContent = sub;
 }
 /** The ticket's Play button on this page: the host's start, once the guest is in. */
 function ready(v) {
@@ -50,6 +57,7 @@ const callbacks = {
     $('olCodeTxt').textContent = fmtCode(c);
     $('olCodeBox').hidden = false;
     status('Waiting for your friend. Send them the code or the link; it lets one person in.');
+    ticket('Waiting for your friend');
   },
   status,
   lobby() {
@@ -64,6 +72,8 @@ const callbacks = {
         : 'Waiting for ' + l.peer + ' to drop the puck.';
     status('Connected directly to ' + l.peer + '. The invite code no longer works.');
     ready(l.role);
+    // the host's settings are used: the host's ticket prints them, the guest's says whose they are
+    ticket(l.role === 'host' ? $('tkSub').textContent : l.peer + "'s arena and settings", l.peer);
   },
   error(t) {
     stage('setup');
@@ -106,6 +116,7 @@ async function hostRoom() {
   if (!n) return;
   stage('room');
   status('Opening a room…');
+  ticket('Opening a room…');
   try {
     await (await load()).hostOnline(n, callbacks);
   } catch (e) {
@@ -125,6 +136,7 @@ async function joinRoom() {
   $('olCode').value = fmtCode(c);
   stage('room');
   status('Connecting…');
+  ticket('Connecting…');
   try {
     await (await load()).joinOnline(c, n, callbacks);
   } catch (e) {
@@ -143,6 +155,7 @@ async function copy(text, btn) {
 }
 export function initOnline() {
   $('olName').value = loadName();
+  $('olName').addEventListener('input', () => $('olSetup').hidden || ticket('Host or join a room above'));
   $('olHost').addEventListener('click', hostRoom);
   $('olJoin').addEventListener('click', joinRoom);
   $('olCode').addEventListener('keydown', e => e.key === 'Enter' && joinRoom());

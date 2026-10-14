@@ -9,6 +9,7 @@ import { G } from '../game/world';
 import { nameOf } from '../game/online';
 import { hintNow, kbdHTML } from './keyhint';
 import { clockText } from './hud';
+import { loadAimBest } from '../core/storage';
 import { fit } from '../render/camera';
 
 const WIDE = matchMedia('(orientation: landscape) and (min-width: 1060px) and (min-height: 560px)');
@@ -72,6 +73,60 @@ function drawStats() {
   setHTML($('sdStats'), html);
 }
 
+/* ---------- practice: the drill's own numbers instead of the match stats and the play-by-play ---------- */
+const OPP = { none: 'NONE', dummy: 'DUMMIES', easy: 'EASY', cpu: 'CPU' },
+  GOALIE = { none: 'NONE', dummy: 'DUMMY', cpu: 'CPU' };
+function drawDrill() {
+  const c = G.practice,
+    row = (label, v) => `<div class="srow one"><span>${label}</span><b>${v}</b></div>`,
+    goals = G.score[0],
+    shots = G.score[1],
+    shooting =
+      row('GOALS', goals) +
+      row('SHOTS', shots) +
+      row('ACCURACY', shots ? Math.round((goals / shots) * 100) + '%' : '–');
+  let title, html, note;
+  if (c.mode === 'aim') {
+    const a = G.aim,
+      endless = a ? a.endless : c.endless,
+      moving = a ? a.moving : c.moving;
+    title = 'AIM TRAINER';
+    html =
+      row('TIME', endless ? 'ENDLESS' : clockText(Math.max(0, Math.ceil(a ? a.t : 0)))) +
+      shooting +
+      row('BEST', loadAimBest(moving));
+    note = moving ? 'The gap slides along the board.' : 'The gap moves after every goal.';
+  } else if (c.mode === 'fight') {
+    const B = G.br;
+    title = 'FIGHT PRACTICE';
+    html = B
+      ? row('YOU', Math.max(0, Math.round(B.hpA)) + ' HP') +
+        row('THEM', Math.max(0, Math.round(B.hpB)) + ' HP') +
+        row('STAMINA', Math.round(B.stam) + '%')
+      : '';
+    note = 'Block when you see the red !, counter when they miss.';
+  } else if (c.mode === 'zam') {
+    const z = G.zam;
+    title = 'RESURFACER';
+    html = z
+      ? row('POLISHED', Math.round((z.count / Math.max(1, z.total)) * 100) + '%') +
+        row('TIME', Math.max(0, Math.ceil(z.t)) + 's')
+      : '';
+    note = 'Steer over the scraped ice to polish it.';
+  } else {
+    title = 'FREE SKATE';
+    html =
+      shooting +
+      row('OPPONENTS', OPP[c.opp] || 'NONE') +
+      row('TEAMMATES', c.mates ? 'ON' : 'OFF') +
+      row('THEIR GOALIE', GOALIE[c.goalie] || 'NONE');
+    note = 'No clock: quit from the pause menu.';
+  }
+  setHTML($('sdDrillH'), title);
+  setHTML($('sdDrillStats'), html);
+  setHTML($('sdDrillNote'), note);
+}
+
 /* ---------- status: boosts, shot power, controls ---------- */
 function drawBoost() {
   const m = G.mom,
@@ -101,6 +156,17 @@ const WATCH_PAD = [
   ['X', 'Switch camera'],
   ['☰', 'Pause'],
 ];
+// on the result card the match controls are done with: only what works on the card
+const OVER_KEYS = [
+  ['Tab', 'Pick a button'],
+  ['Enter', 'Press it'],
+  ['F', 'Fullscreen'],
+];
+const OVER_PAD = [
+  ['☰', 'Again'],
+  ['✚', 'Pick a button'],
+  ['A', 'Press it'],
+];
 const ALWAYS_KEYS = [
   ['WASD', 'Skate (or arrows)'],
   ['F', 'Fullscreen'],
@@ -113,8 +179,9 @@ const ALWAYS_PAD = [
 let lastKeys = '';
 function drawKeys() {
   const padOn = hintNow.pad,
-    now = G.watch ? (padOn ? WATCH_PAD : WATCH_KEYS) : hintNow.list,
-    always = G.watch ? [] : padOn ? ALWAYS_PAD : ALWAYS_KEYS,
+    over = G.state === 'over',
+    now = over ? (padOn ? OVER_PAD : OVER_KEYS) : G.watch ? (padOn ? WATCH_PAD : WATCH_KEYS) : hintNow.list,
+    always = G.watch || over ? [] : padOn ? ALWAYS_PAD : ALWAYS_KEYS,
     key = JSON.stringify([now, always, padOn]);
   if (key === lastKeys) return;
   lastKeys = key;
@@ -195,10 +262,20 @@ export function updSide() {
   lastT = clock.now;
   drawBanners();
   if (!match) return;
-  drawStats();
+  const drill = !!G.practice;
+  for (const [id, on] of [
+    ['sdMatch', !drill],
+    ['sdPbp', !drill],
+    ['sdDrill', drill],
+  ])
+    if ($(id).hidden === on) $(id).hidden = !on;
+  if (drill) drawDrill();
+  else {
+    drawStats();
+    if (feedDirty) drawFeed();
+  }
   drawBoost();
   drawKeys();
-  if (feedDirty) drawFeed();
   setHTML(
     $('sdTeams'),
     `<span class="home">${esc(G.watch ? kit.TEAMS[0].name.toUpperCase() : 'YOU')}</span>` +

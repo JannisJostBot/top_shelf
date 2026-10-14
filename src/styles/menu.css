@@ -115,6 +115,23 @@ kbd {
   border: 2px solid var(--line);
   border-bottom-width: 3px;
 }
+kbd .arw {
+  display: inline-block;
+  font-style: normal;
+}
+kbd .arw.l {
+  transform: rotate(-90deg);
+}
+kbd .arw.r {
+  transform: rotate(90deg);
+}
+kbd .kico {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  vertical-align: -1px;
+  fill: currentColor;
+}
 #keyhint {
   position: absolute;
   left: 8px;
