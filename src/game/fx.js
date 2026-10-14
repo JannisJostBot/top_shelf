@@ -53,7 +53,7 @@ export const goalMusic = out('goalMusic');
 export const stopSong = out('stopSong');
 export const chime = out('chime');
 export const vib = out('haptic'); // vibration / controller rumble pattern
-export const zamEngine = out('zamEngine'); // 'start' | 'stop' | 'speed', v
+export const zamEngine = out('zamEngine'); // 'start' | 'stop' | 'pause' | 'resume' | 'speed', v
 export const zamHorn = out('zamHorn');
 export const flash = out('flash'); // a white flash over the rink (a big hit you were in)
 

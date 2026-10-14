@@ -3,7 +3,8 @@ import { settings } from '../settings';
 import { AC, master, osc } from './engine';
 
 let eng = null;
-/** 'start' when it sets off, 'speed' with the current speed while driving, 'stop' when it is done. */
+/** 'start' when it sets off, 'speed' with the current speed while driving, 'pause' / 'resume' around a pause
+ * (quiet, then back at the same note), 'stop' when it is done. */
 export function zamEngine(cmd, v) {
   if (cmd === 'start') {
     if (!AC || settings.muted) return;
@@ -35,6 +36,14 @@ export function zamEngine(cmd, v) {
     eng.o1.frequency.setTargetAtTime(52 + v * 1.1, t, 0.1);
     eng.o2.frequency.setTargetAtTime(104 + v * 2.2, t, 0.1);
     eng.lp.frequency.setTargetAtTime(420 + v * 14, t, 0.1);
+  } else if (cmd === 'pause' || cmd === 'resume') {
+    if (!eng || !AC) return;
+    const t = AC.currentTime;
+    try {
+      eng.g.gain.cancelScheduledValues(t);
+      eng.g.gain.setValueAtTime(eng.g.gain.value, t);
+      eng.g.gain.linearRampToValueAtTime(cmd === 'pause' ? 0.0001 : 0.09, t + (cmd === 'pause' ? 0.15 : 0.3));
+    } catch (e) {}
   } else if (cmd === 'stop') {
     if (!eng || !AC) return;
     const t = AC.currentTime;

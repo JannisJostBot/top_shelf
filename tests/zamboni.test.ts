@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { NETS, RX0, RY0, STEP } from '../src/config';
-import { clearEvents } from '../src/core/events';
+import { clearEvents, on } from '../src/core/events';
+import { togglePause } from '../src/game/match';
 import { startZamboni, zamStep } from '../src/game/states/zamboni';
 import { G } from '../src/game/world';
 import { input, pad } from '../src/input/state';
@@ -78,5 +79,32 @@ describe('resurfacer run', () => {
     pad.x = pad.y = 0;
     input.sp = input.pp = false;
     expect(z.pct).toBeGreaterThanOrEqual(50);
+  });
+});
+
+// The engine hum goes quiet while the game is paused and comes back on resume.
+describe('resurfacer engine and pause', () => {
+  it('pauses and resumes the engine with the game', () => {
+    clearEvents();
+    G.demo = false;
+    G.net = null;
+    const cmds: string[] = [];
+    on('zamEngine', (c: string) => cmds.push(c));
+    startZamboni();
+    const z = G.zam;
+    while (z.phase === 'count') zamStep(STEP);
+    togglePause();
+    expect(G.state).toBe('paused');
+    togglePause();
+    expect(G.state).toBe('zamboni');
+    expect(cmds.filter(c => c === 'pause' || c === 'resume')).toEqual(['pause', 'resume']);
+    // once this machine is done its engine is off: nothing to quiet
+    z.phase = 'done';
+    togglePause();
+    togglePause();
+    expect(cmds.filter(c => c === 'pause' || c === 'resume')).toEqual(['pause', 'resume']);
+    clearEvents();
+    G.zam = null;
+    G.state = 'menu';
   });
 });
