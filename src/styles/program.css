@@ -1170,12 +1170,6 @@ body.wide .prog.insert:not(.result) {
 .prog .tban .f2 {
   fill: var(--p2);
 }
-.prog .tban .pp {
-  fill: var(--paper);
-}
 .prog .tban .mx {
   mix-blend-mode: multiply;
-}
-.prog .tban .dash {
-  stroke-dasharray: 6 4;
 }
