@@ -11,6 +11,9 @@ export const M = 14,
   FAN_SEATS = 128,
   FAN_ROWS = 48;
 export let fanTab = [];
+/** Share of seats taken during practice: a training session draws only a handful of onlookers. */
+export const PRACTICE_FILL = 0.05;
+let fansSparse = false;
 export const U32 = h =>
   ((255 << 24) |
     (parseInt(h.slice(5, 7), 16) << 16) |
@@ -29,6 +32,7 @@ const shade = (h, k) =>
 export function buildFans() {
   const extra = ['#e9edf3', '#2a2f3d', '#f2b632', '#5a6a7d', '#d8343f', '#3d7bff'],
     skins = ['#f3cfae', '#e8b48a', '#c98d5f', '#9a633d', '#6e4329'];
+  fansSparse = !!G.practice;
   fanTab = [];
   for (let s = 0; s < FAN_SEATS; s++)
     for (let r = 0; r < FAN_ROWS; r++) {
@@ -41,7 +45,7 @@ export function buildFans() {
               : extra[Math.floor(hash(s, r) * extra.length)],
         head = skins[Math.floor(hash(r, s * 2) * skins.length)];
       fanTab.push({
-        empty: h > 0.93,
+        empty: h > 0.93 || (fansSparse && hash(s * 0.37 + 5.1, r * 1.3 + 2.9) > PRACTICE_FILL),
         bodyHex: body,
         headHex: head,
         body: U32(body),
@@ -50,6 +54,10 @@ export function buildFans() {
         ph: hash(r * 2, s) * 6.28,
       });
     }
+}
+/** Rebuild the crowd when play switches between a match (full stands) and practice (nearly empty). */
+export function syncFans() {
+  if (!!G.practice !== fansSparse) buildFans();
 }
 const FAN2D = [];
 for (const side of [-1, 1])
