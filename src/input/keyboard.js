@@ -6,6 +6,8 @@ import { endCelebration } from '../game/states/celebrate';
 import { G } from '../game/world';
 import { input } from './state';
 import { menuBack, showTab, toggleWatchCam } from '../ui/menu';
+import { EMOTE_KEYS } from '../data/emotes';
+import { sendEmote, toggleVote } from '../ui/emotes';
 
 export function initKeyboard() {
   // typing a name or an invite code is not playing
@@ -32,6 +34,12 @@ export function initKeyboard() {
     if (e.code === 'KeyC' && G.watch) {
       toggleWatchCam();
       return;
+    }
+    // online replays: G votes for a fight, 1 to 6 send an emote
+    if (G.net && G.state === 'replay') {
+      if (e.code === 'KeyG') return toggleVote();
+      const d = /^(Digit|Numpad)([1-6])$/.exec(e.code);
+      if (d) return sendEmote(EMOTE_KEYS[+d[2] - 1]);
     }
     if (e.code === 'Enter' && G.state === 'replay') {
       endReplay();

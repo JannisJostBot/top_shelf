@@ -1,4 +1,5 @@
 import { $ } from '../core/dom';
+import { net } from '../game/online';
 import { G, puck } from '../game/world';
 import { pad } from '../input/gamepad';
 import { mouse } from '../input/state';
@@ -23,14 +24,15 @@ export function updPad() {
       else m = 'loose';
     }
   }
-  if (G.state === 'replay' || G.state === 'celebrate') m = 'replay';
+  if (G.state === 'replay' && G.net) m = net.vote.open && !G.fought ? 'replayVote' : 'replayNet';
+  else if (G.state === 'replay' || G.state === 'celebrate') m = 'replay';
   else if (!G.ai0 && (G.state === 'goal' || G.state === 'inter')) m = 'idle';
   if (m === touchState.padMode && mouse.on === lastMouseOn && pad.active === lastPadOn) return;
   touchState.padMode = m;
   lastMouseOn = mouse.on;
   lastPadOn = pad.active;
   setHint(m);
-  if (m === 'replay' || m === 'idle') return;
+  if (m.startsWith('replay') || m === 'idle') return;
   const L = {
     zam: ['HORN', 'FINISH'],
     fight: ['PUNCH', 'BLOCK'],

@@ -18,7 +18,17 @@ import { scuff, clearIceWear } from '../game/iceWear';
 import { kit } from '../game/kit';
 import { freshStats, startGame, toMenu, togglePause } from '../game/match';
 import { MIN_REACTION, net, rinput } from '../game/online';
-import { endReplay, nextAngle, recFrame, replayStep, startReplay, beginAngle, ANGLES } from '../game/replay';
+import {
+  endReplay,
+  nextAngle,
+  recFrame,
+  replayStep,
+  startReplay,
+  beginAngle,
+  voteFight,
+  ANGLES,
+} from '../game/replay';
+import { EMOTES } from '../data/emotes';
 import { endCelebration } from '../game/states/celebrate';
 import { endIntro } from '../game/states/intro';
 import { foReport } from '../game/states/faceoff';
@@ -57,6 +67,7 @@ import {
 import { input, mouse, readStick } from '../input/state';
 import { reduceMotion, settings } from '../settings';
 import { applyColors, setArena, setPuck, setStick } from '../ui/customize';
+import { refreshVote, showEmote } from '../ui/emotes';
 import { PERIOD_LENGTHS, setPeriodLen } from '../ui/menu';
 import {
   bucket,
@@ -166,6 +177,7 @@ function endMatch() {
   setRelay(null);
   net.pre = net.post = net.guestStep = null;
   net.send = null;
+  resetVote();
   mp.inMatch = false;
   restoreSettings();
   if (G.net) {
@@ -185,6 +197,7 @@ net.onMenu = () => {
   setRelay(null);
   net.pre = net.post = net.guestStep = null;
   net.send = null;
+  resetVote();
   mp.inMatch = false;
   clearTimeout(mp.lostTimer);
   restoreSettings();
@@ -218,7 +231,9 @@ function restoreSettings() {
 /* ---------- messages ---------- */
 const inputBurst = bucket(130, 40),
   ctlBurst = bucket(4, 4),
-  zamBurst = bucket(60, 30);
+  zamBurst = bucket(60, 30),
+  voteBurst = bucket(4, 6),
+  emoBurst = bucket(1.5, 3);
 function onMessage(m) {
   const host = session.link.role === 'host';
   switch (m.t) {
@@ -275,6 +290,16 @@ function onMessage(m) {
       return;
     case 'zd':
       if (mp.inMatch && Number.isInteger(m.n) && m.n >= 0 && m.n < 5000) zamRemoteDone(m.n);
+      return;
+    case 'vote':
+      if (host && mp.inMatch && voteBurst.take()) voteFight(1, m.on === true);
+      return;
+    case 'fv':
+      if (!host && mp.inMatch) guestVote(m);
+      return;
+    case 'emo':
+      if (mp.inMatch && typeof m.k === 'string' && Object.hasOwn(EMOTES, m.k) && emoBurst.take())
+        showEmote(m.k, false);
       return;
   }
 }
@@ -333,6 +358,51 @@ function wantAgain(side) {
   if (mp.again[0] && mp.again[1] && session.link.role === 'host') hostStart();
 }
 
+/* ---------- the fight vote and emotes (during replays) ---------- */
+// The host keeps the votes (game/replay.js) and tells the guest whenever they change; the guest shows its own
+// vote at once and takes the host's word for the other one. Emotes go straight to the other player.
+let voteKey = '',
+  voteN = 0,
+  myVoteAt = -Infinity;
+function resetVote() {
+  net.vote = { open: false, v: [false, false] };
+  voteKey = '';
+  voteN = 0;
+}
+net.castVote = on => {
+  if (G.net === 'host') voteFight(0, on);
+  else if (G.net === 'guest' && net.vote.open) {
+    net.vote.v[0] = !!on;
+    myVoteAt = performance.now();
+    session.send({ t: 'vote', on: !!on });
+  }
+};
+net.emote = k => session.send({ t: 'emo', k });
+/** Host: the votes of the replay on screen, sent to the guest when they change (the replay's number tells a new
+ * vote from an old one). */
+function hostVote() {
+  const rp = G.state === 'replay' && G.rp && G.rp.votes ? G.rp : null,
+    v = rp ? rp.votes : [false, false],
+    k = (rp ? rp.n : 0) + ':' + +v[0] + +v[1];
+  if (k === voteKey) return;
+  voteKey = k;
+  net.vote = { open: !!rp, v: [v[0], v[1]] };
+  refreshVote();
+  session.send({ t: 'fv', n: rp ? rp.n : 0, v: [v[0], v[1]] });
+}
+function guestVote(m) {
+  if (!Number.isInteger(m.n) || m.n < 0 || !Array.isArray(m.v) || m.v.length !== 2) return;
+  if (m.n !== voteN) {
+    voteN = m.n;
+    net.vote.v[0] = false;
+  }
+  net.vote.open = m.n > 0;
+  net.vote.v[1] = m.v[0] === true;
+  // this player's own vote as the host has it, unless a click of theirs is still on its way
+  if (performance.now() - myVoteAt > 1500) net.vote.v[0] = m.v[1] === true;
+  refreshVote();
+}
+
 /* ---------- host ---------- */
 let hostT = 0,
   tick = 0,
@@ -362,6 +432,7 @@ export function hostStart() {
   outEvents = [];
   outParts = [];
   inq.length = 0;
+  resetVote();
   mp.inMatch = true;
   startGame(false, true);
   for (const p of parts) p.$s = 1;
@@ -438,6 +509,7 @@ function stateMsg(s) {
 /** After each step: every other step (or at once when the state changed) a frame goes to the guest. */
 function hostPost(dt, force) {
   hostT += dt;
+  hostVote();
   let st = null;
   if (G.state !== lastSt || net.stateDirty) {
     st = stateMsg(G.state);
@@ -518,6 +590,7 @@ function guestStart(m) {
   net.disputes = 0;
   net.send = session.send;
   net.guestStep = guestStep;
+  resetVote();
   queue = [];
   prevF = null;
   playT = null;

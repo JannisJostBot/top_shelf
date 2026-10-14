@@ -6,7 +6,7 @@ import { burst, faceTo, steer } from '../physics/motion';
 import { integrate } from '../physics/step';
 import { GK, SK, SKATERS, players } from '../players';
 import { practiceOver } from '../practice';
-import { startReplay } from '../replay';
+import { afterGoal, startReplay } from '../replay';
 import { G, ref } from '../world';
 import { input } from '../../input/state';
 import { reduceMotion, settings } from '../../settings';
@@ -50,7 +50,8 @@ export const duelist = () => ({
   stun: 0,
   pow: 1,
 });
-export function startBrawl() {
+/** Starts a fight; `voted` when both online players voted for it during the replay (it then ends in the face-off). */
+export function startBrawl(voted) {
   const duel = G.net === 'host',
     a = duel
       ? seat(0).controlled || SK[0][0]
@@ -74,7 +75,8 @@ export function startBrawl() {
     opp: duel ? duelist() : { st: 'idle', t: rnd(0.6, 1.1), punchT: 0, blockT: 0 },
     me: duel ? duelist() : { punchCd: 0, blockT: 0, blockCd: 0, stun: 0, punchT: 0 },
   };
-  if (duel) Object.assign(G.br, { duel: true, stamB: 100, winner: null, at: [a.x, a.y, b.x, b.y] });
+  if (duel)
+    Object.assign(G.br, { duel: true, stamB: 100, winner: null, at: [a.x, a.y, b.x, b.y], voted: !!voted });
   for (const f of [a, b]) {
     f.jump = 0;
     f.stickUp = false;
@@ -93,10 +95,12 @@ export function startBrawl() {
     banner(
       'GLOVES OFF!',
       'away',
-      persp(v => {
-        const o = v ? a : b;
-        return '#' + o.num + ' ' + o.name + ' wants a piece of you';
-      }),
+      voted
+        ? 'You both wanted it'
+        : persp(v => {
+            const o = v ? a : b;
+            return '#' + o.num + ' ' + o.name + ' wants a piece of you';
+          }),
     );
   } else {
     bubble(b, '?&!*#!', 0);
@@ -423,5 +427,7 @@ function finishBrawl() {
     );
     return;
   }
-  startReplay();
+  // a fight the players voted for came out of the replay: on to the face-off
+  if (B && B.voted) afterGoal();
+  else startReplay();
 }

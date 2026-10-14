@@ -19,6 +19,8 @@ const KEYMAP = [
   [['Middle click'], 'Switch skater'],
   [['Enter'], 'Skip replay or celebration'],
   [['V'], 'Next replay angle'],
+  [['G'], 'Online replay: vote to fight (both have to)'],
+  [['1–6'], 'Online replay: emotes (hyped, nice, LOL, what?!, nooo, grrr)'],
   [['P', 'Esc'], 'Pause'],
   [['H', '?'], 'Show the key map'],
   [['F'], 'Fullscreen'],
@@ -90,10 +92,29 @@ const HINTS = {
     ['Enter', 'Skip'],
     ['V', 'Angle'],
   ],
+  replayNet: [
+    ['Enter', 'Skip'],
+    ['V', 'Angle'],
+    ['1-6', 'Emote'],
+  ],
+  replayVote: [
+    ['Enter', 'Skip'],
+    ['G', 'Fight?'],
+    ['1-6', 'Emote'],
+  ],
   idle: [],
 };
 // keyboard hint keys as Xbox controller buttons
-const PAD_GLYPH = { Space: 'A', Shift: 'B', L: 'X', Enter: 'View', V: 'Y', Arrows: 'LS' };
+const PAD_GLYPH = {
+  Space: 'A',
+  Shift: 'B',
+  L: 'X',
+  Enter: 'View',
+  V: 'Y',
+  Arrows: 'LS',
+  G: 'LT',
+  '1-6': '✚',
+};
 const PADMAP = [
   [['LS', '✚'], 'Skate (stick gives analog speed)'],
   [['A', 'RT'], 'Shoot (hold to wind up) · Poke · Draw · Punch · Horn'],
@@ -101,6 +122,11 @@ const PADMAP = [
   [['X', 'LB'], 'Switch skater'],
   [['View'], 'Skip replay or celebration'],
   [['Y'], 'Next replay angle'],
+  [['LT'], 'Online replay: vote to fight (both have to)'],
+  [
+    ['✚', 'L3', 'R3'],
+    'Online replay: emotes (✚ up hyped, right nice, down nooo, left grrr · L3 LOL · R3 what?!)',
+  ],
   [['☰'], 'Pause'],
   [['✚', 'A'], 'In menus: move and press · LB / RB change tab · B resume'],
 ];

@@ -8,6 +8,7 @@ import { update } from '../game/update';
 import { pollGamepad } from '../input/gamepad';
 import { render } from '../render/renderer';
 import { beforeStep, blendIn, blendOut } from '../render/interp';
+import { updEmotes } from '../ui/emotes';
 import { updPad } from '../ui/pad';
 import { updCard } from '../ui/playerCard';
 import { hudBuff } from '../ui/hud';
@@ -56,6 +57,7 @@ export function frame(now) {
     blendOut();
   }
   updPad();
+  updEmotes();
   updCard();
   hudBuff();
   updSide();

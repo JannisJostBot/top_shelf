@@ -30,6 +30,11 @@ export const net = {
   /** leaving an online match from the menu, and asking for a rematch */
   onMenu: null,
   again: null,
+  /** the fight vote of the replay on screen, as this player sees it: offered or not, and [mine, theirs] */
+  vote: { open: false, v: [false, false] },
+  /** this player votes for the fight (true) or takes it back, and sends an emote (by key); set by net/match.js */
+  castVote: null,
+  emote: null,
 };
 
 /** The guest's stick and buttons as they arrive on the host, in the host's view of the rink. */

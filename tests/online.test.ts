@@ -14,6 +14,7 @@ import { players, SK } from '../src/game/players';
 import { duelist } from '../src/game/states/brawl';
 import { foReport } from '../src/game/states/faceoff';
 import { zamRemote, zamRemoteDone, ZAM_ONLINE } from '../src/game/states/zamboni';
+import { voteFight } from '../src/game/replay';
 import { update } from '../src/game/update';
 import { G as world, puck } from '../src/game/world';
 import { input, pad } from '../src/input/state';
@@ -319,7 +320,7 @@ describe('online match on the host', () => {
 // A fight online: after a goal by either side, the two players fight each other. The host's script blocks every
 // wind-up it sees and punishes an open guest; the guest's swings at random and blocks now and then.
 describe('online fight', () => {
-  it('lets both players punch and block, and gives the winner the boost', () => {
+  it('starts when both players vote for it during the replay, lets both punch and block, and boosts the winner', () => {
     clearEvents();
     // (the same match every run: damage and the CPU teams roll dice)
     let seed = 5;
@@ -352,17 +353,31 @@ describe('online fight', () => {
     expect(G.state).toBe('play');
     const host = G.controlled,
       guest = seat1.controlled;
-    // the guest scores, and the fight is certain
-    G.fightP = 1;
-    goalScored(1, NETS[0]);
-    expect(G.brawlNext).toBe(true);
-    for (let i = 0; i < 2000 && G.state !== 'brawl'; i++) {
+    // (a second of play, so the replay has something to show)
+    for (let i = 0; i < 60 && G.state === 'play'; i++) {
       clock.now += STEP;
       update(STEP);
     }
+    // the guest scores: no random fight online, the replay offers the vote instead
+    G.fightP = 1;
+    goalScored(1, NETS[0]);
+    expect(G.brawlNext).toBe(false);
+    for (let i = 0; i < 2000 && G.state !== 'replay'; i++) {
+      clock.now += STEP;
+      update(STEP);
+    }
+    expect(G.state).toBe('replay');
+    expect(G.rp.votes).toEqual([false, false]);
+    // one vote is not enough, and a vote can be taken back
+    voteFight(1, true);
+    voteFight(1, false);
+    voteFight(0, true);
+    expect(G.state).toBe('replay');
+    voteFight(1, true);
     expect(G.state).toBe('brawl');
     const B = G.br;
     expect(B.duel).toBe(true);
+    expect(B.voted).toBe(true);
     expect([B.a, B.b]).toEqual([host, guest]);
     let rnd = 11;
     const r = () => (rnd = (rnd * 16807) % 2147483647) / 2147483647;
@@ -395,7 +410,7 @@ describe('online fight', () => {
     expect(B.winner).toBe(0);
     expect(G.mom).toMatchObject({ team: 0, t: expect.any(Number), src: 'fight' });
     expect(G.mom.t).toBeGreaterThan(20);
-    expect(G.state).not.toBe('brawl'); // (on to the replay)
+    expect(G.state).toBe('faceoff'); // (the replay was already shown: on to the face-off)
     expect(G.br).toBeNull();
     // each side reads its own result
     expect(banners).toContain('YOU WIN THE FIGHT');
@@ -414,12 +429,31 @@ describe('online fight', () => {
     expect(gb.hpA).toBeLessThan(100); // the guest's own health, hit by the host
     expect(gb.hpB).toBe(100);
     G.br = null;
-    // no fights online with them turned off
+    // once a match: the next replay offers no vote
+    const goalAndReplay = () => {
+      for (let i = 0; i < 4000 && G.state !== 'play'; i++) {
+        clock.now += STEP;
+        if (G.state === 'faceoff' && G.fo.phase === 'drop') foReport(G.fo.id, false, 0.3);
+        update(STEP);
+      }
+      for (let i = 0; i < 60 && G.state === 'play'; i++) {
+        clock.now += STEP;
+        update(STEP);
+      }
+      goalScored(0, NETS[1]);
+      for (let i = 0; i < 2000 && G.state !== 'replay'; i++) {
+        clock.now += STEP;
+        update(STEP);
+      }
+      expect(G.state).toBe('replay');
+    };
+    goalAndReplay();
+    expect(G.rp.votes).toBeNull();
+    // and none with fights turned off
     startGame(false, true);
     settings.fightsOn = false;
-    G.fightP = 1;
-    goalScored(0, NETS[1]);
-    expect(G.brawlNext).toBe(false);
+    goalAndReplay();
+    expect(G.rp.votes).toBeNull();
     settings.fightsOn = true;
     rand.mockRestore();
     clearEvents();

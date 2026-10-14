@@ -65,6 +65,8 @@ import {
 } from './ui/menu';
 import { drawPreview } from './ui/preview';
 import { initReplayBar } from './ui/replayBar';
+import { initEmotes } from './ui/emotes';
+import { initInstallHint } from './ui/install';
 import { initOnline } from './ui/online';
 
 // the presentation listens to the simulation's events before anything can happen
@@ -72,6 +74,7 @@ bindPresentation();
 initTouch();
 initMouse();
 initReplayBar();
+initEmotes();
 initKeyboard();
 initGamepad();
 initFullscreen();
@@ -81,6 +84,7 @@ initSide();
 initCustomize();
 initMenu();
 initOnline();
+initInstallHint();
 
 const pr = loadPrefs();
 if (pr.color && COLORS[pr.color]) settings.colorKey = pr.color;

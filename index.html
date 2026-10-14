@@ -165,6 +165,29 @@
           </button>
         </div>
 
+        <!-- online replays: the emotes popping up (yours left, theirs right) and the tray with the fight vote -->
+        <div class="emo mine" id="emoMine" hidden aria-live="polite"></div>
+        <div class="emo theirs" id="emoTheirs" hidden aria-live="polite"></div>
+        <div id="emoTray" hidden>
+          <div id="voteBox" hidden>
+            <button class="votebtn" id="voteBtn" aria-pressed="false" title="Vote to fight (G)">
+              <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="4" y="1" width="8" height="1" />
+                <rect x="3" y="2" width="10" height="1" />
+                <rect x="2" y="3" width="12" height="6" />
+                <rect x="3" y="9" width="10" height="1" />
+                <rect x="4" y="10" width="8" height="1" />
+                <rect x="5" y="12" width="6" height="3" />
+                <rect x="3" y="7" width="6" height="1" fill="#000" opacity="0.35" />
+              </svg><span>FIGHT?</span>
+            </button>
+            <span class="votesub" id="voteSub"></span>
+          </div>
+          <button class="emotog" id="emoToggle" aria-expanded="false" aria-controls="emoBtns" title="Emotes (1–6)">
+            <span id="emoToggleFace"></span>
+          </button>
+          <div id="emoBtns" role="group" aria-label="Emotes" hidden></div>
+        </div>
         <div id="keyhint" hidden></div>
         <div id="pad" hidden>
           <div id="zone">
@@ -524,8 +547,15 @@
               <p class="small">
                 These players start your next match. Give each skater a position: the centre takes the face-offs,
                 the wing leads the rush, the defenceman stays back. Ratings stay with the player, so a sharp shooter
-                can play centre too. Skip this and every match rolls a fresh roster.
+                can play centre too. Tap two players on the rink to swap their positions. Skip this and every
+                match rolls a fresh roster.
               </p>
+              <div class="lurink" id="luRink" role="group" aria-label="Your line-up on the rink">
+                <span class="lrk" aria-hidden="true"
+                  ><i class="gl l"></i><i class="crease"></i><i class="bl l"></i><i class="cl"></i><i class="cdot"></i
+                  ><i class="bl r"></i><i class="gl r"></i><i class="net"></i><span class="atk">Attack</span></span
+                >
+              </div>
               <div id="luRows"></div>
               <div class="lubtns">
                 <button class="btn ghost" id="luAuto">Auto</button>
@@ -585,7 +615,7 @@
                 </div>
               </div>
               <div class="orow">
-                <div><b>Fights</b><span>A sore loser may drop the gloves</span></div>
+                <div><b>Fights</b><span>A sore loser may drop the gloves (online: if you both vote for it)</span></div>
                 <div class="seg two" role="radiogroup" aria-label="Fights" id="fightSeg">
                   <button role="radio" id="fi-on" data-v="on" aria-checked="true">On</button
                   ><button role="radio" id="fi-off" data-v="off" aria-checked="false">Off</button>
@@ -641,7 +671,8 @@
               </div>
               <p class="small">
                 The buttons change with the situation: Poke and Check on defense, Punch and Block in a fight,
-                Horn and Finish on the resurfacer.
+                Horn and Finish on the resurfacer. In an online replay, G (LT) votes to fight and 1–6 (the D-pad,
+                L3 and R3) send emotes; on touch, tap the face button at the bottom of the rink and pick one.
               </p>
                 <button class="plink" data-goto="guide">Guide: how the game works ›</button>
               </div>
@@ -665,6 +696,11 @@
               <p>
                 A match opens with a short fly-through of the arena; any button skips it. Pause any time (P,
                 Esc or the II button); the game also pauses when you switch to another tab.
+              </p>
+              <p>
+                On a phone or tablet, add the game to your home screen: it then opens fullscreen like an app,
+                without the browser's bars. The first time you open it in a mobile browser a tip shows how (tick
+                "Don't show again" to keep it away).
               </p>
               <figure class="demo">
                 <canvas data-demo="switch" width="128" height="56" aria-hidden="true"></canvas>
@@ -756,8 +792,9 @@
                 SPD skating speed, SHT shot power, HND puck handling (stealing and keeping the puck), CHK
                 checking. Wingers shoot harder and skate faster, centers have the best hands, defensemen check
                 hardest but are slower. Every match rolls a fresh roster, unless you set your line-up first
-                (the Line-up bench on the left of the rink): it shows your players' ratings and lets you pick
-                who plays centre, wing and defence. The centre takes the face-offs.
+                (the Line-up bench on the left of the rink): it draws your players at their positions on a
+                small rink, shows their ratings and lets you pick who plays centre, wing and defence (tap two
+                skaters on the rink to swap them). The centre takes the face-offs.
               </p>
               <h3>Momentum</h3>
               <p>
@@ -780,8 +817,14 @@
                 shows. Punch late in their wind-up to interrupt it and land a big hit; a punch into their
                 guard gets blocked and may be countered. Punching drains stamina, so tired punches are weak;
                 it recovers when you wait. Higher CPU levels wind up faster, block and counter more. The winner's
-                team skates faster for 25 s; after 22 s without a knockout the refs break it up. Online, a fight can follow either side's goal (the host's
-                Fights setting, once a match) and you face the other player: every punch winds up with the red !
+                team skates faster for 25 s; after 22 s without a knockout the refs break it up.
+              </p>
+              <p>
+                Online, nobody drops the gloves by chance: during every goal replay each of you can vote to fight
+                (the FIGHT? button, G, or LT). It only happens if you both vote; the button blinks when the other
+                player wants it, and you can take your vote back. Once you both have, the replay stops and you
+                face each other; after the fight the game goes on with the face-off. One fight a match, so after
+                it the vote is gone (the host's Fights setting turns it off). Every punch winds up with the red !
                 first, so a block in time stops it; a blocked or interrupted fighter is left open.
               </p>
               <h3>CPU level and style</h3>
@@ -808,6 +851,12 @@
                 changing camera angles, some of them in 3D. The camera button, V or Y on a controller shows the
                 next angle; the skip button, Enter, View, a click or a tap skips ahead.
               </p>
+              <p>
+                Online, the replay is also the time to talk back: six pixel emotes (hyped, nice, LOL, what?!, nooo,
+                grrr): tap the face button at the bottom to open them and pick one (a tap anywhere else closes
+                them), or use keys 1 to 6, or the D-pad, L3 and R3 on a controller. Yours pops up
+                on the left, the other player's on the right, one about every second at most.
+              </p>
               <h3>Watching</h3>
               <p>
                 Watch CPU vs CPU plays a match by itself, filmed like a broadcast: Cinematic cuts between
@@ -825,7 +874,8 @@
                 faster than 0.1 s counts as jumping the draw. Between periods you both resurface your own half
                 (20 s, a slower machine) and the bigger share wins the boost. Each side checks what the other
                 reports (face-off times, goals, resurfacing) and notes anything that does not add up. Fights are
-                between the two of you. Your own skater moves the moment you steer, on your screen; the rest of
+                between the two of you, and only when you both vote for one during a replay; replays also let you
+                send emotes (see above). Your own skater moves the moment you steer, on your screen; the rest of
                 the match reaches the guest a moment later. Either player can pause or resume, a rematch needs
                 both of you, and leaving ends the match for both. The invite code works for one guest, once.
               </p>
@@ -883,6 +933,21 @@
               <button class="tkgo" id="againBtn">Again</button>
             </div>
             <button class="plink" id="menuBtn">‹ Back to the program</button>
+          </div>
+        </div>
+        <!-- phones and tablets, in the browser: how to add the game to the home screen (ui/install.js) -->
+        <div class="ov" id="installOv" hidden role="dialog" aria-modal="true" aria-labelledby="h-install">
+          <div class="prog night insert ihint">
+            <div class="pmast"><span>Tip</span><span>Best experience</span></div>
+            <h2 class="ptitle" id="h-install">Add to home screen</h2>
+            <p class="small">
+              Installed on your home screen, Top Shelf opens like an app: fullscreen without the browser's bars,
+              and swipes on the rink never scroll the page or go back.
+            </p>
+            <ol class="isteps" id="installSteps"></ol>
+            <button class="btn go" id="installBtn" hidden>Install now</button>
+            <label class="inever"><input type="checkbox" id="installNever" /><span>Don't show again</span></label>
+            <button class="btn ghost" id="installOk">Got it</button>
           </div>
         </div>
       </main>

@@ -31,7 +31,7 @@ src/
   config.ts           world size, rink/net geometry, physics constants
   settings.ts         user options (difficulty, jerseys, arena, toggles)
   core/               loop, event bus, math helpers, clock, DOM helper, localStorage
-  data/               pure tables: teams/colors, pucks, stadiums, difficulty, roster names
+  data/               pure tables: teams/colors, pucks, stadiums, difficulty, roster names, online emotes
   game/               simulation (never imports render/, audio/ or ui/; runs headless)
     fx.js             the simulation's outlet: sounds, effects, camera, HUD and screen changes as events
     world.js          G (game state), puck, referee, particles, replay buffer
@@ -50,7 +50,8 @@ src/
   render/             canvas drawing: sprites, ice, stands, players, puck, effects, mode-7 replay cam
   audio/              Web Audio engine, procedural skate sounds, synth voices, SFX table, goal songs
   input/              shared input state + keyboard, mouse, touch, game controller, haptics
-  ui/                 DOM UI: HUD, menu, customization, player card, touch pad
+  ui/                 DOM UI: HUD, menu, customization, player card, touch pad, online emotes and fight vote,
+                      the home-screen tip on phones (install.js)
   styles/             CSS split by area
 tests/                Vitest specs
 ```

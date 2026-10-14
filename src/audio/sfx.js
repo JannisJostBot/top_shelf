@@ -120,6 +120,40 @@ export const SFX = {
   tick() {
     osc('sine', 1250, AC.currentTime, 0.035, 0.06);
   },
+  // an emote popping up: each face has its own little chiptune signature (the other player's a touch quieter)
+  emote({ k, mine }) {
+    const t = AC.currentTime,
+      v = mine ? 1 : 0.8;
+    const notes = (type, list, len, vol) =>
+      list.forEach((f, i) => osc(type, f, t + i * len, len * 1.4, vol * v));
+    switch (k) {
+      case 'hyped': // a fast rising arpeggio and a whoosh
+        notes('square', [523, 659, 784, 1047, 1319], 0.045, 0.05);
+        nz(t + 0.18, 0.25, 0.12 * v, 'bandpass', 900, 4000, 2);
+        break;
+      case 'happy': // two bright bouncy notes
+        osc('triangle', 784, t, 0.1, 0.16 * v);
+        osc('triangle', 1175, t + 0.1, 0.18, 0.16 * v);
+        break;
+      case 'lol': // ha-ha-ha
+        for (let i = 0; i < 3; i++) osc('square', 760 - i * 40, t + i * 0.09, 0.07, 0.05 * v, 560 - i * 40);
+        break;
+      case 'shocked': // a slide whistle going up
+        osc('sine', 380, t, 0.32, 0.18 * v, 1500, 0.02);
+        osc('square', 1500, t + 0.33, 0.06, 0.03 * v);
+        break;
+      case 'sad': // wah, wah, wah, waaah
+        notes('triangle', [392, 370, 349], 0.16, 0.16);
+        osc('triangle', 330, t + 0.48, 0.5, 0.16 * v, 300);
+        break;
+      case 'angry': // a low growl, twice
+        for (const d of [0, 0.16]) {
+          osc('sawtooth', 120, t + d, 0.13, 0.07 * v, 80);
+          nz(t + d, 0.13, 0.18 * v, 'lowpass', 400, 150);
+        }
+        break;
+    }
+  },
   stride(v, pan) {
     playBuf(pick(strideBufs), 0.42 * v, rnd(0.94, 1.06), pan);
   },

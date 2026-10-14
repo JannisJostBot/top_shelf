@@ -3,6 +3,7 @@ import { lerp, pick, rnd } from '../core/math';
 import { clock } from '../core/time';
 import { endGame } from './match';
 import { SKATERS, players } from './players';
+import { startBrawl } from './states/brawl';
 import { faceoff } from './states/faceoff';
 import { G, PF, REC, REC_MAX, parts, puck, ref } from './world';
 import { input } from '../input/state';
@@ -66,7 +67,8 @@ export const ANGLES = [
   { name: 'NET CAM 3D', z: 1, spd: 0.5, mode7: 'net' },
   { name: 'FAN CAM 3D', z: 1, spd: 0.5, mode7: 'guest' },
 ];
-let angleIdx = -1;
+let angleIdx = -1,
+  replayN = 0;
 /** The camera angle the replay is filmed from (online, the guest is told so both see the same shot). */
 export const replayAngle = () => angleIdx;
 export function applyFrame(fi) {
@@ -140,7 +142,8 @@ export function startReplay(angle) {
     angle >= 0 && angle < ANGLES.length ? angle : (angleIdx + 1 + Math.floor(rnd(0, 2))) % ANGLES.length;
   const i0 = Math.max(0, REC.length - 1 - 190);
   G.state = 'replay';
-  G.rp = { i0, i: i0, end: REC.length - 1, angle: ANGLES[angleIdx] };
+  G.rp = { i0, i: i0, end: REC.length - 1, angle: ANGLES[angleIdx], n: ++replayN, votes: null };
+  if (fightVoteOpen()) G.rp.votes = [false, false];
   parts.length = 0;
   clearFx();
   hideBanner();
@@ -226,7 +229,29 @@ export function endReplay() {
   uiShow('rpBar', false);
   afterGoal();
 }
-function afterGoal() {
+/* ---------- the fight vote (online) ----------
+   Online there are no random fights: during each replay both players may vote to drop the gloves, and when both
+   want it the fight starts at once. Once a match had its fight the vote is not offered again. */
+const fightVoteOpen = () =>
+  G.net === 'host' && settings.fightsOn && !G.fought && !G.practice && G.period <= 3;
+/** Host: team t's player wants the fight (on) or takes it back. */
+export function voteFight(t, on) {
+  if (G.state !== 'replay' || !G.rp || !G.rp.votes || G.fought) return;
+  G.rp.votes[t] = !!on;
+  if (G.rp.votes[0] && G.rp.votes[1]) fightNow();
+}
+function fightNow() {
+  // everyone back where the goal left them (the replay moved them around, maybe from the other end)
+  G.rp = null;
+  applyFrame(REC.length - 1);
+  zoom(1);
+  uiShow('rpBar', false);
+  clearGoalFx();
+  goalLamp(null);
+  resetCloth();
+  startBrawl(true);
+}
+export function afterGoal() {
   if (G.period > 3) endGame();
   else faceoff();
 }

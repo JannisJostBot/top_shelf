@@ -3,6 +3,7 @@ import { nextShot } from '../render/director';
 //
 // In game:   left stick / D-pad skate · A or RT shoot (hold to wind up) · B or RB pass · X or LB switch skater
 //            Y next replay angle · View skip replay or celebration · Menu pause
+//            online replays: LT vote to fight · D-pad, L3 and R3 emotes
 // In menus:  D-pad / left stick move between buttons · A press · B back (resume) · LB / RB change tab
 //            Menu start a game
 import { $ } from '../core/dom';
@@ -12,6 +13,7 @@ import { endCelebration } from '../game/states/celebrate';
 import { G } from '../game/world';
 import { input, pad } from './state';
 import { menuBack, toggleWatchCam } from '../ui/menu';
+import { sendEmote, toggleVote } from '../ui/emotes';
 
 // standard mapping button indices
 const A = 0,
@@ -20,9 +22,12 @@ const A = 0,
   Y = 3,
   LB = 4,
   RB = 5,
+  LT = 6,
   RT = 7,
   VIEW = 8,
   MENU = 9,
+  L3 = 10,
+  R3 = 11,
   UP = 12,
   DOWN = 13,
   LEFT = 14,
@@ -167,7 +172,20 @@ function gameInput(gp, down, now) {
     else if (G.state === 'celebrate') endCelebration();
   }
   if (down(MENU)) togglePause();
+  // online replays: LT votes for a fight, the D-pad and the stick clicks send emotes
+  if (G.net && G.state === 'replay') {
+    if (down(LT)) toggleVote();
+    for (const [i, k] of PAD_EMOTES) if (down(i)) sendEmote(k);
+  }
 }
+const PAD_EMOTES = [
+  [UP, 'hyped'],
+  [RIGHT, 'happy'],
+  [DOWN, 'sad'],
+  [LEFT, 'angry'],
+  [L3, 'lol'],
+  [R3, 'shocked'],
+];
 
 /** Reads the first connected controller and feeds the game input or the menu focus. Called every frame. */
 export function pollGamepad() {

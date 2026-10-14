@@ -114,9 +114,10 @@ export function goalScored(team, n) {
   S(persp(v => (ours(v) ? SKIP : 'buzzer')));
   vib(persp(v => (G.ai0 ? SKIP : v === team ? [60, 40, 60, 40, 180] : [120])));
   // fights get likelier with every goal that passes without one, so they turn up about once a game (and never twice)
-  // (against the CPU only after your goals, its enforcer's answer; online after either side's, the host's setting)
+  // (against the CPU only after your goals, its enforcer's answer; online the players vote for one during the
+  // replay instead, see game/replay.js)
   G.brawlNext = false;
-  if (!G.ai0 && (G.net === 'host' || (!G.net && team === 0)) && settings.fightsOn && !G.fought) {
+  if (!G.ai0 && !G.net && team === 0 && settings.fightsOn && !G.fought) {
     if (Math.random() < G.fightP) {
       G.brawlNext = true;
       G.fightP = 0.1;

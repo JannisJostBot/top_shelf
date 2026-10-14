@@ -130,3 +130,267 @@
   font-size: 9px;
   color: #9fc0e2;
 }
+
+/* ---------- online replays: emotes and the fight vote ---------- */
+/* the tray near the bottom of the rink, above the replay caption and the key hints (and above the touch controls
+   when they show) */
+#emoTray {
+  position: absolute;
+  left: 50%;
+  bottom: calc(64px + var(--sab));
+  z-index: 3;
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100% - 16px);
+}
+#stage:has(#pad:not([hidden])) #emoTray {
+  bottom: calc(160px + var(--sab));
+}
+/* the emote button: one face that opens the picker */
+.emotog {
+  width: 52px;
+  height: 52px;
+  padding: 7px;
+  border: 0;
+  cursor: pointer;
+  background: #1a2442;
+  box-shadow:
+    inset -2px -3px 0 rgba(0, 0, 0, 0.35),
+    inset 2px 2px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 2px #05070c,
+    0 0 0 4px #232a3e,
+    0 5px 0 2px #0b0f1a;
+}
+.emotog span,
+.emotog svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+#emoTray.picking .emotog {
+  background: #2a3a66;
+}
+#emoTray.picking #voteBox {
+  visibility: hidden;
+}
+/* the picker: six big faces with their words, well apart for thumbs, opening above the button (and over the vote,
+   so that cannot be hit by mistake either) */
+#emoBtns {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 52px + 14px);
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  gap: 12px;
+  padding: 12px;
+  background: #0a0f1e;
+  border: 2px solid #05070c;
+  box-shadow:
+    0 0 0 2px #232a3e,
+    0 4px 0 2px #0b0f1a;
+}
+.emob {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  width: 72px;
+  padding: 8px 4px 6px;
+  border: 0;
+  cursor: pointer;
+  color: var(--ink);
+  background: #1a2442;
+  box-shadow:
+    inset -2px -3px 0 rgba(0, 0, 0, 0.35),
+    inset 2px 2px 0 rgba(255, 255, 255, 0.12);
+}
+.emob svg,
+.emo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.emob svg {
+  width: 44px;
+  height: 44px;
+}
+.emob b {
+  font-family: var(--display);
+  font-size: 7px;
+}
+.emob:hover,
+.emob:focus-visible {
+  background: #2a3a66;
+}
+.emob:active {
+  transform: translateY(2px);
+}
+#voteBox {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+/* the vote: a red glove button; pressed once you voted, blinking when the other player wants the fight */
+.votebtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--display);
+  font-size: 11px;
+  color: #fff;
+  background: #a8232c;
+  box-shadow:
+    inset -3px -4px 0 rgba(0, 0, 0, 0.3),
+    inset 3px 3px 0 rgba(255, 255, 255, 0.22),
+    0 4px 0 var(--shadow);
+}
+.votebtn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+.votebtn.hot {
+  animation: voteHot 0.6s steps(2) infinite;
+}
+.votebtn[aria-pressed='true'] {
+  background: #3a1216;
+  color: #ff9aa0;
+  transform: translateY(3px);
+  box-shadow:
+    inset 3px 3px 0 rgba(0, 0, 0, 0.4),
+    0 1px 0 var(--shadow);
+  animation: none;
+}
+@keyframes voteHot {
+  50% {
+    background: #ef4b52;
+  }
+}
+.votesub {
+  padding: 2px 6px;
+  font-size: 10px;
+  color: var(--ink);
+  background: rgba(10, 15, 30, 0.82);
+}
+/* an emote: a big pixel face in a speech bubble with its word, popping up with a bounce (yours on the left, the
+   other player's on the right with their name) */
+.emo {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  width: 92px;
+  padding: 8px 6px 6px;
+  background: #eaf0ff;
+  color: #0b0f1a;
+  border: 3px solid #0b0f1a;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.emo svg {
+  width: 56px;
+  height: 56px;
+}
+.emo b {
+  font-family: var(--display);
+  font-size: 9px;
+}
+.emo .who {
+  font-size: 9px;
+  color: #45507a;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* the bubble's tail, pointing down toward the player's own end */
+.emo::after {
+  content: '';
+  position: absolute;
+  bottom: -11px;
+  width: 10px;
+  height: 8px;
+  background: #0b0f1a;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+.emo.mine {
+  left: 12px;
+  bottom: calc(200px + var(--sab));
+  transform-origin: 20% 100%;
+}
+.emo.mine::after {
+  left: 14px;
+}
+.emo.theirs {
+  right: 12px;
+  top: calc(var(--below-hud) + 20px);
+  transform-origin: 80% 0%;
+}
+.emo.theirs::after {
+  right: 14px;
+  bottom: auto;
+  top: -11px;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+#stage:has(#pad:not([hidden])) .emo.mine {
+  bottom: calc(275px + var(--sab));
+}
+body.wide .emo.theirs {
+  top: 20px;
+}
+.emo.pop {
+  animation:
+    emoIn 0.35s cubic-bezier(0.3, 1.8, 0.5, 1),
+    emoOut 0.3s 2.1s forwards;
+}
+.emo.pop[data-k='hyped'] svg,
+.emo.pop[data-k='angry'] svg {
+  animation: emoShake 0.12s steps(2) 6 0.35s;
+}
+.emo.pop[data-k='lol'] svg {
+  animation: emoHop 0.3s steps(3) 4 0.35s;
+}
+.emo.pop[data-k='sad'] svg {
+  animation: emoDroop 1.2s steps(4) 0.35s forwards;
+}
+@keyframes emoIn {
+  from {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+}
+@keyframes emoOut {
+  to {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+@keyframes emoShake {
+  50% {
+    transform: translateX(3px) rotate(4deg);
+  }
+}
+@keyframes emoHop {
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes emoDroop {
+  to {
+    transform: translateY(3px) rotate(-6deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .emo.pop,
+  .emo.pop svg,
+  .votebtn.hot {
+    animation: none !important;
+  }
+}
