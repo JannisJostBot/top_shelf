@@ -417,7 +417,7 @@
                   </svg>
                     <b>Host a match</b
                     ><span
-                      >You get a code to send your friend. The match uses your settings: period length, arena,
+                      >You get a code, a link and a QR code to send your friend. The match uses your settings: period length, arena,
                       puck, celebrations and resurfacing.</span
                     >
                     <button class="btn go" id="olHost">HOST A ROOM</button>
@@ -428,7 +428,7 @@
                     <rect fill="url(#tht6)" x="214" y="22" width="120" height="36" rx="18" />
                     <rect class="s2 mx" stroke-width="6" x="306" y="25" width="120" height="36" rx="18" />
                   </svg>
-                    <b>Join a match</b><span>Paste the code (or open the link) your friend sent you.</span>
+                    <b>Join a match</b><span>Paste the code or link your friend sent you (or open the link, or scan their QR code).</span>
                     <input
                       class="olin code"
                       id="olCode"
@@ -445,10 +445,16 @@
                   <div class="olcode" id="olCodeBox" hidden>
                     <span class="olbl">INVITE CODE · WORKS ONCE</span>
                     <output id="olCodeTxt"></output>
+                    <span class="olbl">INVITE LINK</span>
+                    <output class="ollink" id="olLinkTxt"></output>
                     <div class="olcopy">
                       <button class="btn ghost" id="olCopy">Copy code</button
                       ><button class="btn ghost" id="olLink">Copy link</button>
                     </div>
+                    <figure class="olqr" id="olQr">
+                      <canvas id="olQrImg" role="img" aria-label="QR code of the invite link"></canvas>
+                      <figcaption class="small">Or let your friend scan it with a phone camera.</figcaption>
+                    </figure>
                   </div>
                   <div class="ollobby" id="olLobby" hidden>
                     <span class="olvs"
@@ -853,7 +859,8 @@
               </p>
               <h3>Online</h3>
               <p>
-                Host a room on the Online page and send your friend the code, or join with theirs; once you are
+                Host a room on the Online page and send your friend the code, the link (it opens the game with
+                the code filled in) or the QR code to scan with a phone, or join with theirs; once you are
                 both in, the host drops the puck with the ticket at the bottom of the page. The host's
                 browser runs the match with the host's settings; the guest sees it from their own end, so both
                 attack up the screen, and each of you steers one skater with CPU teammates. Face-offs are timed

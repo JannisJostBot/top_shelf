@@ -3,6 +3,7 @@
 import { $ } from '../core/dom';
 import { cleanName, fmtCode, normCode } from '../net/proto';
 import { showTab } from './menu';
+import { drawQR } from './qr';
 
 const NAME_KEY = 'blb-name';
 let mod = null;
@@ -55,8 +56,12 @@ const callbacks = {
   code(c) {
     code = c;
     $('olCodeTxt').textContent = fmtCode(c);
+    $('olLinkTxt').textContent = inviteLink();
+    $('olQr').hidden = !drawQR($('olQrImg'), inviteLink());
     $('olCodeBox').hidden = false;
-    status('Waiting for your friend. Send them the code or the link; it lets one person in.');
+    status(
+      'Waiting for your friend. Send them the code or the link, or let them scan the QR code; it lets one person in.',
+    );
     ticket('Waiting for your friend');
   },
   status,
@@ -143,6 +148,8 @@ async function joinRoom() {
     callbacks.error((e && e.message) || 'Could not join.');
   }
 }
+// the code rides in the link's #fragment, which browsers never send to the web server
+const inviteLink = () => location.origin + location.pathname + '#join=' + fmtCode(code);
 async function copy(text, btn) {
   const was = btn.textContent;
   try {
@@ -165,10 +172,7 @@ export function initOnline() {
   });
   $('olStart').addEventListener('click', () => mod && mod.hostStart());
   $('olCopy').addEventListener('click', e => copy(fmtCode(code), e.currentTarget));
-  // the code rides in the link's #fragment, which browsers never send to the web server
-  $('olLink').addEventListener('click', e =>
-    copy(location.origin + location.pathname + '#join=' + fmtCode(code), e.currentTarget),
-  );
+  $('olLink').addEventListener('click', e => copy(inviteLink(), e.currentTarget));
   stage('setup');
   // opened from an invite link: straight to the Online page with the code filled in (and the code taken back out
   // of the address bar and the history entry)
