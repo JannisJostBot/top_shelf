@@ -81,16 +81,15 @@ const glows = [];
 // (`only`: it lights the scene around it, see odLights, but is not drawn as a glow itself)
 const glow = (x, y, r, c, a, only = false) => glows.push({ x, y, r, c, a, only });
 
-/* ---------- the lasting marks: skate scratches and snow, until the resurfacer comes ---------- */
+/* ---------- the lasting marks: snow and grooves, until the resurfacer comes ---------- */
 const markC = document.createElement('canvas');
 markC.width = IW;
 markC.height = IH;
 const mctx = markC.getContext('2d');
-/** the skates' last blade positions, per skater and foot */
-const feet = new WeakMap();
 export function odIceClear() {
   mctx.setTransform(1, 0, 0, 1, 0, 0);
   mctx.clearRect(0, 0, IW, IH);
+  if (grooveC) grooveC.getContext('2d').clearRect(0, 0, grooveC.width, grooveC.height);
 }
 /** The resurfacer wiped these world points ([x, y, …]). */
 export function odIcePolish(pts) {
@@ -105,6 +104,86 @@ export function odIcePolish(pts) {
   }
   mctx.fill();
   mctx.restore();
+  if (!grooveC) return;
+  const gx = grooveC.getContext('2d');
+  gx.save();
+  gx.globalCompositeOperation = 'destination-out';
+  gx.beginPath();
+  for (let i = 0; i < pts.length; i += 2) {
+    const x = pts[i] * K * GF,
+      y = pts[i + 1] * K * GF;
+    gx.moveTo(x + 5 * K * GF, y);
+    gx.arc(x, y, 5 * K * GF, 0, Math.PI * 2);
+  }
+  gx.fill();
+  gx.restore();
+}
+// The grooves: fine cuts the skates leave in the ice, drawn smooth at four times the world's pixel size and only
+// on a full-resolution screen (see odPresent). They build up at random over each period, as play goes on, until
+// the resurfacer wipes them: long carved arcs, often a few side by side, and short nicks everywhere.
+const GF = 4;
+let grooveC = null,
+  arcsDue = 0,
+  nicksDue = 0;
+/** From the groove canvas to the screen canvas, for a frame whose world transform is `m` (turned round with the
+ * ice in the reverse-angle replay). */
+function grooveMatrix(m) {
+  const s = view.ss;
+  let t = new DOMMatrix([m.a * s, 0, 0, m.d * s, m.e * s, m.f * s]);
+  if (G.state === 'replay' && G.rp && G.rp.angle.flip) t = t.translate(IW, IH).scale(-1, -1);
+  return t.scale(1 / GF, 1 / GF);
+}
+const GROOVE_STATES = new Set(['play', 'faceoff', 'goal', 'celebrate', 'brawl']);
+function growGrooves() {
+  if (G.demo || view.ss === 1 || !GROOVE_STATES.has(G.state)) return;
+  if (!grooveC) {
+    grooveC = document.createElement('canvas');
+    grooveC.width = IW * GF;
+    grooveC.height = IH * GF;
+  }
+  // about 160 arcs and 2600 nicks over a period
+  const per = Math.max(30, settings.periodLen || 60);
+  arcsDue += (160 / per) * dt;
+  nicksDue += (2600 / per) * dt;
+  const s = grooveC.getContext('2d');
+  s.setTransform(K * GF, 0, 0, K * GF, 0, 0);
+  s.lineCap = 'round';
+  s.strokeStyle = '#8fa3b9';
+  for (; arcsDue >= 1; arcsDue--) {
+    // a turn carved through the rink: a circle's arc around a centre anywhere near it
+    const x = rnd(RX0 + 4, RX1 - 4),
+      y = rnd(RY0 + 4, RY1 - 4),
+      r = rnd(14, 70),
+      a0 = rnd(0, Math.PI * 2),
+      len = rnd(0.3, 1.1),
+      cx = x - Math.cos(a0) * r,
+      cy = y - Math.sin(a0) * r;
+    for (let k = 0, n = 1 + Math.floor(rnd(0, 4)); k < n; k++) {
+      s.globalAlpha = rnd(0.3, 0.8);
+      s.lineWidth = rnd(0.1, 0.3);
+      s.beginPath();
+      s.arc(cx, cy, r + k * rnd(0.4, 1.1), a0 + rnd(-0.04, 0.04), a0 + len + rnd(-0.08, 0.08));
+      s.stroke();
+    }
+  }
+  for (; nicksDue >= 1; nicksDue--) {
+    const x = rnd(RX0 + 2, RX1 - 2),
+      y = rnd(RY0 + 2, RY1 - 2),
+      a = rnd(0, Math.PI * 2),
+      l = rnd(0.8, 4.5);
+    s.globalAlpha = rnd(0.2, 0.7);
+    s.lineWidth = rnd(0.08, 0.22);
+    s.beginPath();
+    s.moveTo(x, y);
+    s.quadraticCurveTo(
+      x + Math.cos(a + 0.3) * l * 0.5,
+      y + Math.sin(a + 0.3) * l * 0.5,
+      x + Math.cos(a) * l,
+      y + Math.sin(a) * l,
+    );
+    s.stroke();
+  }
+  s.globalAlpha = 1;
 }
 const inRink = (x, y, m = 0) => x > RX0 + m && x < RX1 - m && y > RY0 + m && y < RY1 - m;
 /** Snow left on the ice where a fleck settles (the stop spray, see spray.js, and the netting's snow): heavier
@@ -121,52 +200,6 @@ function settle(x, y) {
   mctx.globalAlpha = 1;
 }
 onSettle(settle);
-const MARK_STATES = new Set(['play', 'faceoff', 'goal', 'celebrate', 'brawl']);
-/** Each skate cuts a thin scratch while it pushes (one foot, then the other); they add up over the period. */
-function cutMarks() {
-  if (G.demo || !MARK_STATES.has(G.state)) return;
-  const dark = new Path2D(),
-    bright = new Path2D();
-  let any = false;
-  for (const p of SKATERS) {
-    if (p.benched) continue;
-    const sp = Math.hypot(p.vx, p.vy);
-    let f = feet.get(p);
-    if (!f) feet.set(p, (f = [null, null]));
-    if (sp < 16 || p.down > 0) {
-      f[0] = f[1] = null;
-      continue;
-    }
-    const ux = p.vx / sp,
-      uy = p.vy / sp,
-      phase = p.anim - 2 * Math.floor(p.anim / 2);
-    for (let s = 0; s < 2; s++) {
-      const side = s ? 1 : -1,
-        pushing = side < 0 ? phase < 1 : phase >= 1;
-      // the blade pushes out to its side
-      const bx = p.x - uy * side * (1 + (phase % 1) * 1.2),
-        by = p.y + ux * side * (1 + (phase % 1) * 1.2) + 0.5,
-        last = f[s];
-      f[s] = pushing ? { x: bx, y: by } : null;
-      if (!pushing || !last || Math.hypot(bx - last.x, by - last.y) > 4) continue;
-      dark.moveTo(last.x * K, last.y * K);
-      dark.lineTo(bx * K, by * K);
-      bright.moveTo(last.x * K + 1, last.y * K);
-      bright.lineTo(bx * K + 1, by * K);
-      any = true;
-    }
-  }
-  if (!any) return;
-  mctx.lineWidth = 1;
-  mctx.globalAlpha = 0.06;
-  mctx.strokeStyle = '#7f93aa';
-  mctx.stroke(dark);
-  mctx.globalAlpha = 0.05;
-  mctx.strokeStyle = '#ffffff';
-  mctx.stroke(bright);
-  mctx.globalAlpha = 1;
-}
-
 /* ---------- events from the simulation ---------- */
 const nearest = (x, y, list = SKATERS) => {
   let best = null,
@@ -364,7 +397,7 @@ export function odFrame() {
     e.x += e.vx * dt;
     e.y += e.vy * dt;
   }
-  cutMarks();
+  growGrooves();
   // where everyone was over the last frames (afterimages)
   for (const p of SKATERS) {
     let h = hist.get(p);
@@ -907,7 +940,7 @@ export function odLights(g, ox, oy) {
 // the stands and the ice on the game's canvas (low), the reflections at full resolution, everything standing on
 // the ice on a second layer and what goes over the lighting on a third. odPresent puts them together, the pixel
 // art scaled up crisp and the light map multiplied in between.
-const layered = { on: false, refl: false, light: false, lens: false },
+const layered = { on: false, refl: false, light: false, lens: false, m: new DOMMatrix() },
   layerC = [2, 3].map(() => document.createElement('canvas'));
 /** Starts drawing on layer `n` (2: on the ice, 3: over the lighting); returns the context to go on with. */
 export function odLayer(g, n) {
@@ -924,6 +957,7 @@ export function odLayer(g, n) {
   x.clearRect(0, 0, view.CW, view.CH);
   x.setTransform(g.getTransform());
   x.imageSmoothingEnabled = false;
+  if (n === 2) layered.m = g.getTransform(); // the world's transform, for the grooves
   layered.on = true;
   return x;
 }
@@ -938,6 +972,16 @@ export function odPresent() {
   x.imageSmoothingEnabled = false;
   x.drawImage(low, 0, 0, w, h);
   if (layered.on) {
+    // the grooves in the ice, smooth at full resolution
+    if (grooveC) {
+      x.setTransform(grooveMatrix(layered.m));
+      x.imageSmoothingEnabled = true;
+      x.globalAlpha = 0.6;
+      x.drawImage(grooveC, 0, 0);
+      x.globalAlpha = 1;
+      x.imageSmoothingEnabled = false;
+      x.setTransform(1, 0, 0, 1, 0, 0);
+    }
     if (layered.refl) {
       x.globalAlpha = 0.5;
       x.drawImage(RB, 0, 0);
@@ -969,54 +1013,7 @@ export function odPresent() {
 
 /* ---------- reflections in real ice ---------- */
 // At full resolution the ice reflections look like the real thing: the mirrored players a little soft, wavering
-// gently where the ice is uneven, fading out below the feet, and broken up by the fine grooves and scratches
-// skates have cut into the ice (a fixed web of them, made once, plus this period's skate marks).
-const GF = 4; // the grooves are drawn at four times the world's pixel size
-let grooveC = null;
-function grooves() {
-  if (grooveC) return grooveC;
-  grooveC = document.createElement('canvas');
-  grooveC.width = IW * GF;
-  grooveC.height = IH * GF;
-  const s = grooveC.getContext('2d');
-  s.scale(GF, GF);
-  s.lineCap = 'round';
-  s.strokeStyle = '#000000';
-  // long sweeping cuts: skaters carving turns, in bundles that follow each other
-  for (let b = 0; b < 140; b++) {
-    const cx = rnd(-40, IW + 40),
-      cy = rnd(-40, IH + 40),
-      r = rnd(30, 160),
-      a0 = rnd(0, Math.PI * 2),
-      len = rnd(0.25, 0.9);
-    for (let k = 0, n = 1 + Math.floor(rnd(0, 5)); k < n; k++) {
-      s.globalAlpha = rnd(0.35, 0.95);
-      s.lineWidth = rnd(0.2, 0.6);
-      s.beginPath();
-      s.arc(cx, cy, r + k * rnd(0.8, 2.2), a0 + rnd(-0.05, 0.05), a0 + len + rnd(-0.1, 0.1));
-      s.stroke();
-    }
-  }
-  // short nicks and scratches everywhere
-  for (let i = 0; i < 2600; i++) {
-    const x = rnd(0, IW),
-      y = rnd(0, IH),
-      a = rnd(0, Math.PI * 2),
-      l = rnd(1.5, 9);
-    s.globalAlpha = rnd(0.25, 0.8);
-    s.lineWidth = rnd(0.15, 0.45);
-    s.beginPath();
-    s.moveTo(x, y);
-    s.quadraticCurveTo(
-      x + Math.cos(a + 0.3) * l * 0.5,
-      y + Math.sin(a + 0.3) * l * 0.5,
-      x + Math.cos(a) * l,
-      y + Math.sin(a) * l,
-    );
-    s.stroke();
-  }
-  return grooveC;
-}
+// gently where the ice is uneven, fading out below the feet, and broken up where the ice is grooved.
 const RA = document.createElement('canvas'),
   rax = RA.getContext('2d'),
   RB = document.createElement('canvas'),
@@ -1072,17 +1069,14 @@ export function odReflections(g) {
   rax.filter = `blur(${(0.35 * zs).toFixed(2)}px)`;
   rax.drawImage(RB, 0, 0);
   rax.filter = 'none';
-  // broken up by the grooves
+  // broken up where the ice is grooved
   rbx.clearRect(0, 0, w, h);
   rbx.drawImage(RA, 0, 0);
-  rbx.globalCompositeOperation = 'destination-out';
-  rbx.setTransform(zs / GF, 0, 0, zs / GF, m.e * s, m.f * s);
-  rbx.globalAlpha = 0.8;
-  rbx.drawImage(grooves(), 0, 0);
-  rbx.setTransform(zs, 0, 0, zs, m.e * s, m.f * s);
-  rbx.globalAlpha = 1;
-  rbx.drawImage(markC, 0, 0);
-  rbx.drawImage(markC, 0, 0);
-  rbx.globalCompositeOperation = 'source-over';
+  if (grooveC) {
+    rbx.globalCompositeOperation = 'destination-out';
+    rbx.setTransform(grooveMatrix(m));
+    rbx.drawImage(grooveC, 0, 0);
+    rbx.globalCompositeOperation = 'source-over';
+  }
   layered.refl = true;
 }
