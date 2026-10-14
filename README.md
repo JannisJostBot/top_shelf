@@ -54,7 +54,7 @@ src/
   audio/              Web Audio engine, procedural skate sounds, synth voices, SFX table, goal songs
   input/              shared input state + keyboard, mouse, touch, game controller, haptics
   ui/                 DOM UI: HUD, menu, customization, player card, touch pad, online emotes and fight vote,
-                      the home-screen tip on phones (install.js)
+                      the home-screen tip on phones (install.js), the invite link's QR code (qr.js)
   styles/             CSS split by area
 tests/                Vitest specs
 ```

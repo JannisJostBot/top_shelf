@@ -25,6 +25,7 @@ import {
   decodeEvent,
   encodeArg,
   fmtCode,
+  linkToken,
   newCode,
   normCode,
   packInput,
@@ -51,6 +52,14 @@ describe('invite codes and names', () => {
     expect(normCode(fmtCode(a).toLowerCase())).toBe(a);
     expect(normCode(' ' + fmtCode(a).replace(/-/g, ' ') + ' ')).toBe(a);
     expect(normCode('https://example.org/game/#join=' + fmtCode(a))).toBe(a);
+    // invite links carry the code scrambled: 20 characters that do not contain it, read back exactly
+    for (const c of [a, b, '0'.repeat(24), 'Z'.repeat(24)]) {
+      const t = linkToken(c);
+      expect(t).toMatch(/^[A-Za-z0-9_-]{20}$/);
+      expect(normCode('https://example.org/game/#j=' + t)).toBe(c);
+    }
+    expect(normCode('https://example.org/game/#j=tooshort')).toBeNull();
+    expect(linkToken('0'.repeat(24)).toUpperCase()).not.toContain('0000');
     // O for zero and I or L for one are forgiven
     expect(normCode('O'.repeat(24))).toBe('0'.repeat(24));
     expect(normCode('il'.repeat(12))).toBe('1'.repeat(24));
