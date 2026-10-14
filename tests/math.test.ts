@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clamp, dist, hash, lerp, pick, rnd, toS } from '../src/core/math';
+import { clamp, dist, hash, lerp, pick, rnd, toS, wrapAngle } from '../src/core/math';
 import { K } from '../src/config';
 
 describe('core/math', () => {
@@ -13,6 +13,17 @@ describe('core/math', () => {
     expect(lerp(10, 20, 0)).toBe(10);
     expect(lerp(10, 20, 0.5)).toBe(15);
     expect(lerp(10, 20, 1)).toBe(20);
+  });
+
+  it('wraps angles of any number of turns into [-π, π)', () => {
+    for (const a of [0, 1, -1, 3, -3]) {
+      for (const turns of [0, 1, -1, 3, -5]) {
+        const w = wrapAngle(a + turns * Math.PI * 2);
+        expect(w).toBeCloseTo(a, 9);
+        expect(w).toBeGreaterThanOrEqual(-Math.PI);
+        expect(w).toBeLessThan(Math.PI);
+      }
+    }
   });
 
   it('measures euclidean distance', () => {

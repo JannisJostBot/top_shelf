@@ -11,7 +11,7 @@
 //  - the puck carrier follows a lane, curves around defenders, sometimes dekes, looks up before passing
 //    and winds up visibly before shooting
 import { ACC, BASE, GB, GT } from '../../config';
-import { clamp, dist, lerp, rnd } from '../../core/math';
+import { clamp, dist, lerp, rnd, wrapAngle } from '../../core/math';
 import { clock } from '../../core/time';
 import { startCheck } from '../hits';
 import { accelTo, faceTo, maxSpd } from '../physics/motion';
@@ -21,8 +21,6 @@ import { G, puck } from '../world';
 import { settings } from '../../settings';
 import { cpuSide, ctlOf } from '../online';
 import { DOUBLE_AFTER, PRESS_AFTER, catchUp, easingOff, nearest, openLane, readCarrier, teamMul } from './team';
-
-const wrap = a => ((a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
 
 /** Per-skater memory: smoothed target, next decision time, lane and the current plan. */
 function brain(p) {
@@ -79,7 +77,7 @@ function skate(p, tx, ty, dt, mul, urgency) {
     hy = dy / d;
   if (sp > 6) {
     const cur = Math.atan2(p.vy, p.vx),
-      da = wrap(Math.atan2(dy, dx) - cur);
+      da = wrapAngle(Math.atan2(dy, dx) - cur);
     if (Math.abs(da) > 2.2 && sp > BASE * 0.55) {
       // turning round at speed: dig the edges in and stop first
       accelTo(p, 0, 0, dt, ACC * 1.1);
@@ -227,7 +225,12 @@ export function teamAIRealistic(t, dt) {
     }
   if (!sk.length) return;
   const avail = sk.filter(p => p !== hum && p !== o && p.checkT <= 0 && !p.dummy);
-  for (const p of sk) if (p !== o && p.rai) p.rai.shot = p.rai.pass = null;
+  // a skater who lost the puck drops its plans, and the stick it had raised for a shot
+  for (const p of sk)
+    if (p !== o && p.rai) {
+      if (p.rai.shot) p.stickUp = false;
+      p.rai.shot = p.rai.pass = null;
+    }
   if (o && o !== hum && o.team === t && o.role === 'S') carrier(o, t, dt);
   else if (o && o.rai) o.stickUp = false;
 

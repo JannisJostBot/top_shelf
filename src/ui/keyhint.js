@@ -8,7 +8,7 @@ const KEYMAP = [
   [['↑', '↓', '←', '→'], 'Skate (relative to the aim arrow when using the mouse)'],
   [['W', 'A', 'S', 'D'], 'Also skate'],
   [['Space', 'J'], 'Shoot (hold to wind up) · Poke · Draw · Punch · Horn'],
-  [['Shift', 'K'], 'Pass · Check · Dash · Block · Finish'],
+  [['Shift', 'K', 'X'], 'Pass · Check · Dash · Block · Finish'],
   [['L', 'C'], 'Switch skater'],
   [
     ['Mouse'],

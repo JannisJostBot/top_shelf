@@ -4,6 +4,7 @@
 // far the clock has got into the next one. The blended values only exist while drawing: they are put on the
 // objects just before rendering and the simulation's own values are put back right after, so the game itself
 // runs exactly as before.
+import { wrapAngle } from '../core/math';
 import { G, puck, ref } from '../game/world';
 import { players } from '../game/players';
 import { cam } from './canvas';
@@ -45,7 +46,7 @@ export function blendIn(alpha) {
     if (e === puck && e._iz !== undefined) e.z = e._iz + (e.z - e._iz) * alpha;
     if ((e === G.zam || e === G.zam2) && e._ia !== undefined) e.a = e._ia + (e.a - e._ia) * alpha;
     if (e === G.cam3 && e._iyaw !== undefined) {
-      const d = ((e.yaw - e._iyaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+      const d = wrapAngle(e.yaw - e._iyaw);
       e.yaw = e.yaw - d * (1 - alpha);
     }
   }
