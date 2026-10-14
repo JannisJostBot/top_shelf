@@ -1174,3 +1174,32 @@ body.wide .prog.result > .pwin {
     max-height: 11vh;
   }
 }
+/* each drill card opens with a banner printed like a two-ink riso poster: halftone fields, bold shapes, and the red
+   overprinted on the blue so where they cross the inks darken */
+.prog .tban {
+  display: block;
+  width: calc(100% + 20px);
+  height: 80px;
+  margin: -10px -10px 2px;
+  border-bottom: 2px solid var(--p1);
+  background: var(--paper);
+}
+.prog .tban .s1,
+.prog .tban .s2 {
+  fill: none;
+}
+.prog .tban .s1 {
+  stroke: var(--p1);
+}
+.prog .tban .s2 {
+  stroke: var(--p2);
+}
+.prog .tban .f1 {
+  fill: var(--p1);
+}
+.prog .tban .f2 {
+  fill: var(--p2);
+}
+.prog .tban .mx {
+  mix-blend-mode: multiply;
+}
