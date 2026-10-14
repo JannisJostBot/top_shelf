@@ -43,10 +43,12 @@ import {
   odFront,
   odFrozen,
   odIce,
+  odLayer,
   odLens,
   odLights,
   odNets,
   odPost,
+  odPresent,
   odReflections,
   odStands,
   odTop,
@@ -92,7 +94,10 @@ export function render() {
   if (odFrozen()) return;
   odFrame();
   drawFrame(g);
-  odPost(g);
+  if (view.ss > 1) {
+    odPresent();
+    odPost(cv.getContext('2d'));
+  } else odPost(g);
 }
 function drawFrame(g) {
   kit.PS = puckStyle();
@@ -192,6 +197,7 @@ function drawFrame(g) {
     if (od) odReflections(g);
     else reflections(g);
   }
+  g = odLayer(g, 2); // overdrive at full resolution: what stands on the ice goes on its own layer
   for (const n of NETS) drawNet(g, n);
   odNets(g);
   const showCtl = !G.ai0 && (G.state === 'play' || G.state === 'faceoff');
@@ -275,6 +281,7 @@ function drawFrame(g) {
   g.globalAlpha = 1;
   drawSpray(g);
   odLights(g, ox, oy);
+  g = odLayer(g, 3); // and what goes over the lighting on another
   if (c && od) at(c, () => drawCtlTop(g, c)); // the marker stays bright over the arena lighting
   drawFx(g);
   drawGoalFx(g);

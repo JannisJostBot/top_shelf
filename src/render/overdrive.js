@@ -27,7 +27,7 @@ import { SKATERS, players } from '../game/players';
 import { G, puck, ref } from '../game/world';
 import { reduceMotion, settings } from '../settings';
 import { reflections, viewRect } from './atmosphere';
-import { view } from './canvas';
+import { cv, low, view } from './canvas';
 import { AMB, SH } from './colors';
 import { FAN2D, M } from './stands';
 import { R, disc, ellipsePx } from './pixels';
@@ -724,10 +724,17 @@ const LC = document.createElement('canvas'),
 /** Goal replays: the edges of the frame soft and coarse, as if out of focus, so the eye goes to the middle. */
 export function odLens(g) {
   if (!on() || G.state !== 'replay') return;
-  const w = view.CW,
-    h = view.CH,
-    sw = Math.max(1, Math.round(w / 3)),
-    sh = Math.max(1, Math.round(h / 3));
+  // (on the layers of a frame put together at full resolution, odPresent applies it at the right moment)
+  if (layered.on) layered.lens = true;
+  else lens(g);
+}
+/** The lens on whatever `g` holds, in blocks of three canvas pixels. */
+function lens(g) {
+  const w = g.canvas.width,
+    h = g.canvas.height,
+    b = 3 * (w / view.CW),
+    sw = Math.max(1, Math.round(w / b)),
+    sh = Math.max(1, Math.round(h / b));
   if (SC.width !== sw || SC.height !== sh) {
     SC.width = sw;
     SC.height = sh;
@@ -767,12 +774,13 @@ const TC = document.createElement('canvas'),
 /** After a goal or a big hit: the red channel slips a pixel or two sideways for a moment, and a light flash. */
 export function odPost(g) {
   if (!on() || reduceMotion) return;
-  const w = view.CW,
-    h = view.CH;
+  const w = g.canvas.width,
+    h = g.canvas.height,
+    px = w / view.CW;
   g.save();
   g.setTransform(1, 0, 0, 1, 0, 0);
   if (clock.now < chromaUntil) {
-    const d = (chromaUntil - clock.now) / chromaLen > 0.5 ? 2 : 1;
+    const d = ((chromaUntil - clock.now) / chromaLen > 0.5 ? 2 : 1) * px;
     if (TC.width !== w || TC.height !== h) {
       TC.width = w;
       TC.height = h;
@@ -881,6 +889,11 @@ export function odLights(g, ox, oy) {
   // everything that glows lights its surroundings too
   for (const l of glows)
     light((l.x * z + ox) / LS, (l.y * z + oy) / LS, (l.r * 1.6 * z) / LS, l.c, l.a * 1.8, 0.1);
+  // (on the layers of a frame put together at full resolution, odPresent multiplies it in)
+  if (layered.on) {
+    layered.light = true;
+    return;
+  }
   g.save();
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.globalCompositeOperation = 'multiply';
@@ -889,98 +902,187 @@ export function odLights(g, ox, oy) {
   g.restore();
 }
 
+/* ---------- the frame at full resolution ---------- */
+// When the screen canvas is bigger than the game's canvas (view.ss > 1), a top-down frame is drawn in layers:
+// the stands and the ice on the game's canvas (low), the reflections at full resolution, everything standing on
+// the ice on a second layer and what goes over the lighting on a third. odPresent puts them together, the pixel
+// art scaled up crisp and the light map multiplied in between.
+const layered = { on: false, refl: false, light: false, lens: false },
+  layerC = [2, 3].map(() => document.createElement('canvas'));
+/** Starts drawing on layer `n` (2: on the ice, 3: over the lighting); returns the context to go on with. */
+export function odLayer(g, n) {
+  if (!on() || view.ss === 1) return g;
+  const c = layerC[n - 2],
+    x = c.getContext('2d');
+  if (c.width !== view.CW || c.height !== view.CH) {
+    c.width = view.CW;
+    c.height = view.CH;
+  }
+  x.setTransform(1, 0, 0, 1, 0, 0);
+  x.globalAlpha = 1;
+  x.globalCompositeOperation = 'source-over';
+  x.clearRect(0, 0, view.CW, view.CH);
+  x.setTransform(g.getTransform());
+  x.imageSmoothingEnabled = false;
+  layered.on = true;
+  return x;
+}
+/** Shows the frame on the screen canvas (view.ss > 1): scaled up, or put together from its layers. */
+export function odPresent() {
+  const x = cv.getContext('2d'),
+    w = cv.width,
+    h = cv.height;
+  x.setTransform(1, 0, 0, 1, 0, 0);
+  x.globalAlpha = 1;
+  x.globalCompositeOperation = 'source-over';
+  x.imageSmoothingEnabled = false;
+  x.drawImage(low, 0, 0, w, h);
+  if (layered.on) {
+    if (layered.refl) {
+      x.globalAlpha = 0.5;
+      x.drawImage(RB, 0, 0);
+      x.globalAlpha = 1;
+    }
+    x.drawImage(layerC[0], 0, 0, w, h);
+    if (layered.light) {
+      x.globalCompositeOperation = 'multiply';
+      x.imageSmoothingEnabled = true;
+      x.drawImage(
+        LMC,
+        0,
+        0,
+        LMC.width,
+        LMC.height,
+        0,
+        0,
+        LMC.width * LS * view.ss,
+        LMC.height * LS * view.ss,
+      );
+      x.globalCompositeOperation = 'source-over';
+      x.imageSmoothingEnabled = false;
+    }
+    if (layered.lens) lens(x);
+    x.drawImage(layerC[1], 0, 0, w, h);
+  }
+  layered.on = layered.refl = layered.light = layered.lens = false;
+}
+
 /* ---------- reflections in real ice ---------- */
-// The ice only mirrors where it is smooth. A fixed web of fine scratches (made once, in world pixels) and the
-// marks skated into it this period break the reflections up; rows of the mirrored picture slip sideways by a
-// whole world pixel here and there, as uneven ice bends the image; and each reflection fades out below the feet.
-// Everything stays on the world's pixel grid, so it reads as pixel art.
-const scratchC = document.createElement('canvas');
-scratchC.width = IW;
-scratchC.height = IH;
-{
-  const s = scratchC.getContext('2d');
-  s.fillStyle = '#000000';
-  for (let i = 0; i < 1800; i++) {
-    // a short skate cut: a gently curving line of single pixels
-    let x = rnd(0, IW),
-      y = rnd(0, IH),
-      a = rnd(0, Math.PI * 2);
-    const len = rnd(4, 22),
-      bend = rnd(-0.12, 0.12);
-    s.globalAlpha = rnd(0.4, 1);
-    for (let k = 0; k < len; k++) {
-      s.fillRect(Math.round(x), Math.round(y), 1, 1);
-      a += bend;
-      x += Math.cos(a);
-      y += Math.sin(a) * 0.6; // seen at a slant: cuts run more across than along
+// At full resolution the ice reflections look like the real thing: the mirrored players a little soft, wavering
+// gently where the ice is uneven, fading out below the feet, and broken up by the fine grooves and scratches
+// skates have cut into the ice (a fixed web of them, made once, plus this period's skate marks).
+const GF = 4; // the grooves are drawn at four times the world's pixel size
+let grooveC = null;
+function grooves() {
+  if (grooveC) return grooveC;
+  grooveC = document.createElement('canvas');
+  grooveC.width = IW * GF;
+  grooveC.height = IH * GF;
+  const s = grooveC.getContext('2d');
+  s.scale(GF, GF);
+  s.lineCap = 'round';
+  s.strokeStyle = '#000000';
+  // long sweeping cuts: skaters carving turns, in bundles that follow each other
+  for (let b = 0; b < 140; b++) {
+    const cx = rnd(-40, IW + 40),
+      cy = rnd(-40, IH + 40),
+      r = rnd(30, 160),
+      a0 = rnd(0, Math.PI * 2),
+      len = rnd(0.25, 0.9);
+    for (let k = 0, n = 1 + Math.floor(rnd(0, 5)); k < n; k++) {
+      s.globalAlpha = rnd(0.35, 0.95);
+      s.lineWidth = rnd(0.2, 0.6);
+      s.beginPath();
+      s.arc(cx, cy, r + k * rnd(0.8, 2.2), a0 + rnd(-0.05, 0.05), a0 + len + rnd(-0.1, 0.1));
+      s.stroke();
     }
   }
+  // short nicks and scratches everywhere
+  for (let i = 0; i < 2600; i++) {
+    const x = rnd(0, IW),
+      y = rnd(0, IH),
+      a = rnd(0, Math.PI * 2),
+      l = rnd(1.5, 9);
+    s.globalAlpha = rnd(0.25, 0.8);
+    s.lineWidth = rnd(0.15, 0.45);
+    s.beginPath();
+    s.moveTo(x, y);
+    s.quadraticCurveTo(
+      x + Math.cos(a + 0.3) * l * 0.5,
+      y + Math.sin(a + 0.3) * l * 0.5,
+      x + Math.cos(a) * l,
+      y + Math.sin(a) * l,
+    );
+    s.stroke();
+  }
+  return grooveC;
 }
-// per world pixel row: how far the reflection slips there (-1, 0 or 1 world pixels), in runs of a few rows
-const slip = new Int8Array(IH);
-for (let y = 0; y < IH;) {
-  const run = 1 + Math.floor(rnd(0, 4)),
-    r = Math.random(),
-    o = r < 0.14 ? -1 : r < 0.28 ? 1 : 0;
-  for (let k = 0; k < run && y < IH; k++) slip[y++] = o;
-}
-const RC = document.createElement('canvas'),
-  rcx = RC.getContext('2d'),
-  RC2 = document.createElement('canvas'),
-  rc2x = RC2.getContext('2d');
+const RA = document.createElement('canvas'),
+  rax = RA.getContext('2d'),
+  RB = document.createElement('canvas'),
+  rbx = RB.getContext('2d');
 export function odReflections(g) {
-  const w = view.CW,
-    h = view.CH,
+  // on a screen canvas no bigger than the game's, the plain reflections
+  if (view.ss === 1) {
+    reflections(g);
+    return;
+  }
+  const s = view.ss,
+    w = view.CW * s,
+    h = view.CH * s,
     m = g.getTransform(),
-    z = m.a;
-  for (const c of [RC, RC2])
+    zs = m.a * s;
+  for (const c of [RA, RB])
     if (c.width !== w || c.height !== h) {
       c.width = w;
       c.height = h;
     }
-  rcx.setTransform(1, 0, 0, 1, 0, 0);
-  rcx.globalCompositeOperation = 'source-over';
-  rcx.clearRect(0, 0, w, h);
-  rcx.setTransform(m);
-  reflections(rcx, 1);
+  // the mirrored players, at full resolution
+  rax.setTransform(1, 0, 0, 1, 0, 0);
+  rax.globalCompositeOperation = 'source-over';
+  rax.clearRect(0, 0, w, h);
+  rax.imageSmoothingEnabled = false;
+  rax.setTransform(zs, 0, 0, zs, m.e * s, m.f * s);
+  reflections(rax, 1);
   // fading out below the feet
-  rcx.globalCompositeOperation = 'destination-out';
+  rax.globalCompositeOperation = 'destination-out';
   const fade = (x, y) => {
-    const gr = rcx.createLinearGradient(0, y + 4, 0, y + 26);
+    const gr = rax.createLinearGradient(0, y + 2, 0, y + 26);
     gr.addColorStop(0, 'rgba(0,0,0,0)');
     gr.addColorStop(1, 'rgba(0,0,0,1)');
-    rcx.fillStyle = gr;
-    rcx.fillRect(x - 16, y, 32, 30);
+    rax.fillStyle = gr;
+    rax.fillRect(x - 16, y, 32, 30);
   };
   for (const p of players) if (!p.benched) fade(toS(p.x), toS(p.y) + 1);
   fade(toS(ref.x), toS(ref.y) + 1);
-  // broken up by the scratches and this period's skate marks
-  rcx.globalAlpha = 0.7;
-  rcx.drawImage(scratchC, 0, 0);
-  rcx.globalAlpha = 1;
-  rcx.drawImage(markC, 0, 0);
-  rcx.drawImage(markC, 0, 0);
-  rcx.globalCompositeOperation = 'source-over';
-  // rows slipping sideways, a world pixel at a time
-  rc2x.clearRect(0, 0, w, h);
-  let y0 = 0,
-    o0 = null;
-  const flush = y1 => {
-    if (y1 > y0) rc2x.drawImage(RC, 0, y0, w, y1 - y0, o0 * z, y0, w, y1 - y0);
-  };
-  for (let y = 0; y < h; y++) {
-    const row = clamp(Math.floor((y - m.f) / z), 0, IH - 1),
-      o = slip[row];
-    if (o !== o0) {
-      if (o0 !== null) flush(y);
-      y0 = y;
-      o0 = o;
-    }
+  rax.globalCompositeOperation = 'source-over';
+  // wavering where the ice is uneven: thin rows shifted by a fraction of a pixel, the same spots every frame
+  rbx.setTransform(1, 0, 0, 1, 0, 0);
+  rbx.globalCompositeOperation = 'source-over';
+  rbx.clearRect(0, 0, w, h);
+  rbx.imageSmoothingEnabled = true;
+  for (let y = 0; y < h; y += 2) {
+    const wy = (y - m.f * s) / zs,
+      o = (Math.sin(wy * 0.9 + Math.sin(wy * 0.21) * 2.3) * 0.45 + Math.sin(wy * 2.7) * 0.2) * zs;
+    rbx.drawImage(RA, 0, y, w, 2, o, y, w, 2);
   }
-  flush(h);
-  g.save();
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  g.globalAlpha = 0.42;
-  g.drawImage(RC2, 0, 0);
-  g.restore();
+  // a little soft, as ice is no perfect mirror
+  rax.setTransform(1, 0, 0, 1, 0, 0);
+  rax.clearRect(0, 0, w, h);
+  rax.filter = `blur(${(0.35 * zs).toFixed(2)}px)`;
+  rax.drawImage(RB, 0, 0);
+  rax.filter = 'none';
+  // broken up by the grooves
+  rbx.clearRect(0, 0, w, h);
+  rbx.drawImage(RA, 0, 0);
+  rbx.globalCompositeOperation = 'destination-out';
+  rbx.setTransform(zs / GF, 0, 0, zs / GF, m.e * s, m.f * s);
+  rbx.globalAlpha = 0.8;
+  rbx.drawImage(grooves(), 0, 0);
+  rbx.setTransform(zs, 0, 0, zs, m.e * s, m.f * s);
+  rbx.globalAlpha = 1;
+  rbx.drawImage(markC, 0, 0);
+  rbx.drawImage(markC, 0, 0);
+  rbx.globalCompositeOperation = 'source-over';
+  layered.refl = true;
 }

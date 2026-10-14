@@ -3,7 +3,7 @@ import { $ } from '../core/dom';
 import { clamp, lerp } from '../core/math';
 import { G, puck } from '../game/world';
 import { pad } from '../input/touch';
-import { cam, cv, view } from './canvas';
+import { cam, cv, low, view } from './canvas';
 import { gl3dReady } from './gl3d';
 import { M } from './stands';
 import { settings } from '../settings';
@@ -64,12 +64,19 @@ export function fit() {
   // (2 in overdrive, when the GPU draws the 3D view)
   if (G.demo) nw = Math.max(nw, Math.round(r.width / (settings.overdrive && gl3dReady() ? 4 : 6)) * 2);
   const nh = clamp(Math.round((nw * r.height) / r.width), 64, 1200);
-  if (nw !== view.CW || nh !== view.CH) {
+  // overdrive: the screen canvas at about the screen's resolution (whole multiples of the canvas, up to 4)
+  const ss = settings.overdrive ? clamp(Math.round(r.width / nw), 1, 4) : 1;
+  if (nw !== view.CW || nh !== view.CH || ss !== view.ss) {
     view.CW = nw;
     view.CH = nh;
-    cv.width = view.CW;
-    cv.height = view.CH;
-    view.ctx = cv.getContext('2d');
+    view.ss = ss;
+    cv.width = nw * ss;
+    cv.height = nh * ss;
+    if (ss > 1) {
+      low.width = nw;
+      low.height = nh;
+    }
+    view.ctx = (ss > 1 ? low : cv).getContext('2d');
     view.ctx.imageSmoothingEnabled = false;
   }
   G.padWorld = pad.hidden ? 0 : (pad.offsetHeight * (view.CW / r.width)) / K;
