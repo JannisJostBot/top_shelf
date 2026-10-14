@@ -36,7 +36,7 @@ import {
 import { R } from './pixels';
 import { drawGoalie, drawRef, drawSkater } from './players';
 import { drawPuck, puckGround } from './puck';
-import { drawStands } from './stands';
+import { drawStands, syncFans } from './stands';
 import { drawZamHud, drawZamboni } from './zamboni';
 
 // On phones the menu (and the result) show the 3D arena through a window in the program: the view is framed to it.
@@ -73,6 +73,7 @@ function frameMenuWindow() {
 }
 export function render() {
   kit.PS = puckStyle();
+  syncFans();
   if (!G.demo && !(G.state === 'over' && G.post)) view.frame = null; // matches use the whole view
   // after the final whistle: b-roll of the arena behind the results card, filmed like the menu background
   if (G.state === 'over' && G.post) {
