@@ -109,7 +109,6 @@ export function showTab(name) {
   if (name === 'arena') arenaThumbs();
   if (name === 'lineup') renderLineup();
 }
-/** The best one-minute score for the chosen gap (endless rounds keep no best). */
 /** Back to the rink from a section page; true when there was a page to leave. */
 export function menuBack() {
   if (page === 'play' || $('menu').hidden) return false;
@@ -133,6 +132,7 @@ export function updSummary() {
   $('matchSum').textContent = lvl + ' · 3×' + per;
   $('tkSub').textContent = STADIUMS[settings.stadiumKey].short + ' · ' + lvl + ' · 3 × ' + per;
 }
+/** The best one-minute score for the chosen gap (endless rounds keep no best). */
 function showAimBest() {
   const a = aimCfg.endless ? 0 : loadAimBest(aimCfg.moving);
   $('aimBest').textContent = a ? 'Your best' + (aimCfg.moving ? ' (moving gap): ' : ': ') + a + (a === 1 ? ' goal.' : ' goals.') : '';

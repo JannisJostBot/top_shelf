@@ -35,7 +35,8 @@ export function postStep(dt) {
     faceTo(p, here ? m.x : tx, here ? m.y : ty, 0.3);
   });
   // the losers drift slowly back toward their own end, spread across the ice
-  const own = 1 - w ? GB - 50 : GT + 50;
+  // (team 0 defends the lower goal, team 1 the upper one)
+  const own = w ? GB - 50 : GT + 50;
   SK[1 - w].forEach((p, i) => {
     p.jump = 0;
     p.stickUp = false;

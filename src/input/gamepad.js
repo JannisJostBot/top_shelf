@@ -195,6 +195,12 @@ export function pollGamepad() {
   if (!gp) {
     pad.x = pad.y = 0;
     prev = [];
+    // unplugged with shoot held down: let go of the shot instead of winding it up forever
+    if (shootHeld) {
+      shootHeld = false;
+      input.shootHeld = false;
+      input.sr = true;
+    }
     return;
   }
   const now = performance.now(),
