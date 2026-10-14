@@ -141,28 +141,28 @@ function growGrooves() {
     grooveC.width = IW * GF;
     grooveC.height = IH * GF;
   }
-  // about 160 arcs and 2600 nicks over a period
+  // about 60 short curved cuts and 1600 tiny nicks over a period: imperfections, not gouges
   const per = Math.max(30, settings.periodLen || 60);
-  arcsDue += (160 / per) * dt;
-  nicksDue += (2600 / per) * dt;
+  arcsDue += (60 / per) * dt;
+  nicksDue += (1600 / per) * dt;
   const s = grooveC.getContext('2d');
   s.setTransform(K * GF, 0, 0, K * GF, 0, 0);
   s.lineCap = 'round';
   s.strokeStyle = '#8fa3b9';
   for (; arcsDue >= 1; arcsDue--) {
-    // a turn carved through the rink: a circle's arc around a centre anywhere near it
+    // a short curved cut, now and then two side by side
     const x = rnd(RX0 + 4, RX1 - 4),
       y = rnd(RY0 + 4, RY1 - 4),
-      r = rnd(14, 70),
+      r = rnd(8, 30),
       a0 = rnd(0, Math.PI * 2),
-      len = rnd(0.3, 1.1),
+      len = rnd(2, 7) / r, // 2 to 7 world units along the curve
       cx = x - Math.cos(a0) * r,
       cy = y - Math.sin(a0) * r;
-    for (let k = 0, n = 1 + Math.floor(rnd(0, 4)); k < n; k++) {
-      s.globalAlpha = rnd(0.3, 0.8);
-      s.lineWidth = rnd(0.1, 0.3);
+    for (let k = 0, n = 1 + Math.floor(rnd(0, 2)); k < n; k++) {
+      s.globalAlpha = rnd(0.15, 0.4);
+      s.lineWidth = rnd(0.06, 0.15);
       s.beginPath();
-      s.arc(cx, cy, r + k * rnd(0.4, 1.1), a0 + rnd(-0.04, 0.04), a0 + len + rnd(-0.08, 0.08));
+      s.arc(cx, cy, r + k * rnd(0.4, 1.1), a0 + rnd(-0.02, 0.02), a0 + len + rnd(-0.02, 0.02));
       s.stroke();
     }
   }
@@ -170,9 +170,9 @@ function growGrooves() {
     const x = rnd(RX0 + 2, RX1 - 2),
       y = rnd(RY0 + 2, RY1 - 2),
       a = rnd(0, Math.PI * 2),
-      l = rnd(0.8, 4.5);
-    s.globalAlpha = rnd(0.2, 0.7);
-    s.lineWidth = rnd(0.08, 0.22);
+      l = rnd(0.4, 1.8);
+    s.globalAlpha = rnd(0.1, 0.35);
+    s.lineWidth = rnd(0.05, 0.12);
     s.beginPath();
     s.moveTo(x, y);
     s.quadraticCurveTo(
@@ -976,7 +976,7 @@ export function odPresent() {
     if (grooveC) {
       x.setTransform(grooveMatrix(layered.m));
       x.imageSmoothingEnabled = true;
-      x.globalAlpha = 0.6;
+      x.globalAlpha = 0.4;
       x.drawImage(grooveC, 0, 0);
       x.globalAlpha = 1;
       x.imageSmoothingEnabled = false;
