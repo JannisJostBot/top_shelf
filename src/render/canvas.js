@@ -15,8 +15,14 @@ export const view = {
   /** where the menu's 3D view is framed: rows y0..y1 (the window on phones) and/or the column cx to centre it
    * on (beside the program sheet on desktop); null for the whole canvas */
   frame: /** @type {any} */ (null),
+  /** screen pixels per canvas pixel on the screen canvas: 1, or more in overdrive (see `low`) */
+  ss: 1,
 };
 view.ctx.imageSmoothingEnabled = false;
+// Overdrive shows the frame at `ss` times the canvas size: the game still draws its pixel art at CW x CH, into
+// this canvas, and render/overdrive.js (odPresent) puts the frame together on the screen canvas, with the ice
+// reflections in between at full resolution.
+export const low = document.createElement('canvas');
 export const pvc = $('pv'),
   pvx = pvc.getContext('2d');
 pvx.imageSmoothingEnabled = false;

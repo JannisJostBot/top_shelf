@@ -18,10 +18,12 @@ uniform vec2 uRes;            // canvas size
 uniform vec3 uCam;            // camera x, y, eye height
 uniform vec4 uFR;             // forward and right vectors (Fx, Fy, Rx, Ry)
 uniform float uF, uHor, uCxs, uK, uNow, uHype;
+uniform bool uCards, uOd;     // overdrive: card stunts in the stands, adverts on the ribbon board
+uniform vec3 uCardA, uCardB;
 uniform bool uOutside;
 uniform sampler2D uIce;       // the painted rink (IW x IH)
 uniform sampler2D uCols;      // per column: t (boards), tIn (near boards), seat position, u + 1000 * tiny
-uniform sampler2D uFans;      // per fan: head, body, darker body (rows of FAN_ROWS), phase in the alpha
+uniform sampler2D uFans;      // per fan: head, body, darker body (rows of FAN_ROWS); taken (head), card (body), phase in the alpha
 uniform vec3 uKick, uBoard, uStand, uSeat, uNear1, uNear2, uArena, uRibbon, uSuite, uMid, uDark;
 uniform int uRoof;            // roof kind
 uniform vec3 uRB, uRA, uRL, uRC, uRLight;
@@ -127,7 +129,10 @@ void main() {
         col = roof(uCam.x + dx * tc, uCam.y + dy * tc, max(tc / uF, (tc * tc) / (uF * (ROOF_H - h))), tc);
       } else {
         float z = h - ((y - uHor) * tW) / uF;
-        col = z >= 36.0 && z < 37.6 ? uRibbon : (z >= 40.0 && z < 44.0 && mod(u, 8.0) < 6.0 ? uSuite : uArena);
+        if (z >= 36.0 && z < 37.6) {
+          float ad = u + floor(uNow * 24.0), m = mod(ad, 24.0), seg = mod(floor(ad / 24.0), 3.0);
+          col = !uOd ? uRibbon : (m >= 20.0 ? uDark : (seg < 1.0 ? uCardA : (seg < 2.0 ? uRibbon : uCardB)));
+        } else col = z >= 40.0 && z < 44.0 && mod(u, 8.0) < 6.0 ? uSuite : uArena;
       }
     } else {
       float top = rowY(t, r + 1.0, h), bh = rowY(t, r, h) - top;
@@ -137,18 +142,21 @@ void main() {
         fd = texelFetch(uFans, ivec2(seat, fr + 2 * FROWS), 0);
       bool empty = fh.a < 0.5;
       float wave = sin(uNow * 11.0 + fd.a * TAU);
+      bool card = uCards && fb.a > 0.5 && wave > -0.2;
+      vec3 cardC = mod(floor(seatF / 6.0), 2.0) < 1.0 ? uCardA : uCardB;
       if (bh < 2.0 || tiny) {
         vec3 shade = parity(r) > 0.5 ? uDark : uMid;
         if (empty) col = shade;
         else {
           bool up = uHype > 0.05 && wave > 0.4, head = bh >= 1.5 && (y - top) / bh < 0.32;
-          col = (floor((head || up ? fh.rgb : (xin > 0.6 ? fd.rgb : fb.rgb)) * 127.5) + floor(shade * 127.5)) / 255.0;
+          col = (floor((card ? cardC : (head || up ? fh.rgb : (xin > 0.6 ? fd.rgb : fb.rgb))) * 127.5) + floor(shade * 127.5)) / 255.0;
         }
       } else {
         float bob = uHype > 0.05 ? wave * uHype * 0.18 : 0.0, w = (y - top) / bh + bob;
         col = w >= 0.84 ? uSeat : uStand;
         if (!empty) {
-          if (w >= 0.02 && w < 0.3 && xin >= 0.32 && xin <= 0.68) col = fh.rgb;
+          if (card && w >= 0.0 && w < 0.34 && xin >= 0.2 && xin <= 0.8) col = cardC;
+          else if (w >= 0.02 && w < 0.3 && xin >= 0.32 && xin <= 0.68) col = fh.rgb;
           else if (w >= 0.3 && w < 0.84 && xin >= 0.14 && xin <= 0.86) col = xin > 0.68 ? fd.rgb : fb.rgb;
         }
       }
@@ -280,7 +288,8 @@ export function drawGL(a) {
           d[i] = (c || 0) & 255;
           d[i + 1] = ((c || 0) >> 8) & 255;
           d[i + 2] = ((c || 0) >> 16) & 255;
-          d[i + 3] = k === 0 ? (fan.empty ? 0 : 255) : k === 2 ? Math.round(((fan.ph % (Math.PI * 2)) / (Math.PI * 2)) * 255) : 255;
+          // (body row: whether this fan holds up a card)
+          d[i + 3] = k === 0 ? (fan.empty ? 0 : 255) : k === 2 ? Math.round(((fan.ph % (Math.PI * 2)) / (Math.PI * 2)) * 255) : fan.card ? 255 : 0;
         });
       });
       gl.activeTexture(gl.TEXTURE2);
@@ -299,9 +308,11 @@ export function drawGL(a) {
     gl.uniform1f(U.uK, K);
     gl.uniform1f(U.uNow, a.now);
     gl.uniform1f(U.uHype, a.hype);
+    gl.uniform1i(U.uCards, a.cards ? 1 : 0);
+    gl.uniform1i(U.uOd, a.od ? 1 : 0);
     gl.uniform1i(U.uOutside, a.outside ? 1 : 0);
     const c = a.colors;
-    for (const k of ['uKick', 'uBoard', 'uStand', 'uSeat', 'uNear1', 'uNear2', 'uArena', 'uRibbon', 'uSuite', 'uMid', 'uDark'])
+    for (const k of ['uKick', 'uBoard', 'uStand', 'uSeat', 'uNear1', 'uNear2', 'uArena', 'uRibbon', 'uSuite', 'uMid', 'uDark', 'uCardA', 'uCardB'])
       gl.uniform3fv(U[k], rgb(c[k]));
     const R = a.roof;
     gl.uniform1i(U.uRoof, ROOFS[R.kind] ?? 0);

@@ -3,6 +3,7 @@ import { hash, rnd, toS } from '../core/math';
 import { clock } from '../core/time';
 import { kit } from '../game/kit';
 import { G } from '../game/world';
+import { settings } from '../settings';
 import { viewRect } from './atmosphere';
 import { R } from './pixels';
 
@@ -52,6 +53,8 @@ export function buildFans() {
         bodyD: U32(shade(body, 0.7)),
         head: U32(head),
         ph: hash(r * 2, s) * 6.28,
+        // holds up a card when the crowd gets loud (overdrive)
+        card: hash(s * 0.71 + 1.3, r * 0.53 + 4.1) < 0.35,
       });
     }
 }
@@ -59,7 +62,14 @@ export function buildFans() {
 export function syncFans() {
   if (!!G.practice !== fansSparse) buildFans();
 }
-const FAN2D = [];
+/** The crowd's mood: overdrive keeps them a little livelier, and on their feet for a fight. */
+export function crowdHype() {
+  if (!settings.overdrive) return G.hype;
+  return Math.max(G.hype, G.state === 'brawl' ? 0.85 : G.practice ? 0 : 0.12);
+}
+// The card stunt: sections of fans hold up cards in the home colour and white, block by block.
+export const cardCol = section => (section & 1 ? '#ffffff' : kit.TEAMS[0].main);
+export const FAN2D = [];
 for (const side of [-1, 1])
   for (let c = 0; c < 3; c++)
     for (let y = 8; y <= 248; y += 5)
@@ -80,17 +90,22 @@ export function drawStands(g) {
   const v = viewRect();
   if (v.x >= 0 && v.x + v.w <= W && v.y >= 0 && v.y + v.h <= H) return;
   R(g, -M * K, -M * K, (W + 2 * M) * K, (H + 2 * M) * K, '#141a2c');
+  const hype = crowdHype(),
+    cards = settings.overdrive && hype > 0.4;
   for (let i = 0; i < FAN2D.length; i++) {
     const f = FAN2D[i];
     if (f.x < v.x - 3 || f.x > v.x + v.w + 3 || f.y < v.y - 3 || f.y > v.y + v.h + 3) continue;
     const t = fanTab[i % fanTab.length];
     if (!t || t.empty) continue;
-    const bob = Math.round(Math.sin(clock.now * (4 + G.hype * 8) + f.ph) * (0.4 + G.hype * 2)),
+    const bob = Math.round(Math.sin(clock.now * (4 + hype * 8) + f.ph) * (0.4 + hype * 2)),
       x = toS(f.x),
       y = toS(f.y) - bob;
     R(g, x - 3, y - 1, 6, 4, t.bodyHex);
     R(g, x - 2, y - 4, 4, 3, t.headHex);
-    if (G.hype > 0.4 && Math.sin(clock.now * 6 + f.ph) > 0) {
+    if (cards && t.card && Math.sin(clock.now * 6 + f.ph) > -0.2) {
+      R(g, x - 3, y - 9, 6, 5, '#0b0f1a');
+      R(g, x - 2, y - 8, 4, 3, cardCol(Math.floor((f.x + f.y + 40) / 24)));
+    } else if (hype > 0.4 && Math.sin(clock.now * 6 + f.ph) > 0) {
       R(g, x - 4, y - 7, 1, 4, t.headHex);
       R(g, x + 3, y - 7, 1, 4, t.headHex);
     }

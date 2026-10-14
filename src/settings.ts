@@ -23,6 +23,8 @@ export const settings: {
   watchCam: 'cine' | 'classic';
   /** show the frames-per-second counter */
   fps: boolean;
+  /** overdrive graphics: extra effects that cost more to draw (render/overdrive.js) */
+  overdrive: boolean;
 } = {
   puckKey: 'classic',
   diffKey: 'pro',
@@ -41,6 +43,7 @@ export const settings: {
   sticks: ['wood', 'wood'],
   watchCam: 'cine',
   fps: false,
+  overdrive: false,
 };
 
 export const reduceMotion =

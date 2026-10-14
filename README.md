@@ -49,7 +49,8 @@ src/
                       host's frames and the guest's playback (match.js), the guest's frame buffer and its
                       adaptive delay (buffer.js), snapshots (snap.js), the guest's own skater predicted
                       (predict.js), message checks and the mirror between the two views (proto.js)
-  render/             canvas drawing: sprites, ice, stands, players, puck, effects, mode-7 replay cam
+  render/             canvas drawing: sprites, ice, stands, players, puck, effects, mode-7 replay cam, and the
+                      optional overdrive extras (overdrive.js; Setup > Overdrive graphics)
   audio/              Web Audio engine, procedural skate sounds, synth voices, SFX table, goal songs
   input/              shared input state + keyboard, mouse, touch, game controller, haptics
   ui/                 DOM UI: HUD, menu, customization, player card, touch pad, online emotes and fight vote,

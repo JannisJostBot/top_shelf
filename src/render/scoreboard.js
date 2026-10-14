@@ -1,6 +1,7 @@
 // The centre-hung scoreboard for the 3D views: a box hanging high over centre ice (where arenas hang theirs),
 // with a screen on each side showing the teams, the score, the period and the clock, LED rings in the arena's
 // colour above and below the screens, and cables up to the roof.
+import { clock } from '../core/time';
 import { G } from '../game/world';
 import { kit } from '../game/kit';
 import { STADIUMS } from '../data/stadiums';
@@ -55,6 +56,7 @@ const F = {
   Y: '101101010010010',
   Z: '111001010100111',
   ' ': '000000000000000',
+  '!': '010010010000010',
 };
 /** Text in the 3x5 font at scale s; returns its width. */
 function text(g, str, x, y, col, s = 1) {
@@ -93,7 +95,12 @@ function paint() {
           : clockText(Math.max(0, Math.ceil(G.clock || 0))),
     sc = G.score || [0, 0],
     S = STADIUMS[settings.stadiumKey],
-    key = [per, clk, sc[0], sc[1], abbr(0), abbr(1), kit.TEAMS[0].main, kit.TEAMS[1].main, S.kick].join('|');
+    // overdrive: GOAL! flashing after a goal, REPLAY during replays, and adverts running round the LED rings
+    od = settings.overdrive,
+    show = !od || G.demo ? '' : G.state === 'goal' || G.state === 'celebrate' ? 'goal' : G.state === 'replay' ? 'replay' : '',
+    blink = od ? Math.floor(clock.now * 4) & 1 : 0,
+    scroll = od ? Math.floor(clock.now * 10) % 6 : -1,
+    key = [per, clk, sc[0], sc[1], abbr(0), abbr(1), kit.TEAMS[0].main, kit.TEAMS[1].main, S.kick, show, blink, scroll].join('|');
   if (key === shownKey) return;
   shownKey = key;
   for (const f of [LONG, SHORT]) {
@@ -105,8 +112,30 @@ function paint() {
     g.fillStyle = S.kick; // LED rings
     g.fillRect(0, 0, W, 2);
     g.fillRect(0, H - 2, W, 2);
+    if (scroll >= 0) {
+      g.fillStyle = '#ffffff';
+      for (let x = scroll - 6; x < W; x += 6) {
+        g.fillRect(x, 0, 2, 2);
+        g.fillRect(W - x - 2, H - 2, 2, 2);
+      }
+    }
     g.fillStyle = '#04060b'; // screen
     g.fillRect(1, 3, W - 2, H - 6);
+    if (show === 'goal') {
+      const word = f === LONG ? 'GOAL!' : 'GOAL',
+        t = G.lastTeam === 1 ? 1 : 0;
+      text(g, word, (W - width(word, 2)) / 2, 5, blink ? '#ffc845' : '#ffffff', 2);
+      text(g, abbr(t), (W - width(abbr(t))) / 2, 18, kit.TEAMS[t].main);
+      continue;
+    }
+    if (show === 'replay') {
+      text(g, 'REPLAY', (W - width('REPLAY')) / 2, 8, '#ffffff');
+      g.fillStyle = blink ? '#ff3b3b' : '#5a1515'; // the recording light
+      g.fillRect((W - width('REPLAY')) / 2 - 4, 9, 2, 2);
+      const sc2 = sc[0] + '-' + sc[1];
+      text(g, sc2, (W - width(sc2)) / 2, 17, '#8f9cc0');
+      continue;
+    }
     const s0 = String(sc[0]),
       s1 = String(sc[1]);
     if (f === LONG) {

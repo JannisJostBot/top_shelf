@@ -2,7 +2,7 @@ import { GB, GT, IH, IW, K, ND, NETS, RR, RX0, RX1, RY0, RY1 } from '../config';
 import { insideRinkW } from '../game/physics/rink';
 export { insideRinkW };
 import { drawPyro3D } from './pyro';
-import { clamp, lerp, wrapAngle } from '../core/math';
+import { clamp, lerp, rnd, wrapAngle } from '../core/math';
 import { clock } from '../core/time';
 import { STADIUMS } from '../data/stadiums';
 import { kit } from '../game/kit';
@@ -14,9 +14,10 @@ import { SH } from './colors';
 import { iceBuf } from './ice';
 import { puckBadge, replayOverlay } from './overlays';
 import { R } from './pixels';
-import { drawGoalie, drawRef, drawSkater } from './players';
+import { drawAgain, drawGoalie, drawRef, drawSkater } from './players';
 import { puckPixels } from './puck';
-import { FAN_ROWS, FAN_SEATS, U32, fanTab } from './stands';
+import { FAN_ROWS, FAN_SEATS, U32, cardCol, crowdHype, fanTab } from './stands';
+import { odLens } from './overdrive';
 import { ROOF_H, roofLamps, roofPainter } from './roofs';
 import { drawScoreboard } from './scoreboard';
 import { columnBuffer, drawGL, gl3dReady } from './gl3d';
@@ -306,6 +307,9 @@ let rowT = new Float64Array(0),
   roofFoot = new Float64Array(0);
 // per column, the screen row where the roof ends (the back wall starts); glares only show on the roof
 let roofEdge = new Float32Array(0);
+// per column, the screen rows where the boards meet the ice and where the glass ends (the ice mirror's reach)
+let baseY = new Float32Array(0),
+  glassY = new Float32Array(0);
 let fanWave = new Float64Array(0),
   fanWaveAt = new Float64Array(0);
 /** Halfway between two opaque packed colours. */
@@ -392,12 +396,22 @@ export function render3D(g, overlay = true) {
       RIBBON = U32(S.kick),
       SUITE = U32('#3a3222'),
       roof = roofPainter(S),
-      hype = G.hype;
+      hype = crowdHype(),
+      // overdrive: card stunts in the stands when the crowd is loud, adverts running along the ribbon board
+      od = settings.overdrive,
+      cards = od && hype > 0.4,
+      CARD_A = U32(cardCol(0)),
+      CARD_B = U32(cardCol(1)),
+      adAt = Math.floor(clock.now * 24);
     const crowd = crowdTone(),
       // the fan cam sits in the stands: rays first cross the near boards and glass, then the ice
       outside = !insideRinkW(C3.x, C3.y);
     if (rowT.length !== view.CH) rowT = new Float64Array(view.CH);
     if (roofEdge.length !== view.CW) roofEdge = new Float32Array(view.CW);
+    if (baseY.length !== view.CW) {
+      baseY = new Float32Array(view.CW);
+      glassY = new Float32Array(view.CW);
+    }
     for (let y = hor + 1; y < view.CH; y++) rowT[y] = (h * f) / (y - hor);
     // the same for the roof above the horizon: distance to the roof plane and how much roof one pixel covers
     if (roofT.length !== view.CH) {
@@ -501,6 +515,8 @@ export function render3D(g, overlay = true) {
       const tW = t + ROW_D0 + ROWS * ROW_DD,
         wallTop = hor + ((h - ROOF_H) * f) / tW;
       roofEdge[x] = wallTop;
+      baseY[x] = wb;
+      glassY[x] = gt;
       if (useGL) {
         colData[x * 4] = t;
         colData[x * 4 + 1] = tIn;
@@ -530,7 +546,13 @@ export function render3D(g, overlay = true) {
             } else {
               // the back wall above the top row: a ribbon board in the arena colour and a row of lit suites
               const z = h - ((y - hor) * tW) / f;
-              col = z >= 36 && z < 37.6 ? RIBBON : z >= 40 && z < 44 && u % 8 < 6 ? SUITE : WALL;
+              if (z >= 36 && z < 37.6) {
+                // adverts, a block in each colour with a dark gap, scrolling round the arena
+                const a = u + adAt,
+                  m = a % 24,
+                  seg = Math.floor(a / 24) % 3;
+                col = !od ? RIBBON : m >= 20 ? crowd.dark : seg === 0 ? CARD_A : seg === 1 ? RIBBON : CARD_B;
+              } else col = z >= 40 && z < 44 && u % 8 < 6 ? SUITE : WALL;
             }
           } else {
             const top = rowY[r + 1],
@@ -544,15 +566,29 @@ export function render3D(g, overlay = true) {
               if (fan.empty) col = shade;
               else {
                 const up = hype > 0.05 && wave(fi) > 0.4,
-                  head = bh >= 1.5 && (y - top) / bh < 0.32;
-                col = avg32(head || up ? fan.head : xin > 0.6 ? fan.bodyD : fan.body, shade);
+                  head = bh >= 1.5 && (y - top) / bh < 0.32,
+                  card = cards && fan.card && wave(fi) > -0.2;
+                col = avg32(
+                  card
+                    ? Math.floor(seatF / 6) & 1
+                      ? CARD_B
+                      : CARD_A
+                    : head || up
+                      ? fan.head
+                      : xin > 0.6
+                        ? fan.bodyD
+                        : fan.body,
+                  shade,
+                );
               }
             } else {
               const bob = hype > 0.05 ? wave(fi) * hype * 0.18 : 0,
                 w = (y - top) / bh + bob;
               col = w >= 0.84 ? SEAT : STAND;
               if (!fan.empty) {
-                if (w >= 0.02 && w < 0.3 && xin >= 0.32 && xin <= 0.68) col = fan.head;
+                if (cards && fan.card && wave(fi) > -0.2 && w >= 0 && w < 0.34 && xin >= 0.2 && xin <= 0.8)
+                  col = Math.floor(seatF / 6) & 1 ? CARD_B : CARD_A;
+                else if (w >= 0.02 && w < 0.3 && xin >= 0.32 && xin <= 0.68) col = fan.head;
                 else if (w >= 0.3 && w < 0.84 && xin >= 0.14 && xin <= 0.86)
                   col = xin > 0.68 ? fan.bodyD : fan.body;
               }
@@ -585,6 +621,8 @@ export function render3D(g, overlay = true) {
           cxs,
           now,
           hype,
+          cards,
+          od,
           outside,
           iceBuf: ib,
           fanTab,
@@ -601,11 +639,14 @@ export function render3D(g, overlay = true) {
             uSuite: SUITE,
             uMid: crowd.mid,
             uDark: crowd.dark,
+            uCardA: CARD_A,
+            uCardB: CARD_B,
           },
         })
       : null;
     if (glc) g.drawImage(glc, 0, 0);
     else if (!useGL) g.putImageData(img3, 0, 0);
+    if (od && !outside) iceMirror(g, hor);
     const fog = g.createLinearGradient(0, hor, 0, hor + view.CH * 0.25);
     if (fog) {
       fog.addColorStop(0, 'rgba(10,15,30,.35)');
@@ -652,7 +693,7 @@ export function render3D(g, overlay = true) {
   // behind the menu nobody fills the frame: a skater coming that close to the lens fades out before they get there
   const nearFade = fr ? (fr.y0 != null ? fr.y1 - fr.y0 : view.CH) * NEAR_FADE : 0;
   // a sprite drawn by `draw(s)` into the small sprite canvas `s` at 1:1, then scaled onto the view at q
-  const billboard = (draw, q) => {
+  const billboard = (draw, q, mirror = false) => {
     const sc = q.s / K;
     if (sc > 14) return;
     const fade = nearFade ? Math.min(1, (nearFade * 1.3 - SPR_H * sc) / (nearFade * 0.3)) : 1;
@@ -663,6 +704,13 @@ export function render3D(g, overlay = true) {
     draw(spx);
     g.imageSmoothingEnabled = false;
     if (fade < 1) g.globalAlpha = fade;
+    if (mirror) {
+      // upside down below the feet, faint: the skater seen in the ice
+      g.save();
+      g.globalAlpha *= 0.2;
+      g.translate(0, 2 * Math.round(q.y));
+      g.scale(1, -1);
+    }
     g.drawImage(
       SPC,
       Math.round(q.x - 24 * sc),
@@ -670,11 +718,15 @@ export function render3D(g, overlay = true) {
       Math.round(48 * sc),
       Math.round(56 * sc),
     );
+    if (mirror) g.restore();
     g.globalAlpha = 1;
   };
   if (buf3 && fanTab.length) {
-    drawGlares(g, proj, roofLamps(STADIUMS[settings.stadiumKey]));
+    const lamps = roofLamps(STADIUMS[settings.stadiumKey]);
+    if (settings.overdrive) hazeAndBeams(g, proj, hor, lamps);
+    drawGlares(g, proj, lamps);
     drawScoreboard(g, proj, C3);
+    if (settings.overdrive) crowdFlashes(g, proj);
   }
   drawPyro3D(g, proj);
   const items = [];
@@ -686,6 +738,16 @@ export function render3D(g, overlay = true) {
   for (const n of NETS)
     for (const part of goalParts(g, n, cam)) items.push({ k: 'N', d: part.d, draw: part.draw });
   items.sort((a, b) => b.d - a.d);
+  // overdrive: everyone reflected in the ice, under all the sprites
+  if (settings.overdrive)
+    for (const it of items) {
+      if (it.k === 'N' || it.k === 'P') continue;
+      const e = it.e,
+        q = proj(e.x, e.y, 0);
+      if (!q) continue;
+      if (it.k === 'R') rel(e, () => billboard(drawRef, q, true));
+      else rel(e, () => billboard(s => drawAgain(s, e), q, true));
+    }
   for (const it of items) {
     const e = it.e;
     if (it.k === 'N') {
@@ -729,7 +791,10 @@ export function render3D(g, overlay = true) {
   g.globalAlpha = 1;
   if (C3.guest) fanHeads(g, proj, C3, f, hor);
   cinema(g);
-  if (overlay) replayOverlay(g);
+  if (overlay) {
+    odLens(g);
+    replayOverlay(g);
+  }
 }
 // ---------- goals in 3D ----------
 const NEAR = 0.6; // camera-space depth below which geometry is clipped away
@@ -872,4 +937,116 @@ function lamp3D(g, n, cam, B, dir) {
     g.fill();
     g.globalAlpha = 1;
   }
+}
+
+// ---------- overdrive extras ----------
+/** The boards, the glass and the crowd behind it mirrored in the ice, column by column, fading with distance. */
+function iceMirror(g, hor) {
+  const src = g.canvas,
+    H = view.CH;
+  for (let x = 0; x < view.CW; x++) {
+    const wb = Math.round(baseY[x]);
+    let L = Math.round(baseY[x] - glassY[x]);
+    if (wb <= hor || wb >= H - 1 || L < 2) continue;
+    L = Math.min(L, H - wb);
+    const near = Math.ceil(L / 2);
+    // drawn upside down about the line where the boards meet the ice
+    g.setTransform(1, 0, 0, -1, 0, 2 * wb);
+    g.globalAlpha = 0.2;
+    g.drawImage(src, x, wb - near, 1, near, x, wb - near, 1, near);
+    if (L > near) {
+      g.globalAlpha = 0.08;
+      g.drawImage(src, x, wb - L, 1, L - near, x, wb - L, 1, L - near);
+    }
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalAlpha = 1;
+}
+const rgba = (hex, a) =>
+  `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
+/** A light haze toward the far end of the arena, and slow beams from a few roof lamps down onto the ice. */
+function hazeAndBeams(g, proj, hor, lamps) {
+  const H = view.CH,
+    hz = g.createLinearGradient(0, hor - H * 0.3, 0, hor + H * 0.12);
+  hz.addColorStop(0, 'rgba(200,212,232,0)');
+  hz.addColorStop(0.7, 'rgba(200,212,232,.05)');
+  hz.addColorStop(1, 'rgba(200,212,232,0)');
+  g.fillStyle = hz;
+  g.fillRect(0, hor - H * 0.3, view.CW, H * 0.42);
+  if (!lamps.length) return;
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  const step = Math.max(1, Math.ceil(lamps.length / 6));
+  for (let i = 0; i < lamps.length; i += step) {
+    const l = lamps[i],
+      top = proj(l.x, l.y, ROOF_H - 1),
+      bot = proj(
+        l.x + Math.sin(clock.now * 0.3 + l.ph) * 14,
+        l.y + Math.cos(clock.now * 0.23 + l.ph) * 14,
+        0,
+      );
+    if (!top || !bot) continue;
+    const wt = Math.max(1, top.s * 1.2),
+      wb = bot.s * 7,
+      col = l.col && l.col[0] === '#' ? l.col : '#fff4d6',
+      gr = g.createLinearGradient(top.x, top.y, bot.x, bot.y);
+    gr.addColorStop(0, rgba(col, 0.09));
+    gr.addColorStop(1, rgba(col, 0));
+    g.fillStyle = gr;
+    g.beginPath();
+    g.moveTo(top.x - wt, top.y);
+    g.lineTo(top.x + wt, top.y);
+    g.lineTo(bot.x + wb, bot.y);
+    g.lineTo(bot.x - wb, bot.y);
+    g.closePath();
+    g.fill();
+  }
+  g.restore();
+}
+// camera flashes going off in the 3D stands: a seat row behind the boards, for a moment
+const flashes3 = [];
+let flashT = 0;
+function crowdFlashes(g, proj) {
+  const dt = clamp(clock.now - flashT, 0, 0.05);
+  flashT = clock.now;
+  const goal = G.state === 'goal' || G.state === 'celebrate',
+    rate = G.practice ? 0 : 1 + crowdHype() * 12 + (goal ? 40 : 0);
+  if (Math.random() < rate * dt) {
+    // a point on the boards (the rink's bounding box, which is close enough in the stands), pushed out a row
+    const w = RX1 - RX0,
+      h = RY1 - RY0,
+      p = rnd(0, 2 * (w + h)),
+      r = Math.floor(rnd(0, ROWS)),
+      d = ROW_D0 + r * ROW_DD;
+    let x, y;
+    if (p < w) [x, y] = [RX0 + p, RY0 - d];
+    else if (p < w + h) [x, y] = [RX1 + d, RY0 + p - w];
+    else if (p < 2 * w + h) [x, y] = [RX1 - (p - w - h), RY1 + d];
+    else [x, y] = [RX0 - d, RY1 - (p - 2 * w - h)];
+    flashes3.push({ x, y, z: ROW_Z0 + r * ROW_DZ + 1.2, t0: clock.now });
+  }
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  g.fillStyle = '#ffffff';
+  for (let i = flashes3.length - 1; i >= 0; i--) {
+    const f = flashes3[i],
+      k = (clock.now - f.t0) / 0.12;
+    if (k >= 1) {
+      flashes3.splice(i, 1);
+      continue;
+    }
+    const q = proj(f.x, f.y, f.z);
+    if (!q) continue;
+    const s = Math.max(1, Math.round(q.s * 0.4)),
+      x = Math.round(q.x),
+      y = Math.round(q.y);
+    g.globalAlpha = 1 - k;
+    g.fillRect(x - s * 2, y, s * 5, s);
+    g.fillRect(x, y - s * 2, s, s * 5);
+    g.globalAlpha = 0.3 * (1 - k);
+    g.beginPath();
+    g.arc(x + s / 2, y + s / 2, s * 4, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.restore();
 }

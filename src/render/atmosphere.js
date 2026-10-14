@@ -5,7 +5,7 @@ import { players } from '../game/players';
 import { puck, ref } from '../game/world';
 import { cam, view } from './canvas';
 import { R } from './pixels';
-import { drawGoalie, drawRef, drawSkater } from './players';
+import { drawAgain, drawRef } from './players';
 import { puckPixels } from './puck';
 
 /* ---------- replay cinematics: reflections, ice sheen, sparkles, spotlights, vignette ---------- */
@@ -18,17 +18,17 @@ export const SPARK = [...Array(160)].map((_, i) => ({
 export function viewRect() {
   return { x: cam.x, y: cam.y, w: view.CW / (K * view.camZ), h: view.CH / (K * view.camZ) };
 }
-export function reflections(g) {
+/** Everyone mirrored in the ice below their feet, at opacity `a`. */
+export function reflections(g, a = 0.2) {
   g.save();
-  g.globalAlpha = 0.2;
+  g.globalAlpha = a;
   for (const p of players) {
     if (p.benched) continue;
     const fy = toS(p.y) + 1;
     g.save();
     g.translate(0, 2 * fy);
     g.scale(1, -1);
-    if (p.role === 'G') drawGoalie(g, p);
-    else drawSkater(g, p);
+    drawAgain(g, p);
     g.restore();
   }
   {
@@ -64,18 +64,23 @@ export function iceSheen(g) {
   }
   g.globalAlpha = 1;
 }
-export function sparkles(g) {
+/** Glints on the ice; `few` (overdrive in live play) shows a third of them, shorter and fainter. */
+export function sparkles(g, few = false) {
   const v = viewRect();
-  for (const s of SPARK) {
+  for (let i = 0; i < SPARK.length; i++) {
+    const s = SPARK[i];
+    if (few && i % 3) continue;
     if (s.x < v.x || s.x > v.x + v.w || s.y < v.y || s.y > v.y + v.h) continue;
     const tw = Math.sin(clock.now * s.sp + s.ph),
       x = toS(s.x),
       y = toS(s.y);
-    if (tw > 0.82) {
+    if (tw > (few ? 0.9 : 0.82)) {
+      if (few) g.globalAlpha = 0.75;
       R(g, x, y - 2, 1, 5, '#ffffff');
       R(g, x - 2, y, 5, 1, '#ffffff');
-    } else if (tw > 0.45) {
-      g.globalAlpha = 0.7;
+      g.globalAlpha = 1;
+    } else if (tw > (few ? 0.6 : 0.45)) {
+      g.globalAlpha = few ? 0.45 : 0.7;
       R(g, x, y, 1, 1, '#ffffff');
       g.globalAlpha = 1;
     }

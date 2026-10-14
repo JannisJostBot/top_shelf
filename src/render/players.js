@@ -454,3 +454,15 @@ export function drawRef(g) {
         : REFSET.frontA;
   blit(g, map, REFPAL, sx - 6, sy - 19, sideV && ref.fx < 0);
 }
+// The animation state drawSkater keeps on a player between frames (stride, stop and fall timing).
+const POSE = ['_rt', '_psp', '_stopUntil', '_coast', '_run0', '_downAt', '_down0', '_suAt'];
+/** Draws `p` once more in the same frame (a reflection, an afterimage) without moving its animation on. */
+export function drawAgain(g, p) {
+  const keep = POSE.map(k => p[k]);
+  try {
+    if (p.role === 'G') drawGoalie(g, p);
+    else drawSkater(g, p);
+  } finally {
+    POSE.forEach((k, i) => (p[k] = keep[i]));
+  }
+}
