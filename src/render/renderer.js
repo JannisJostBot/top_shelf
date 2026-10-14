@@ -36,6 +36,7 @@ import {
 import { R } from './pixels';
 import { drawGoalie, drawRef, drawSkater } from './players';
 import { drawPuck, puckGround } from './puck';
+import { drawSpray, noticeStop } from './spray';
 import {
   odBehind,
   odFrame,
@@ -221,6 +222,7 @@ function drawFrame(g) {
         if (p.role === 'G') drawGoalie(g, p);
         else if (p === c) drawOutlined(g, p);
         else drawSkater(g, p);
+        noticeStop(p);
         // (not in replays: they show play from before the boost)
         if (
           G.state !== 'replay' &&
@@ -270,13 +272,14 @@ function drawFrame(g) {
     }
   }
   g.globalAlpha = 1;
+  drawSpray(g);
   odLights(g, ox, oy);
   odRim(g);
   drawFx(g);
   drawGoalFx(g);
   odTop(g);
   drawBubbles(g);
-  if (shine) sparkles(g);
+  if (shine) sparkles(g, !cine);
   g.setTransform(1, 0, 0, 1, 0, 0);
   if (cine) cinema(g);
   if (G.flash > 0) {

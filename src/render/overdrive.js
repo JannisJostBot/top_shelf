@@ -9,10 +9,10 @@
 //   odFrame()           once per drawn frame: ages the effects, notices goals, stops and dropped gloves
 //   odIce(g)            on the ice, under everyone: lasting skate marks and snow, the puck's shadow and trail
 //   odNets(g)           the goal light washing the ice and its spinning beams
-//   odBehind / odFront  around each skater: soft shadow, afterimages and speed lines; breath, stop spray
+//   odBehind / odFront  around each skater: soft shadow, afterimages and speed lines; breath
 //   odLights(g, ox, oy) the arena lighting: the frame darkened, then lit by the roof lamps, a follow spot,
 //                       the goal light, flares and every glow; odRim(g) then catches the lit side of each player
-//   odTop(g)            over everyone: sprays, sparks, confetti, flying gear, shockwaves, then the glow layer
+//   odTop(g)            over everyone: net snow, sparks, confetti, flying gear, shockwaves, then the glow layer
 //   odStands(g)         over the stands: team banners and camera flashes
 //   odLens(g)           goal replays: the frame's edges soft and pixelated, as if out of focus
 //   odPost(g)           the whole frame: a short colour split and flash on goals and big hits
@@ -31,6 +31,7 @@ import { AMB, SH } from './colors';
 import { FAN2D, M } from './stands';
 import { R, disc, ellipsePx } from './pixels';
 import { drawAgain } from './players';
+import { onSettle } from './spray';
 import { FLARES, pyroActive } from './pyro';
 
 const on = () => settings.overdrive;
@@ -104,8 +105,10 @@ export function odIcePolish(pts) {
   mctx.restore();
 }
 const inRink = (x, y, m = 0) => x > RX0 + m && x < RX1 - m && y > RY0 + m && y < RY1 - m;
-/** Snow left on the ice where a spray fleck settles: heavier against the boards, where it piles up. */
+/** Snow left on the ice where a fleck settles (the stop spray, see spray.js, and the netting's snow): heavier
+ * against the boards, where it piles up. */
 function settle(x, y) {
+  if (!on()) return;
   const boards = !inRink(x, y, 5);
   x = clamp(x, RX0 + 1, RX1 - 1);
   y = clamp(y, RY0 + 1, RY1 - 1);
@@ -115,6 +118,7 @@ function settle(x, y) {
   mctx.fillRect(toS(x), toS(y), s, s);
   mctx.globalAlpha = 1;
 }
+onSettle(settle);
 const MARK_STATES = new Set(['play', 'faceoff', 'goal', 'celebrate', 'brawl']);
 /** Each skate cuts a thin scratch while it pushes (one foot, then the other); they add up over the period. */
 function cutMarks() {
@@ -280,29 +284,8 @@ export function odNetHit(n, x, str) {
       c: Math.random() < 0.7 ? '#ffffff' : '#dbe6f2',
     });
 }
-/** Spray off the blades when a skater digs in to stop: a fan of snow thrown forward and to the sides. */
-function spray(p) {
-  const sp = Math.hypot(p.vx, p.vy) || 1,
-    ux = p.vx / sp,
-    uy = p.vy / sp;
-  for (let i = 0; i < 14; i++) {
-    const side = rnd(-1, 1),
-      v = rnd(18, 45);
-    add({
-      k: 'snow',
-      x: p.x + ux * 2,
-      y: p.y + 0.5,
-      vx: ux * v - uy * side * 30,
-      vy: uy * v + ux * side * 30,
-      life: rnd(0.3, 0.6),
-      c: Math.random() < 0.7 ? '#ffffff' : '#dbe6f2',
-    });
-  }
-}
-
 /* ---------- per frame ---------- */
-const stopSeen = new WeakMap(),
-  trail = [],
+const trail = [],
   hist = new WeakMap();
 let prevZ = 0;
 export function odFrame() {
@@ -369,21 +352,15 @@ export function odFrame() {
     const e = fx[i],
       age = clock.now - e.t0;
     if (age > e.life) {
-      if (e.k === 'snow' || e.k === 'flake') settle(e.x, e.y);
+      if (e.k === 'flake') settle(e.x, e.y);
       fx.splice(i, 1);
       continue;
     }
-    const drag = e.k === 'conf' || e.k === 'streamer' ? 0.5 : e.k === 'snow' ? 4 : e.k === 'spark' ? 1.5 : 1;
+    const drag = e.k === 'conf' || e.k === 'streamer' ? 0.5 : e.k === 'spark' ? 1.5 : 1;
     e.vx *= Math.exp(-drag * dt);
     e.vy *= Math.exp(-drag * dt);
     e.x += e.vx * dt;
     e.y += e.vy * dt;
-    // snow stops at the boards
-    if (e.k === 'snow' && !inRink(e.x, e.y, 1)) {
-      e.x = clamp(e.x, RX0 + 1, RX1 - 1);
-      e.y = clamp(e.y, RY0 + 1, RY1 - 1);
-      e.vx = e.vy = 0;
-    }
   }
   cutMarks();
   // where everyone was over the last frames (afterimages)
@@ -552,7 +529,7 @@ export function odBehind(g, p) {
   }
 }
 const BREATH_STATES = new Set(['faceoff', 'goal', 'celebrate']);
-/** Over the skater: breath in the cold, the spray of a hard stop. */
+/** Over the skater: breath in the cold. */
 export function odFront(g, p) {
   if (!on()) return;
   const sx = toS(p.x),
@@ -573,11 +550,6 @@ export function odFront(g, p) {
     }
   }
   if (boosted(p)) glow(sx, sy - 8, 20, '#ffc845', 0.22);
-  // a hard stop (noticed by the skater drawing, see drawSkater) throws up snow
-  if (p._stopUntil && p._stopUntil !== stopSeen.get(p)) {
-    stopSeen.set(p, p._stopUntil);
-    if (p._stopUntil > clock.now && G.state !== 'replay') spray(p);
-  }
 }
 
 /* ---------- over everyone ---------- */
@@ -603,12 +575,9 @@ export function odTop(g) {
       x = toS(e.x),
       y = toS(e.y);
     switch (e.k) {
-      case 'snow':
       case 'flake': {
         g.globalAlpha = 1 - k * k;
         R(g, x, y, 1, 1, e.c);
-        if (e.k === 'snow' && k < 0.5)
-          R(g, x - Math.round(e.vx * 0.02), y - Math.round(e.vy * 0.02), 1, 1, e.c);
         break;
       }
       case 'spark':
@@ -841,7 +810,7 @@ const RIGS = {
   ),
 };
 const RIG_OF = { dome: 'ring', tent: 'stagger', neon: 'stagger' };
-const AMBIENT = '#3e4562', // what the shadows keep: about a third of the light
+const AMBIENT = '#59627e', // what the shadows keep: about half the light
   LS = 4; // the light map is drawn at a quarter of the canvas size, then smoothed up
 /** the arena's lamp colour (the neon arena's tubes are pink and blue) */
 const lampCol = (S, i) =>
@@ -892,15 +861,16 @@ export function odLights(g, ox, oy) {
   rig.forEach((l, i) => {
     const col = party && (chase + i) & 1 ? team : lampCol(S, i);
     rigCol[i] = col;
-    light(X(l.x), Y(l.y), (l.r * K * z) / LS, col, 0.6, 0.15);
+    // broad, overlapping pools: an evenly lit sheet that dims between the lamps and toward the boards
+    light(X(l.x), Y(l.y), (l.r * 1.25 * K * z) / LS, col, 0.5, 0.3);
   });
   // the follow spot: on the puck, the scorer after a goal, the two fighters in a fight
   const br = G.state === 'brawl' && G.br,
     spot = br ? br.m : party && G.lastShooter ? G.lastShooter : puck.owner || puck;
-  if (spot) light(X(spot.x), Y(spot.y), ((br ? 34 : 22) * K * z) / LS, '#ffffff', br ? 0.75 : 0.5, 0.3);
+  if (spot) light(X(spot.x), Y(spot.y), ((br ? 40 : 30) * K * z) / LS, '#ffffff', br ? 0.35 : 0.2, 0);
   // your own skater carries a little light, so you never lose them in a shadow
   const me = !G.ai0 && G.controlled;
-  if (me) light(X(me.x), Y(me.y), (13 * K * z) / LS, '#ffffff', 0.35, 0.2);
+  if (me) light(X(me.x), Y(me.y), (13 * K * z) / LS, '#ffffff', 0.25, 0);
   if (pyroActive())
     FLARES.forEach((f, i) =>
       light(
