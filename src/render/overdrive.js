@@ -18,7 +18,7 @@
 //   odLens(g)           goal replays: the frame's edges soft and pixelated, as if out of focus
 //   odPost(g)           the whole frame: a short colour split and flash on goals and big hits
 // The 3D views add their own extras in mode7.js (ice reflections, haze and light beams, flashes in the crowd).
-import { H, IH, IW, K, NETS, RX0, RX1, RY0, RY1, W } from '../config';
+import { H, IH, IW, K, NETS, RR, RX0, RX1, RY0, RY1, W } from '../config';
 import { clamp, rnd, toS } from '../core/math';
 import { clock } from '../core/time';
 import { STADIUMS } from '../data/stadiums';
@@ -90,6 +90,7 @@ export function odIceClear() {
   mctx.setTransform(1, 0, 0, 1, 0, 0);
   mctx.clearRect(0, 0, IW, IH);
   if (grooveC) grooveC.getContext('2d').clearRect(0, 0, grooveC.width, grooveC.height);
+  wear = 0;
 }
 /** The resurfacer wiped these world points ([x, y, …]). */
 export function odIcePolish(pts) {
@@ -104,6 +105,8 @@ export function odIcePolish(pts) {
   }
   mctx.fill();
   mctx.restore();
+  // each spot the resurfacer polishes takes back a little of the wear (the rink holds about 1500 of them)
+  wear = Math.max(0, wear - pts.length / 2 / 1500);
   if (!grooveC) return;
   const gx = grooveC.getContext('2d');
   gx.save();
@@ -132,18 +135,22 @@ const FLAW_STATES = new Set(['play', 'faceoff', 'goal', 'celebrate', 'brawl']);
 let scratchDue = 0,
   speckDue = 0,
   cloudDue = 0;
-/** A hairline scratch along a gentle curve from (x, y): tapered at both ends, a darker cut with a faint bright
- * lip on one side, as light catches it. Lengths and widths in world units. */
+/** How worn the ice is: 0 just after the resurfacer, about 1 at the end of a period. The shine, the lamps'
+ * glare and the reflections dull with it, and a frosty haze settles over the ice. */
+let wear = 0;
+/** A cut along a gentle curve from (x, y), tapered at both ends: white shavings packed in it and a faint
+ * shadow along one edge, as real skate cuts look. Lengths and widths in world units. */
 function scratch(s, x, y, a, len, w, alpha) {
-  const bend = (rnd(-0.06, 0.06) / Math.max(1, len)) * 6,
+  const bend = rnd(-0.08, 0.08),
     n = 10,
     left = [],
     right = [];
   for (let i = 0; i <= n; i++) {
     const t = i / n,
-      ang = a + bend * (t - 0.5) * len,
-      px = x + Math.cos(a) * len * t + Math.cos(a + Math.PI / 2) * bend * len * len * t * (1 - t),
-      py = y + Math.sin(a) * len * t + Math.sin(a + Math.PI / 2) * bend * len * len * t * (1 - t),
+      ang = a + bend * (t - 0.5) * 2,
+      off = bend * len * t * (1 - t) * 2,
+      px = x + Math.cos(a) * len * t - Math.sin(a) * off,
+      py = y + Math.sin(a) * len * t + Math.cos(a) * off,
       hw = (w / 2) * Math.pow(Math.sin(Math.PI * t), 0.6),
       nx = -Math.sin(ang),
       ny = Math.cos(ang);
@@ -159,10 +166,10 @@ function scratch(s, x, y, a, len, w, alpha) {
     s.closePath();
     s.fill();
   };
-  fill(0, 0, '#4f6782', alpha);
-  fill(-w * 0.7, -w * 0.7, '#ffffff', alpha * 0.8);
+  fill(w * 0.5, w * 0.5, '#5d738c', alpha * 0.45);
+  fill(0, 0, '#ffffff', alpha);
 }
-/** A soft round spot of `r` world units: a fleck of frost, a tiny chip, a cloudy patch in the ice. */
+/** A soft round spot of `r` world units: frost dust, a chip, a hazy patch. */
 function spot(s, x, y, r, col, alpha) {
   const gr = s.createRadialGradient(x, y, 0, x, y, r);
   gr.addColorStop(0, col);
@@ -171,9 +178,47 @@ function spot(s, x, y, r, col, alpha) {
   s.fillStyle = gr;
   s.fillRect(x - r, y - r, r * 2, r * 2);
 }
-// The ice's flaws: fine imperfections that build up in the surface at random as play goes on, drawn smooth at
-// four times the world's pixel size on the full-resolution screen (see odPresent): hairline scratches, tiny
-// specks and chips, and now and then a faint cloudy patch. The resurfacer wipes them.
+// Where skaters wear the ice most: the creases, the face-off circles, along the boards and through the middle.
+const CIRCLES = [
+  [44, 60],
+  [116, 60],
+  [44, 196],
+  [116, 196],
+  [80, 128],
+];
+function traffic(x, y) {
+  let d = 0.25;
+  for (const n of NETS) {
+    const k = Math.hypot(x - (n.x0 + n.x1) / 2, y - (n.top ? n.y1 : n.y0)) / 16;
+    if (k < 1) d += 1.4 * (1 - k);
+  }
+  for (const [cx, cy] of CIRCLES) {
+    const k = Math.hypot(x - cx, y - cy) / 15;
+    if (k < 1) d += 0.8 * (1 - k * k);
+  }
+  const edge = Math.min(x - RX0, RX1 - x, y - RY0, RY1 - y);
+  if (edge < 8) d += 0.7 * (1 - edge / 8);
+  if (Math.abs(x - 80) < 30) d += 0.2;
+  return d;
+}
+/** A spot on the ice, picked more often where the traffic is, and the way cuts run there (along the boards
+ * near them, any way elsewhere). */
+function wornSpot(m) {
+  let x = 80,
+    y = 128;
+  for (let i = 0; i < 10; i++) {
+    x = rnd(RX0 + m, RX1 - m);
+    y = rnd(RY0 + m, RY1 - m);
+    if (Math.random() * 2.6 < traffic(x, y)) break;
+  }
+  const ex = Math.min(x - RX0, RX1 - x),
+    ey = Math.min(y - RY0, RY1 - y),
+    a = Math.min(ex, ey) < 8 ? (ex < ey ? Math.PI / 2 : 0) + rnd(-0.3, 0.3) : rnd(0, Math.PI * 2);
+  return { x, y, a };
+}
+// The ice's flaws: fine imperfections that build up in the surface as play goes on, most where the skating is,
+// drawn smooth at four times the world's pixel size on the full-resolution screen (see odPresent): cuts packed
+// with white shavings, frost dust and small chips, and frosty patches. The resurfacer wipes them.
 function growGrooves() {
   if (G.demo || view.ss === 1 || !FLAW_STATES.has(G.state)) return;
   if (!grooveC) {
@@ -181,43 +226,27 @@ function growGrooves() {
     grooveC.width = IW * GF;
     grooveC.height = IH * GF;
   }
-  // over a period: about 220 scratches, 700 specks and 18 cloudy patches
+  // over a period: about 220 cuts, 700 specks and 18 frosty patches
   const per = Math.max(30, settings.periodLen || 60);
+  wear = Math.min(1.3, wear + dt / per);
   scratchDue += (220 / per) * dt;
   speckDue += (700 / per) * dt;
   cloudDue += (18 / per) * dt;
   const s = grooveC.getContext('2d');
   s.setTransform(K * GF, 0, 0, K * GF, 0, 0);
-  for (; scratchDue >= 1; scratchDue--)
-    scratch(
-      s,
-      rnd(RX0 + 3, RX1 - 3),
-      rnd(RY0 + 3, RY1 - 3),
-      rnd(0, Math.PI * 2),
-      rnd(1.5, 6),
-      rnd(0.1, 0.24),
-      rnd(0.5, 0.9),
-    );
-  for (; speckDue >= 1; speckDue--) {
-    const white = Math.random() < 0.3;
-    spot(
-      s,
-      rnd(RX0 + 2, RX1 - 2),
-      rnd(RY0 + 2, RY1 - 2),
-      rnd(0.2, 0.6),
-      white ? '#ffffff' : '#6f859c',
-      rnd(0.4, 0.8),
-    );
+  for (; scratchDue >= 1; scratchDue--) {
+    const p = wornSpot(3);
+    scratch(s, p.x, p.y, p.a, rnd(1.5, 6), rnd(0.1, 0.24), rnd(0.5, 0.9));
   }
-  for (; cloudDue >= 1; cloudDue--)
-    spot(
-      s,
-      rnd(RX0 + 8, RX1 - 8),
-      rnd(RY0 + 8, RY1 - 8),
-      rnd(3, 10),
-      Math.random() < 0.5 ? '#ffffff' : '#9fb2c8',
-      rnd(0.12, 0.22),
-    );
+  for (; speckDue >= 1; speckDue--) {
+    const p = wornSpot(2),
+      dust = Math.random() < 0.75;
+    spot(s, p.x, p.y, rnd(0.2, 0.7), dust ? '#ffffff' : '#6f859c', dust ? rnd(0.5, 0.9) : rnd(0.3, 0.6));
+  }
+  for (; cloudDue >= 1; cloudDue--) {
+    const p = wornSpot(8);
+    spot(s, p.x, p.y, rnd(3, 10), '#ffffff', rnd(0.15, 0.3));
+  }
   s.globalAlpha = 1;
 }
 const inRink = (x, y, m = 0) => x > RX0 + m && x < RX1 - m && y > RY0 + m && y < RY1 - m;
@@ -996,6 +1025,73 @@ export function odLayer(g, n) {
   layered.on = true;
   return x;
 }
+/** The rink's outline on the screen canvas, for a frame whose world transform is `m`. */
+function rinkPath(x, m) {
+  const s = view.ss,
+    k = K * m.a * s,
+    ox = m.e * s,
+    oy = m.f * s;
+  x.beginPath();
+  x.roundRect(ox + RX0 * k, oy + RY0 * k, (RX1 - RX0) * k, (RY1 - RY0) * k, RR * k);
+}
+/** The ice as a clear layer over the paint: the lines and logos a touch soft under it, and a frosty haze that
+ * settles over the surface as it wears (`dull`). */
+function iceSurface(x, dull) {
+  x.save();
+  rinkPath(x, layered.m);
+  x.clip();
+  x.imageSmoothingEnabled = true;
+  x.globalAlpha = 0.22;
+  x.filter = `blur(${(0.5 * view.ss).toFixed(2)}px)`;
+  x.drawImage(low, 0, 0, x.canvas.width, x.canvas.height);
+  x.filter = 'none';
+  if (dull > 0) {
+    x.globalAlpha = 0.09 * Math.min(1, dull);
+    x.fillStyle = '#f4f8fc';
+    x.fillRect(0, 0, x.canvas.width, x.canvas.height);
+  }
+  x.restore();
+}
+/** The roof lamps seen in the ice: a bright core and a soft halo for each, where the mirror image of the lamp
+ * falls between it and the camera high above, so they slide over the ice as the camera moves. They fade as the
+ * ice wears. */
+function lampGlare(x, dull) {
+  const m = layered.m,
+    s = view.ss,
+    k = K * m.a * s,
+    v = viewRect(),
+    cx = v.x + v.w / 2,
+    cy = v.y + v.h / 2,
+    S = STADIUMS[settings.stadiumKey],
+    a = 1 - 0.6 * Math.min(1, dull);
+  x.save();
+  rinkPath(x, m);
+  x.clip();
+  x.globalCompositeOperation = 'lighter';
+  rig.forEach((l, i) => {
+    const gx = cx + (l.x - cx) * 0.65,
+      gy = cy + (l.y - cy) * 0.65,
+      px = m.e * s + gx * k,
+      py = m.f * s + gy * k,
+      col = lampCol(S, i);
+    x.save();
+    x.translate(px, py);
+    x.scale(1, 1.35); // stretched toward the camera, as glare on a shiny floor is
+    for (const [r, al] of [
+      [7 * k, 0.07],
+      [1.4 * k, 0.55],
+    ]) {
+      const gr = x.createRadialGradient(0, 0, 0, 0, 0, r);
+      gr.addColorStop(0, col);
+      gr.addColorStop(1, 'rgba(0,0,0,0)');
+      x.globalAlpha = al * a;
+      x.fillStyle = gr;
+      x.fillRect(-r, -r, r * 2, r * 2);
+    }
+    x.restore();
+  });
+  x.restore();
+}
 /** Shows the frame on the screen canvas (view.ss > 1): scaled up, or put together from its layers. */
 export function odPresent() {
   const x = cv.getContext('2d'),
@@ -1007,21 +1103,24 @@ export function odPresent() {
   x.imageSmoothingEnabled = false;
   x.drawImage(low, 0, 0, w, h);
   if (layered.on) {
+    const live = G.state !== 'replay',
+      dull = live ? wear : 0;
+    iceSurface(x, dull);
     // the flaws in the ice, smooth at full resolution
     if (flawsShown()) {
       x.setTransform(grooveMatrix(layered.m));
       x.imageSmoothingEnabled = true;
-      x.globalAlpha = 1;
       x.drawImage(grooveC, 0, 0);
-      x.globalAlpha = 1;
       x.imageSmoothingEnabled = false;
       x.setTransform(1, 0, 0, 1, 0, 0);
     }
+    // a weak mirror, seen from above: it dulls as the ice wears
     if (layered.refl) {
-      x.globalAlpha = 0.5;
+      x.globalAlpha = 0.45 * (1 - 0.5 * Math.min(1, dull));
       x.drawImage(RB, 0, 0);
       x.globalAlpha = 1;
     }
+    lampGlare(x, dull);
     x.drawImage(layerC[0], 0, 0, w, h);
     if (layered.light) {
       x.globalCompositeOperation = 'multiply';
@@ -1048,7 +1147,28 @@ export function odPresent() {
 
 /* ---------- reflections in real ice ---------- */
 // At full resolution the ice reflections look like the real thing: the mirrored players a little soft, wavering
-// gently where the ice is uneven, fading out below the feet, and broken up where the ice is flawed.
+// gently where the ice is uneven, fading out below the feet, broken up where the ice is flawed, and bright
+// things mirroring far more than dark ones.
+// An SVG filter that turns a pixel's brightness into its opacity (0.3 + 0.7 x luminance), for canvas filters.
+// Browsers without canvas filters skip it, and the reflections just keep their colours' opacity.
+let lumUrl = null;
+function brightnessToAlpha() {
+  if (lumUrl !== null) return lumUrl;
+  lumUrl = 'none';
+  try {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '0');
+    svg.setAttribute('height', '0');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.position = 'absolute';
+    svg.innerHTML =
+      '<filter id="od-lum" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" ' +
+      'values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.149 0.5 0.051 0 0.3"/></filter>';
+    document.body.appendChild(svg);
+    lumUrl = 'url(#od-lum)';
+  } catch (e) {}
+  return lumUrl;
+}
 const RA = document.createElement('canvas'),
   rax = RA.getContext('2d'),
   RB = document.createElement('canvas'),
@@ -1113,5 +1233,15 @@ export function odReflections(g) {
     rbx.drawImage(grooveC, 0, 0);
     rbx.globalCompositeOperation = 'source-over';
   }
+  // bright things mirror strongly, dark ones hardly at all: each pixel kept by its brightness (a third at least)
+  rax.setTransform(1, 0, 0, 1, 0, 0);
+  rax.clearRect(0, 0, w, h);
+  rax.filter = brightnessToAlpha();
+  rax.drawImage(RB, 0, 0);
+  rax.filter = 'none';
+  rbx.setTransform(1, 0, 0, 1, 0, 0);
+  rbx.globalCompositeOperation = 'destination-in';
+  rbx.drawImage(RA, 0, 0);
+  rbx.globalCompositeOperation = 'source-over';
   layered.refl = true;
 }
