@@ -4,7 +4,6 @@
 import { H, K, W } from '../config';
 import { clock } from '../core/time';
 import { G } from '../game/world';
-import { view } from './canvas';
 import { R } from './pixels';
 
 // flare spots in the stands (world units) with the direction their smoke drifts
@@ -24,9 +23,8 @@ const flicker = (i, f) =>
   0.75 + 0.25 * Math.sin(clock.now * f + i * 1.7) * Math.sin(clock.now * f * 0.37 + i);
 
 /** Top-down: drawn with the camera transform applied, right after the stands. */
-export function drawPyro() {
+export function drawPyro(g) {
   if (!pyroActive()) return;
-  const g = view.ctx;
   g.save();
   // only ever outside the rink
   g.beginPath();
@@ -52,21 +50,20 @@ export function drawPyro() {
         sy = y + s.oy * d + s.ox * wob,
         r = Math.round(2 + age * 6);
       g.globalAlpha = (1 - age) * 0.4;
-      R(Math.round(sx - r), Math.round(sy - r), r * 2, r * 2, '#8a8f9c');
+      R(g, Math.round(sx - r), Math.round(sy - r), r * 2, r * 2, '#8a8f9c');
     }
     // the flare itself
     g.globalAlpha = 1;
-    R(Math.round(x) - 2, Math.round(y) - 2, 4, 4, '#ff5a2f');
-    R(Math.round(x) - 1, Math.round(y) - 1, 2, 2, a > 0.8 ? '#fffbe0' : '#ffd36a');
+    R(g, Math.round(x) - 2, Math.round(y) - 2, 4, 4, '#ff5a2f');
+    R(g, Math.round(x) - 1, Math.round(y) - 1, 2, 2, a > 0.8 ? '#fffbe0' : '#ffd36a');
   });
   g.restore();
   g.globalAlpha = 1;
 }
 
 /** 3D shots: glow and rising smoke at each flare, using the renderer's projection. */
-export function drawPyro3D(proj) {
+export function drawPyro3D(g, proj) {
   if (!pyroActive()) return;
-  const g = view.ctx;
   SPOTS.forEach((s, i) => {
     const q = proj(s.x, s.y, 7);
     if (!q || q.s < 0.3) return;

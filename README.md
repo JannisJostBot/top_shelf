@@ -61,17 +61,20 @@ tests/                Vitest specs
 ## Conventions
 
 - **Shared mutable state lives in objects**, because ES module imports are read-only:
-  `G` (match state), `settings`, `view` (canvas context, size, zoom), `kit`, `clock`, `mixer`, `touchState`.
+  `G` (match state), `settings`, `view` (main canvas context, size, zoom), `kit`, `clock`, `mixer`, `touchState`.
   To change one from another module, assign the property (`settings.periodLen = 60`).
 - **The simulation talks to the presentation through events.** `game/` announces what happened via `game/fx.js`
   (`S('steal')`, `banner(...)`, `zoom(2)`, `screen('over', …)`), which emits on the bus in `core/events.ts`;
   `bindings.js` subscribes the real sound, drawing and DOM functions. Emits are synchronous, so they behave like
   direct calls. With nothing subscribed the game still runs: `tests/headless.test.ts` plays a whole match in Node.
+- **Drawing functions take the canvas context as their first argument**, `g`: `R(g, x, y, w, h, c)`,
+  `drawSkater(g, p)`. Only the entry points pick a canvas: `render()` draws into `view.ctx`, the menu previews and the
+  Guide demos into their own canvases, and cached sprites, goal nets and the 3D view's billboards into offscreen ones.
 - **Modules only declare things at load time.** Event listeners are registered in `init*()` functions that `main.js` calls in order.
 - **TypeScript is adopted gradually.** `allowJs` is on, so convert a module by renaming it to `.ts` and adding types. Start with leaf modules (`data/`, `game/physics/`), then work up.
 
 ## Next refactoring steps
 
 1. ~~Decouple simulation from presentation~~ (done: `game/` emits events through `game/fx.js`, see Conventions).
-2. Pass `ctx` explicitly to draw functions instead of swapping `view.ctx` (done today in `ui/preview.js` and `render/mode7.js`).
+2. ~~Pass `ctx` explicitly to draw functions instead of swapping `view.ctx`~~ (done: see Conventions).
 3. Use a seeded RNG so replays and AI tests are deterministic.

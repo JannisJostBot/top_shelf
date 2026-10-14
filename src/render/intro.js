@@ -33,15 +33,23 @@ const SHOTS = {
   frost(u, g, W, H) {
     const k = ease(u);
     aim(80, lerp(262, 196, k), lerp(34, 9, k), 80, lerp(150, 110, k));
-    render3D(false);
-    if (Math.random() < 0.9) spawn(2, () => ({ x: rnd(0, W), y: -2, vx: rnd(-4, 4), vy: rnd(10, 22), s: Math.random() < 0.3 ? 2 : 1, c: '#ffffff' }));
+    render3D(g, false);
+    if (Math.random() < 0.9)
+      spawn(2, () => ({
+        x: rnd(0, W),
+        y: -2,
+        vx: rnd(-4, 4),
+        vy: rnd(10, 22),
+        s: Math.random() < 0.3 ? 2 : 1,
+        c: '#ffffff',
+      }));
   },
   // rising from the ice while circling, with light rippling as if under water
   harbor(u, g, W, H) {
     const k = ease(u),
       a = lerp(-2.4, -1.2, k);
     aim(80 + Math.cos(a) * 64, 128 + Math.sin(a) * 96, lerp(2.5, 14, k), 80, 128); // around the players, not through them
-    render3D(false);
+    render3D(g, false);
     g.globalAlpha = 0.18 * (1 - k * 0.7);
     g.fillStyle = '#1fb5a8';
     for (let y = 0; y < H; y += 4) {
@@ -55,7 +63,7 @@ const SHOTS = {
     const k = ease(u),
       bob = Math.abs(Math.sin(clock.now * 7)) * 0.7;
     aim(lerp(34, 58, k), lerp(222, 162, k), 4 + bob, 80, lerp(150, 118, k));
-    render3D(false);
+    render3D(g, false);
     g.globalAlpha = 0.12;
     g.fillStyle = '#ffb000';
     for (let i = 0; i < 2; i++) {
@@ -71,8 +79,9 @@ const SHOTS = {
   neon(u, g, W, H) {
     const k = ease(u);
     aim(80, lerp(214, 170, k), lerp(11, 8, k), 80, 118);
-    render3D(false);
-    const on = u < 0.15 ? 0 : u < 0.45 ? (Math.floor(clock.now * 14) % 3 ? 0.6 : 0.2) * ((u - 0.15) / 0.3) + 0.2 : 1;
+    render3D(g, false);
+    const on =
+      u < 0.15 ? 0 : u < 0.45 ? (Math.floor(clock.now * 14) % 3 ? 0.6 : 0.2) * ((u - 0.15) / 0.3) + 0.2 : 1;
     if (on < 1) {
       g.globalAlpha = 1 - on;
       g.fillStyle = '#05020c';
@@ -93,19 +102,27 @@ const SHOTS = {
     const k = ease(u),
       a = lerp(0.6, 1.5, k);
     aim(80 + Math.cos(a) * 60, 128 + Math.sin(a) * 84, lerp(16, 10, k), 80, 128);
-    render3D(false);
+    render3D(g, false);
     g.globalAlpha = Math.max(0, 0.6 * (1 - u * 1.6));
     g.fillStyle = '#1a0d04';
     g.fillRect(0, 0, W, H);
     g.globalAlpha = 1;
-    if (Math.random() < 0.7) spawn(1, () => ({ x: rnd(0, W), y: H + 2, vx: rnd(-6, 6), vy: rnd(-26, -14), s: 1, c: Math.random() < 0.5 ? '#ffb347' : '#ff7a2a' }));
+    if (Math.random() < 0.7)
+      spawn(1, () => ({
+        x: rnd(0, W),
+        y: H + 2,
+        vx: rnd(-6, 6),
+        vy: rnd(-26, -14),
+        s: 1,
+        c: Math.random() < 0.5 ? '#ffb347' : '#ff7a2a',
+      }));
   },
   // pushing in from the end with a slight shake, sparks raining down, a forge glow at the edges
   iron(u, g, W, H) {
     const k = ease(u),
       sh = (1 - k) * 0.5;
     aim(80 + rnd(-sh, sh), lerp(30, 70, k), lerp(12, 8, k) + rnd(-sh, sh), 80, 150);
-    render3D(false);
+    render3D(g, false);
     const glow = g.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, W * 0.75);
     if (glow) {
       glow.addColorStop(0, 'rgba(255,90,31,0)');
@@ -113,15 +130,22 @@ const SHOTS = {
       g.fillStyle = glow;
       g.fillRect(0, 0, W, H);
     }
-    if (Math.random() < 0.9) spawn(3, () => ({ x: rnd(0, W), y: -2, vx: rnd(-14, 14), vy: rnd(40, 80), s: 1, c: Math.random() < 0.5 ? '#ffde59' : '#ff9b2f' }));
+    if (Math.random() < 0.9)
+      spawn(3, () => ({
+        x: rnd(0, W),
+        y: -2,
+        vx: rnd(-14, 14),
+        vy: rnd(40, 80),
+        s: 1,
+        c: Math.random() < 0.5 ? '#ffde59' : '#ff9b2f',
+      }));
   },
 };
 
 let lastNow = 0;
 /** Draws the current frame of the arena intro. */
-export function drawIntro() {
+export function drawIntro(g) {
   const I = G.intro,
-    g = view.ctx,
     W = view.CW,
     H = view.CH,
     u = Math.min(1, (clock.now - I.t0) / INTRO_LEN),

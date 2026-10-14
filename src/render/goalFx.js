@@ -4,7 +4,6 @@
 import { K } from '../config';
 import { rnd } from '../core/math';
 import { clock } from '../core/time';
-import { view } from './canvas';
 import { R, disc } from './pixels';
 
 const LEN = 2.4; // seconds
@@ -27,14 +26,13 @@ export function clearGoalFx() {
   fx = null;
 }
 /** Draws the running effect in world pixels (call with the camera transform applied). */
-export function drawGoalFx() {
+export function drawGoalFx(g) {
   if (!fx) return;
   const t = clock.now - fx.t0;
   if (t < 0 || t > LEN) {
     if (t > LEN) fx = null;
     return;
   }
-  const g = view.ctx;
   g.save();
   FX[fx.key](g, t, fx);
   g.restore();
@@ -43,7 +41,7 @@ export function drawGoalFx() {
 
 const easeOut = k => 1 - (1 - Math.min(1, Math.max(0, k))) ** 3;
 const fade = t => Math.max(0, 1 - t / LEN);
-const sq = (x, y, s, c) => R(Math.round(x - s / 2), Math.round(y - s / 2), s, s, c);
+const sq = (g, x, y, s, c) => R(g, Math.round(x - s / 2), Math.round(y - s / 2), s, s, c);
 
 /** Mirror ball bursts: rotating coloured light beams sweep out, shards of mirror fly away and sparkle. */
 function disco(g, t, f) {
@@ -64,6 +62,7 @@ function disco(g, t, f) {
   for (const b of f.bits.slice(0, 30)) {
     const d = 70 * b.s * easeOut(t / 0.8);
     sq(
+      g,
       f.x + Math.cos(b.a) * d,
       f.y + Math.sin(b.a) * d,
       2,
@@ -72,8 +71,8 @@ function disco(g, t, f) {
   }
   // the ball itself, glittering, until it shatters
   if (t < 0.35) {
-    disc(Math.round(f.x), Math.round(f.y), 6, 5, '#aab6c4');
-    for (let i = 0; i < 8; i++) sq(f.x + rnd(-5, 5), f.y + rnd(-4, 4), 1, '#ffffff');
+    disc(g, Math.round(f.x), Math.round(f.y), 6, 5, '#aab6c4');
+    for (let i = 0; i < 8; i++) sq(g, f.x + rnd(-5, 5), f.y + rnd(-4, 4), 1, '#ffffff');
   }
 }
 
@@ -83,10 +82,10 @@ function fire(g, t, f) {
     r = k < 1 ? 6 + 30 * easeOut(k) : 36 * Math.max(0, 1 - (t - 0.5) / 0.7);
   if (r > 1) {
     g.globalAlpha = 0.9;
-    disc(Math.round(f.x), Math.round(f.y), Math.round(r), Math.round(r * 0.8), '#c4161c');
-    disc(Math.round(f.x), Math.round(f.y), Math.round(r * 0.78), Math.round(r * 0.62), '#ff4d2e');
-    disc(Math.round(f.x), Math.round(f.y), Math.round(r * 0.55), Math.round(r * 0.44), '#ff9b2f');
-    disc(Math.round(f.x), Math.round(f.y), Math.round(r * 0.3), Math.round(r * 0.24), '#ffde59');
+    disc(g, Math.round(f.x), Math.round(f.y), Math.round(r), Math.round(r * 0.8), '#c4161c');
+    disc(g, Math.round(f.x), Math.round(f.y), Math.round(r * 0.78), Math.round(r * 0.62), '#ff4d2e');
+    disc(g, Math.round(f.x), Math.round(f.y), Math.round(r * 0.55), Math.round(r * 0.44), '#ff9b2f');
+    disc(g, Math.round(f.x), Math.round(f.y), Math.round(r * 0.3), Math.round(r * 0.24), '#ffde59');
   }
   for (const b of f.bits) {
     const life = 0.5 + b.r * 1.2;
@@ -97,6 +96,7 @@ function fire(g, t, f) {
       p = t / life;
     g.globalAlpha = 1 - p;
     sq(
+      g,
       x,
       y,
       p < 0.3 ? 4 : p < 0.6 ? 3 : 2,
@@ -109,6 +109,7 @@ function fire(g, t, f) {
       const s = t - 0.5;
       g.globalAlpha = Math.max(0, 0.35 - s * 0.2);
       disc(
+        g,
         Math.round(f.x + Math.cos(b.a) * 16 * b.s),
         Math.round(f.y - 6 - s * 24 * b.s),
         Math.round(4 + s * 6),
@@ -138,10 +139,10 @@ function rainbow(g, t, f) {
       x = f.x + Math.cos(b.a) * d,
       y = f.y + Math.sin(b.a) * d * 0.75 + t * 12;
     const c = cols[Math.floor(b.r * cols.length)];
-    sq(x, y, 3, c);
+    sq(g, x, y, 3, c);
     if (b.q > 0.5) {
-      sq(x - 2, y, 1, c);
-      sq(x + 2, y, 1, c);
+      sq(g, x - 2, y, 1, c);
+      sq(g, x + 2, y, 1, c);
     }
   }
 }
@@ -175,14 +176,14 @@ function plasma(g, t, f) {
   }
   if (t < 0.25) {
     g.globalAlpha = 1 - t / 0.25;
-    disc(Math.round(f.x), Math.round(f.y), 14, 10, '#7fe3ff');
+    disc(g, Math.round(f.x), Math.round(f.y), 14, 10, '#7fe3ff');
   }
 }
 
 /** Little ghosts float up out of the net in a purple mist. */
 function ghost(g, t, f) {
   g.globalAlpha = 0.25 * fade(t);
-  disc(Math.round(f.x), Math.round(f.y), Math.round(20 + t * 25), Math.round(14 + t * 16), '#9b5cff');
+  disc(g, Math.round(f.x), Math.round(f.y), Math.round(20 + t * 25), Math.round(14 + t * 16), '#9b5cff');
   for (let i = 0; i < 5; i++) {
     const b = f.bits[i],
       s = t - i * 0.12;
@@ -195,9 +196,9 @@ function ghost(g, t, f) {
       gy = Math.round(y),
       w = Math.floor(s * 8) % 2,
       body = (ox, oy, c) => {
-        R(gx - 4 + ox, gy - 6 + oy, 8, 8, c);
-        R(gx - 3 + ox, gy - 7 + oy, 6, 1, c);
-        for (let k = 0; k < 4; k++) R(gx - 4 + k * 2 + ox, gy + 2 + oy, 2, (k + w) % 2 ? 2 : 1, c);
+        R(g, gx - 4 + ox, gy - 6 + oy, 8, 8, c);
+        R(g, gx - 3 + ox, gy - 7 + oy, 6, 1, c);
+        for (let k = 0; k < 4; k++) R(g, gx - 4 + k * 2 + ox, gy + 2 + oy, 2, (k + w) % 2 ? 2 : 1, c);
       };
     for (const [ox, oy] of [
       [-1, 0],
@@ -207,8 +208,8 @@ function ghost(g, t, f) {
     ])
       body(ox, oy, '#3b2463');
     body(0, 0, '#f4f0ff');
-    R(gx - 2, gy - 4, 1, 2, '#1b2030');
-    R(gx + 1, gy - 4, 1, 2, '#1b2030');
+    R(g, gx - 2, gy - 4, 1, 2, '#1b2030');
+    R(g, gx + 1, gy - 4, 1, 2, '#1b2030');
   }
   if (t > 0.3 && t < 1.6) {
     g.globalAlpha = fade(t);
@@ -227,9 +228,9 @@ function galaxy(g, t, f) {
   // a dark nebula grows so the stars show up on white ice
   const neb = easeOut(t / 1.2);
   g.globalAlpha = 0.55 * fade(t);
-  disc(Math.round(f.x), Math.round(f.y), Math.round(12 + neb * 60), Math.round(9 + neb * 42), '#2a1650');
+  disc(g, Math.round(f.x), Math.round(f.y), Math.round(12 + neb * 60), Math.round(9 + neb * 42), '#2a1650');
   g.globalAlpha = 0.7 * fade(t);
-  disc(Math.round(f.x), Math.round(f.y), Math.round(6 + neb * 14), Math.round(5 + neb * 10), '#0b0718');
+  disc(g, Math.round(f.x), Math.round(f.y), Math.round(6 + neb * 14), Math.round(5 + neb * 10), '#0b0718');
   for (let i = 0; i < f.bits.length; i++) {
     const b = f.bits[i],
       arm = i % 3,
@@ -237,6 +238,7 @@ function galaxy(g, t, f) {
       a = (arm / 3) * Math.PI * 2 + d * 0.06 + t * 2.4;
     g.globalAlpha = fade(t) * (0.5 + b.q * 0.5);
     sq(
+      g,
       f.x + Math.cos(a) * d,
       f.y + Math.sin(a) * d * 0.7,
       b.r > 0.85 ? 3 : 2,

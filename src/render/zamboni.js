@@ -8,18 +8,18 @@ import { settings } from '../settings';
 import { ZAM, ZAM_ONLINE } from '../game/states/zamboni';
 import { nameOf } from '../game/online';
 
-export function drawZamboni(z = G.zam) {
+export function drawZamboni(g, z = G.zam) {
   if (!z) return;
   const S = STADIUMS[settings.stadiumKey],
     x = toS(z.x),
     y = toS(z.y);
-  view.ctx.save();
-  view.ctx.translate(x, y);
-  view.ctx.rotate(z.a);
-  view.ctx.scale(1.35, 1.35);
+  g.save();
+  g.translate(x, y);
+  g.rotate(z.a);
+  g.scale(1.35, 1.35);
   const r = (a, b, w, h, c) => {
-    view.ctx.fillStyle = c;
-    view.ctx.fillRect(a, b, w, h);
+    g.fillStyle = c;
+    g.fillRect(a, b, w, h);
   };
   const t = clock.now,
     moving = z.v > 3;
@@ -27,14 +27,14 @@ export function drawZamboni(z = G.zam) {
   // conditioner with its trailing towel at the back.
   // fresh water laid down behind the conditioner
   if (moving) {
-    view.ctx.globalAlpha = 0.32;
+    g.globalAlpha = 0.32;
     r(-10, 15, 20, 4, '#9fd7ff');
-    view.ctx.globalAlpha = 0.18;
+    g.globalAlpha = 0.18;
     r(-10, 19, 20, 3, '#c9ecff');
   }
-  view.ctx.globalAlpha = 0.28;
+  g.globalAlpha = 0.28;
   r(-9, -12, 21, 27, '#1e3c6e');
-  view.ctx.globalAlpha = 1;
+  g.globalAlpha = 1;
   // tyres with tread
   for (const [tx, ty] of [
     [-11, -10],
@@ -76,9 +76,9 @@ export function drawZamboni(z = G.zam) {
   const on = Math.floor(t * 5) & 1;
   r(3, -2, 2, 2, on ? '#ffb000' : '#8a5a00');
   if (on) {
-    view.ctx.globalAlpha = 0.35;
+    g.globalAlpha = 0.35;
     r(2, -3, 4, 4, '#ffd36a');
-    view.ctx.globalAlpha = 1;
+    g.globalAlpha = 1;
   }
   // conditioner: wide steel board with the towel flapping behind it
   r(-11, 11, 22, 3, '#3a4258');
@@ -87,33 +87,32 @@ export function drawZamboni(z = G.zam) {
     const flap = moving && Math.sin(t * 14 + k * 0.9) > 0.2 ? 1 : 0;
     r(k, 14, 2, 1 + flap, '#e8eef5');
   }
-  view.ctx.restore();
+  g.restore();
 }
-export function drawZamHud() {
+export function drawZamHud(g) {
   const z = G.zam;
   if (!z) return;
   const len = (G.net ? ZAM_ONLINE : ZAM).time;
-  if (z.phase === 'count') drawCountdown(z.cd, 0);
+  if (z.phase === 'count') drawCountdown(g, z.cd, 0);
   // GO! for the first moment of driving (the run starts at its full length)
-  else if (z.phase === 'drive' && z.t > len - 0.7) drawCountdown(0, (len - z.t) / 0.7);
+  else if (z.phase === 'drive' && z.t > len - 0.7) drawCountdown(g, 0, (len - z.t) / 0.7);
   if (G.zam2) {
-    drawDuelHud(z, G.zam2);
+    drawDuelHud(g, z, G.zam2);
     return;
   }
   const pct = z.count / Math.max(1, z.total),
     w = Math.floor(view.CW * 0.5),
     x0 = (view.CW - w) >> 1,
     y = 10 + view.topInset; // below the floating scoreboard
-  R(x0 - 2, y - 2, w + 4, 9, '#0b0f1a');
-  R(x0, y, Math.round(w * pct), 5, '#7fe3ff');
-  hudLine(Math.round(pct * 100) + '% POLISHED · ' + Math.max(0, Math.ceil(z.t)) + 's', y + 10);
+  R(g, x0 - 2, y - 2, w + 4, 9, '#0b0f1a');
+  R(g, x0, y, Math.round(w * pct), 5, '#7fe3ff');
+  hudLine(g, Math.round(pct * 100) + '% POLISHED · ' + Math.max(0, Math.ceil(z.t)) + 's', y + 10);
 }
 /** A line of white text centred under the bars, on a dark plate so it reads over the white ice. */
-function hudLine(text, y) {
-  const g = view.ctx;
+function hudLine(g, text, y) {
   g.font = '6px "Press Start 2P", monospace';
   const w = Math.ceil(g.measureText(text).width);
-  R(Math.round((view.CW - w) / 2) - 3, y - 3, w + 6, 11, '#0b0f1a');
+  R(g, Math.round((view.CW - w) / 2) - 3, y - 3, w + 6, 11, '#0b0f1a');
   g.textBaseline = 'top';
   g.textAlign = 'center';
   g.fillStyle = '#ffffff';
@@ -122,19 +121,20 @@ function hudLine(text, y) {
 }
 
 /** Online: both players' shares of their halves, yours on top in your colour, and your seconds left. */
-function drawDuelHud(z, r) {
+function drawDuelHud(g, z, r) {
   const w = Math.floor(view.CW * 0.5),
     x0 = (view.CW - w) >> 1,
     y = 10 + view.topInset,
     bar = (yy, k, c) => {
-      R(x0 - 2, yy - 2, w + 4, 8, '#0b0f1a');
-      R(x0, yy, Math.round(w * k), 4, c);
+      R(g, x0 - 2, yy - 2, w + 4, 8, '#0b0f1a');
+      R(g, x0, yy, Math.round(w * k), 4, c);
     },
     mine = z.count / Math.max(1, z.total),
     theirs = r.count / Math.max(1, r.total);
   bar(y, mine, '#7fe3ff');
   bar(y + 8, theirs, '#9aa6c4');
   hudLine(
+    g,
     'YOU ' +
       Math.round(mine * 100) +
       '% · ' +
@@ -148,9 +148,8 @@ function drawDuelHud(z, r) {
   );
 }
 /** Big 3, 2, 1, GO! in the middle of the screen: each number pops in large and settles. */
-function drawCountdown(count, goAge) {
-  const g = view.ctx,
-    n = Math.ceil(count),
+function drawCountdown(g, count, goAge) {
+  const n = Math.ceil(count),
     label = n > 0 ? String(n) : 'GO!',
     k = n > 0 ? 1 - (count - (n - 1)) : goAge, // 0..1 through this number's second (or GO!'s moment)
     pop = k < 0.18 ? 1 + (1 - k / 0.18) * 1.2 : 1,

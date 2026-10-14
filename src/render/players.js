@@ -26,45 +26,45 @@ import {
 } from './sprites';
 
 /** A stick line in the team's style: pixel by pixel, so patterned and animated sticks work. */
-function stickLine(p, x0, y0, x1, y1, part) {
+function stickLine(g, p, x0, y0, x1, y1, part) {
   const st = STICKS[settings.sticks[p.team]] || STICKS.wood,
     c = st[part],
     n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) | 0;
   for (let i = 0; i <= n; i++) {
     const t = n ? i / n : 0;
-    R(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), 1, 1, stickCol(c, i, n, clock.now));
+    R(g, Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), 1, 1, stickCol(c, i, n, clock.now));
   }
 }
 const bladeTape = p => (STICKS[settings.sticks[p.team]] || STICKS.wood).blade || p.look.tape;
 /** A stick in a team's style at plain pixel coordinates, for the jersey preview: hands at (hx, hy), blade at (bx, by). */
-export function pixelStick(team, hx, hy, bx, by, tape, blade = { x: bx - 1, y: by, w: 4 }) {
+export function pixelStick(g, team, hx, hy, bx, by, tape, blade = { x: bx - 1, y: by, w: 4 }) {
   const p = { team, look: { tape } };
-  stickLine(p, hx, hy, bx, by, 'shaft');
-  stickLine(p, hx + 1, hy, bx + 1, by, 'edge');
-  R(blade.x, blade.y, blade.w, 2, bladeTape(p));
+  stickLine(g, p, hx, hy, bx, by, 'shaft');
+  stickLine(g, p, hx + 1, hy, bx + 1, by, 'edge');
+  R(g, blade.x, blade.y, blade.w, 2, bladeTape(p));
 }
-function drawStick(p, sx, sy) {
+function drawStick(g, p, sx, sy) {
   const side = p.fx < -0.25 ? -1 : 1,
     b = blade(p),
     bx = toS(b.x),
     by = toS(b.y);
   const hx = sx + side * 5,
     hy = sy - 9;
-  stickLine(p, hx, hy, bx - Math.round(p.fx * 2), by - 1, 'shaft');
-  stickLine(p, hx + 1, hy, bx - Math.round(p.fx * 2) + 1, by - 1, 'edge');
+  stickLine(g, p, hx, hy, bx - Math.round(p.fx * 2), by - 1, 'shaft');
+  stickLine(g, p, hx + 1, hy, bx - Math.round(p.fx * 2) + 1, by - 1, 'edge');
   const tape = bladeTape(p);
-  if (Math.abs(p.fx) > 0.5) R(bx - 1, by - 1, 2, 3, tape);
-  else R(bx - 1, by, 4, 2, tape);
+  if (Math.abs(p.fx) > 0.5) R(g, bx - 1, by - 1, 2, 3, tape);
+  else R(g, bx - 1, by, 4, 2, tape);
 }
-function stars(sx, sy) {
+function stars(g, sx, sy) {
   if (view.sil || !(Math.floor(clock.now * 11) & 1)) return;
-  R(sx - 5, sy - 3, 2, 2, AMB);
-  R(sx + 4, sy - 4, 2, 2, AMB);
-  R(sx, sy - 6, 2, 2, '#ffffff');
+  R(g, sx - 5, sy - 3, 2, 2, AMB);
+  R(g, sx + 4, sy - 4, 2, 2, AMB);
+  R(g, sx, sy - 6, 2, 2, '#ffffff');
 }
-export function drawSkater(p) {
+export function drawSkater(g, p) {
   if (G.state === 'brawl' && G.br && (p === G.br.a || p === G.br.b) && p.down <= 0) {
-    drawFighter(p);
+    drawFighter(g, p);
     return;
   }
   const pal = p.pal || kit.PAL[p.team],
@@ -85,25 +85,33 @@ export function drawSkater(p) {
       rise = Math.min(0.3, (p._down0 - 0.14) * 0.35);
     if (age < 0.14) {
       const k = age / 0.14;
-      R(sx - 8, sy, 16, 2, SH);
-      blit(leaned(set.sideStop), pal, sx - 6 + Math.round(dir * k * 4), sy - 19 + Math.round(k * 4), dir < 0);
+      R(g, sx - 8, sy, 16, 2, SH);
+      blit(
+        g,
+        leaned(set.sideStop),
+        pal,
+        sx - 6 + Math.round(dir * k * 4),
+        sy - 19 + Math.round(k * 4),
+        dir < 0,
+      );
       return;
     }
     if (p.down < rise && p.downAge === undefined) {
-      R(sx - 6, sy, 12, 2, SH);
-      blit(crouched(crouched(set.sideA)), pal, sx - 6, sy - 17, dir < 0);
-      drawStick(p, sx, sy);
+      R(g, sx - 6, sy, 12, 2, SH);
+      blit(g, crouched(crouched(set.sideA)), pal, sx - 6, sy - 17, dir < 0);
+      drawStick(g, p, sx, sy);
       return;
     }
     const bounce = age < 0.24 ? 1 : 0,
       sp = Math.hypot(p.vx, p.vy);
-    R(sx - 11, sy, 22, 3, SH);
+    R(g, sx - 11, sy, 22, 3, SH);
     if (sp > 6 && !view.sil) {
       // scraping along the ice
       const ux = -p.vx / sp,
         uy = -p.vy / sp;
       for (let i = 0; i < 4; i++)
         R(
+          g,
           Math.round(sx + ux * (12 + i * 3)),
           Math.round(sy + 1 + uy * (12 + i * 3) + (i & 1)),
           2,
@@ -111,10 +119,10 @@ export function drawSkater(p) {
           '#ffffff',
         );
     }
-    stickLine(p, sx - 9, sy + 3, sx + 7, sy + 1, 'shaft');
-    R(sx + 7, sy, 3, 2, bladeTape(p));
-    blit(set.fallen, pal, sx - 10, sy - 12 - bounce, dir < 0);
-    stars(dir < 0 ? sx - 8 : sx + 8, sy - 9);
+    stickLine(g, p, sx - 9, sy + 3, sx + 7, sy + 1, 'shaft');
+    R(g, sx + 7, sy, 3, 2, bladeTape(p));
+    blit(g, set.fallen, pal, sx - 10, sy - 12 - bounce, dir < 0);
+    stars(g, dir < 0 ? sx - 8 : sx + 8, sy - 9);
     return;
   }
   p._downAt = 0;
@@ -147,6 +155,7 @@ export function drawSkater(p) {
     release = now < (p.followUntil || 0) ? 1 - (p.followUntil - now) / 0.3 : -1;
   if (sideV && (wind >= 0 || release >= 0) && G.state !== 'celebrate' && G.state !== 'post') {
     drawShot(
+      g,
       p,
       set,
       pal,
@@ -159,7 +168,7 @@ export function drawSkater(p) {
   }
   // a goal celebration from the front or back: arms up, stick held high
   if (!sideV && p.stickUp && (G.state === 'celebrate' || G.state === 'post')) {
-    drawCelebration(p, set, pal, sx, sy - jy, back);
+    drawCelebration(g, p, set, pal, sx, sy - jy, back);
     return;
   }
   let map;
@@ -182,20 +191,20 @@ export function drawSkater(p) {
   }
   // the stick stays up for a moment after a shot (follow-through), as during a wind-up
   const stickUp = p.stickUp || now < (p.followUntil || 0);
-  R(sx - 6, sy, 12, 2, SH);
-  R(sx - 4, sy + 2, 8, 1, SH);
+  R(g, sx - 6, sy, 12, 2, SH);
+  R(g, sx - 4, sy + 2, 8, 1, SH);
   if (stickUp) {
     const side = p.fx < -0.25 ? -1 : 1;
-    blit(map, pal, sx - 6, sy - 19 - jy, sideV && p.fx < 0);
-    stickLine(p, sx + side * 5, sy - 9 - jy, sx + side * 7, sy - 30 - jy, 'shaft');
-    stickLine(p, sx + side * 5 + 1, sy - 9 - jy, sx + side * 7 + 1, sy - 30 - jy, 'edge');
-    R(sx + side * 7 - 1, sy - 33 - jy, 3, 4, bladeTape(p));
+    blit(g, map, pal, sx - 6, sy - 19 - jy, sideV && p.fx < 0);
+    stickLine(g, p, sx + side * 5, sy - 9 - jy, sx + side * 7, sy - 30 - jy, 'shaft');
+    stickLine(g, p, sx + side * 5 + 1, sy - 9 - jy, sx + side * 7 + 1, sy - 30 - jy, 'edge');
+    R(g, sx + side * 7 - 1, sy - 33 - jy, 3, 4, bladeTape(p));
     return;
   }
-  if (back) drawStick(p, sx, sy - jy);
-  blit(map, pal, sx - 6, sy - 19 - jy, sideV && p.fx < 0);
-  if (!back) drawStick(p, sx, sy - jy);
-  if (p.stun > 0) stars(sx, sy - 20);
+  if (back) drawStick(g, p, sx, sy - jy);
+  blit(g, map, pal, sx - 6, sy - 19 - jy, sideV && p.fx < 0);
+  if (!back) drawStick(g, p, sx, sy - jy);
+  if (p.stun > 0) stars(g, sx, sy - 20);
 }
 // Stride timing in p.anim units (p.anim grows 0.16 per world unit skated, see game/physics/step.js): a push every
 // 40 units (a long, gliding stride); the first 33 units from slow are quick, short strides, two per 36 units.
@@ -214,7 +223,7 @@ function windup(p) {
   return -1;
 }
 /** Pixels of a short arm (two-pixel sleeve to a 2x2 glove) with its outline, at sprite coordinates. */
-function arm(x0, y0, x1, y1, pal, ox, oy, flip) {
+function arm(g, x0, y0, x1, y1, pal, ox, oy, flip) {
   const px = new Map(),
     put = (x, y, c) => px.set(x + ',' + y, c),
     n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) | 0;
@@ -241,11 +250,11 @@ function arm(x0, y0, x1, y1, pal, ox, oy, flip) {
       [0, 1],
       [0, -1],
     ])
-      if (!px.has(x + dx + ',' + (y + dy))) R(at(x + dx, y), oy + y + dy, 1, 1, pal.O);
+      if (!px.has(x + dx + ',' + (y + dy))) R(g, at(x + dx, y), oy + y + dy, 1, 1, pal.O);
   }
   for (const [k, c] of px) {
     const [x, y] = k.split(',').map(Number);
-    R(at(x, y), oy + y, 1, 1, pal[c]);
+    R(g, at(x, y), oy + y, 1, 1, pal[c]);
   }
 }
 // The slapshot, side-on to the target (front view, mirrored when shooting left): set, load, top of the backswing,
@@ -301,22 +310,31 @@ const SHOT = [
     sway: 1,
   },
 ];
-function drawShot(p, set, pal, sx, sy, i, flip) {
+function drawShot(g, p, set, pal, sx, sy, i, flip) {
   const k = SHOT[i],
     ox = sx - 6,
     oy = sy - 19,
     X = x => ox + (flip ? 11 - x : x);
-  R(sx - 7, sy, 14, 2, SH);
-  blit(swayed(set.frontShot, flip ? -k.sway : k.sway), pal, ox, oy, false);
-  arm(1 + k.sway, 7, k.hands[0][0] + k.sway, k.hands[0][1], pal, ox, oy, flip);
-  arm(10 + k.sway, 7, k.hands[1][0] + k.sway, k.hands[1][1], pal, ox, oy, flip);
+  R(g, sx - 7, sy, 14, 2, SH);
+  blit(g, swayed(set.frontShot, flip ? -k.sway : k.sway), pal, ox, oy, false);
+  arm(g, 1 + k.sway, 7, k.hands[0][0] + k.sway, k.hands[0][1], pal, ox, oy, flip);
+  arm(g, 10 + k.sway, 7, k.hands[1][0] + k.sway, k.hands[1][1], pal, ox, oy, flip);
   const hx = X(k.hands[0][0] + k.sway),
     hy = oy + k.hands[0][1],
     bx = X(k.blade[0]),
     by = oy + k.blade[1],
     d = Math.hypot(bx - hx, by - hy) || 1;
-  stickLine(p, Math.round(hx - ((bx - hx) / d) * 2), Math.round(hy - ((by - hy) / d) * 2), bx, by, 'shaft');
   stickLine(
+    g,
+    p,
+    Math.round(hx - ((bx - hx) / d) * 2),
+    Math.round(hy - ((by - hy) / d) * 2),
+    bx,
+    by,
+    'shaft',
+  );
+  stickLine(
+    g,
     p,
     Math.round(hx - ((bx - hx) / d) * 2) + 1,
     Math.round(hy - ((by - hy) / d) * 2),
@@ -325,11 +343,12 @@ function drawShot(p, set, pal, sx, sy, i, flip) {
     'edge',
   );
   const dir = flip ? -1 : 1;
-  if (by >= oy + 19) R(Math.min(bx, bx + dir * 3), oy + 19, 4, 1, bladeTape(p));
-  else R(bx - (flip ? 1 : 0), by, 2, 2, bladeTape(p));
+  if (by >= oy + 19) R(g, Math.min(bx, bx + dir * 3), oy + 19, 4, 1, bladeTape(p));
+  else R(g, bx - (flip ? 1 : 0), by, 2, 2, bladeTape(p));
   if (k.smear && !view.sil)
     for (let j = 1; j < 6; j++)
       R(
+        g,
         bx - dir * (3 + j),
         Math.round(oy + 19 - j * 2.2 + j * j * 0.25),
         1,
@@ -338,83 +357,83 @@ function drawShot(p, set, pal, sx, sy, i, flip) {
       );
 }
 /** Arms up and the stick held high, pumping now and then (the jump comes from p.jump). */
-function drawCelebration(p, set, pal, sx, sy, back) {
+function drawCelebration(g, p, set, pal, sx, sy, back) {
   const ox = sx - 6,
     oy = sy - 19,
     pump = Math.floor(clock.now * 3 + p.num) & 1 ? -1 : 0;
-  R(sx - 6, sy, 12, 2, SH);
+  R(g, sx - 6, sy, 12, 2, SH);
   const map = back ? withNumber(set.backBare, p.num) : set.frontBare;
-  if (back) stickLine(p, ox - 1, oy + 4 + pump, ox - 3, oy - 4 + pump, 'shaft');
-  blit(map, pal, ox, oy, false);
-  arm(1, 7, -1, 2 + pump, pal, ox, oy, false);
-  arm(10, 7, 11, 2 + pump, pal, ox, oy, false);
+  if (back) stickLine(g, p, ox - 1, oy + 4 + pump, ox - 3, oy - 4 + pump, 'shaft');
+  blit(g, map, pal, ox, oy, false);
+  arm(g, 1, 7, -1, 2 + pump, pal, ox, oy, false);
+  arm(g, 10, 7, 11, 2 + pump, pal, ox, oy, false);
   if (!back) {
-    stickLine(p, ox + 12, oy + 4 + pump, ox + 14, oy - 4 + pump, 'shaft');
-    stickLine(p, ox + 13, oy + 4 + pump, ox + 15, oy - 4 + pump, 'edge');
-    R(ox + 15, oy - 4 + pump, 1, 2, bladeTape(p));
+    stickLine(g, p, ox + 12, oy + 4 + pump, ox + 14, oy - 4 + pump, 'shaft');
+    stickLine(g, p, ox + 13, oy + 4 + pump, ox + 15, oy - 4 + pump, 'edge');
+    R(g, ox + 15, oy - 4 + pump, 1, 2, bladeTape(p));
   }
 }
-export function drawGoalie(g) {
-  const pal = g.pal || kit.PAL[g.team],
-    sx = toS(g.x),
-    sy = toS(g.y),
-    front = g.fy > 0;
-  R(sx - 8, sy, 16, 2, SH);
-  R(sx - 6, sy + 2, 12, 1, SH);
+export function drawGoalie(g, gk) {
+  const pal = gk.pal || kit.PAL[gk.team],
+    sx = toS(gk.x),
+    sy = toS(gk.y),
+    front = gk.fy > 0;
+  R(g, sx - 8, sy, 16, 2, SH);
+  R(g, sx - 6, sy + 2, 12, 1, SH);
   const v = front ? 'goalieF' : 'goalieB';
   // a save: the glove rises beside the mask, the blocker punches out, or a low shot is taken in the butterfly
   // (down on the knees, pads flat on the ice in a wide V); the kind comes from the save (game/ai/goalie.js)
-  if (g.saveT > 0) {
-    const t = 1 - g.saveT / 0.32,
-      kind = g.saveKind || 'pad';
+  if (gk.saveT > 0) {
+    const t = 1 - gk.saveT / 0.32,
+      kind = gk.saveKind || 'pad';
     if (kind === 'pad') {
       const map = SPR[v + (t < 0.15 || t > 0.85 ? 'Drop' : 'Fly')];
-      blit(map, pal, sx - 9, sy - 19 + (20 - map.length), !front);
+      blit(g, map, pal, sx - 9, sy - 19 + (20 - map.length), !front);
       if (front) {
-        stickLine(g, sx - 7, sy - 5, sx - 1, sy - 1, 'shaft');
-        R(sx - 1, sy, 6, 1, bladeTape(g));
+        stickLine(g, gk, sx - 7, sy - 5, sx - 1, sy - 1, 'shaft');
+        R(g, sx - 1, sy, 6, 1, bladeTape(gk));
       }
       return;
     }
     const step = t < 0.3 || t > 0.85 ? 1 : 2,
       map = SPR[v + (kind === 'glove' ? 'Glove' : 'Block') + step];
-    blit(map, pal, sx - 9 - GPAD, sy - 19, !front);
-    if (front) goalieStick(g, sx, sy);
+    blit(g, map, pal, sx - 9 - GPAD, sy - 19, !front);
+    if (front) goalieStick(g, gk, sx, sy);
     return;
   }
   // shuffling across the crease (a T-push): the lead pad turns out, both open while the push leg drives, then
   // they close; held open on a fast push. The upper body leans into the movement.
   // (from the speed, not the position: the 3D view draws sprites at a stand-in position)
-  const sp = Math.hypot(g.vx, g.vy),
-    dt = Math.min(0.1, clock.now - (g._gt || clock.now));
-  g._gt = clock.now;
-  g._gd = (g._gd || 0) + sp * dt;
-  const moving = sp > 6 && Math.abs(g.vx) > 3 && puck.owner !== g;
+  const sp = Math.hypot(gk.vx, gk.vy),
+    dt = Math.min(0.1, clock.now - (gk._gt || clock.now));
+  gk._gt = clock.now;
+  gk._gd = (gk._gd || 0) + sp * dt;
+  const moving = sp > 6 && Math.abs(gk.vx) > 3 && puck.owner !== gk;
   let map = SPR[v];
   if (moving) {
-    map = SPR[v + (sp > 32 ? 'Open' : ['', 'Half', 'Open', 'Half'][Math.floor(g._gd / 1.6) & 3])];
+    map = SPR[v + (sp > 32 ? 'Open' : ['', 'Half', 'Open', 'Half'][Math.floor(gk._gd / 1.6) & 3])];
     // the back view is drawn mirrored, so its lean is mirrored too
-    map = goalieLean(map, (g.vx > 0 ? 1 : -1) * (front ? 1 : -1));
+    map = goalieLean(map, (gk.vx > 0 ? 1 : -1) * (front ? 1 : -1));
   }
-  blit(map, pal, sx - 9, sy - 19, !front);
-  if (front) goalieStick(g, sx, sy);
+  blit(g, map, pal, sx - 9, sy - 19, !front);
+  if (front) goalieStick(g, gk, sx, sy);
 }
 /** The goalie's stick, in the blocker hand on the left, running down across the pads to the blade on the ice. */
-function goalieStick(g, sx, sy) {
-  stickLine(g, sx - 6, sy - 9, sx + 3, sy, 'shaft');
-  R(sx + 3, sy - 1, 5, 2, bladeTape(g));
+function goalieStick(g, gk, sx, sy) {
+  stickLine(g, gk, sx - 6, sy - 9, sx + 3, sy, 'shaft');
+  R(g, sx + 3, sy - 1, 5, 2, bladeTape(gk));
 }
-export function drawRef() {
+export function drawRef(g) {
   const sx = toS(ref.x),
     sy = toS(ref.y);
-  R(sx - 6, sy, 12, 2, SH);
+  R(g, sx - 6, sy, 12, 2, SH);
   if (G.state === 'faceoff') {
-    blit(REFSET.frontA, REFPAL, sx - 6, sy - 19, false);
+    blit(g, REFSET.frontA, REFPAL, sx - 6, sy - 19, false);
     if (puck.z > 0) {
       const px = toS(puck.x) + 3,
         py = toS(puck.y) - Math.round(puck.z * K);
-      line(sx - 6, sy - 12, px, py, '#151515');
-      line(sx - 6, sy - 11, px, py + 1, '#151515');
+      line(g, sx - 6, sy - 12, px, py, '#151515');
+      line(g, sx - 6, sy - 11, px, py + 1, '#151515');
     }
     return;
   }
@@ -433,5 +452,5 @@ export function drawRef() {
       : st
         ? REFSET.frontB
         : REFSET.frontA;
-  blit(map, REFPAL, sx - 6, sy - 19, sideV && ref.fx < 0);
+  blit(g, map, REFPAL, sx - 6, sy - 19, sideV && ref.fx < 0);
 }

@@ -40,7 +40,7 @@ import { initMouse } from './input/mouse';
 import { input, mouse } from './input/state';
 import { applyInputMode, initTouch, touchState } from './input/touch';
 import { fit, initCamera } from './render/camera';
-import { cam } from './render/canvas';
+import { cam, view } from './render/canvas';
 import { arenaThumbs, drawThumb, ice } from './render/ice';
 import { render3D } from './render/mode7';
 import { render } from './render/renderer';
@@ -157,7 +157,7 @@ if (window.__BLB_TEST__)
     },
     ref,
     startBrawl,
-    render3D,
+    render3D: overlay => render3D(view.ctx, overlay),
     ANGLES,
     startZamboni,
     beginAngle,

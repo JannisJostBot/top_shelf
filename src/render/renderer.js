@@ -72,6 +72,7 @@ function frameMenuWindow() {
   view.frame = { y0: (w.top - c.top) * k, y1: (w.bottom - c.top) * k };
 }
 export function render() {
+  const g = view.ctx; // the main canvas: everything below draws into it
   kit.PS = puckStyle();
   syncFans();
   if (!G.demo && !(G.state === 'over' && G.post)) view.frame = null; // matches use the whole view
@@ -79,19 +80,19 @@ export function render() {
   if (G.state === 'over' && G.post) {
     frameMenuWindow();
     updDemoCam();
-    render3D(false);
+    render3D(g, false);
     return;
   }
   // the arena intro before the opening face-off
   if (G.state === 'intro' && G.intro) {
-    drawIntro();
+    drawIntro(g);
     return;
   }
   // behind the main menu the CPU game is filmed with the 3D broadcast cameras
   if (G.demo) {
     frameMenuWindow();
     updDemoCam();
-    render3D(false);
+    render3D(g, false);
     return;
   }
   // Watch mode is directed: cuts between top-down and 3D shots (goal replays keep their own angles)
@@ -101,19 +102,19 @@ export function render() {
     liveName = shot.name;
     if (shot.kind !== '2d') {
       broadcastCam(shot.kind, shot.fresh);
-      render3D(false);
-      liveLabel(liveName);
+      render3D(g, false);
+      liveLabel(g, liveName);
       return;
     }
     view.camZ = shot.zoom;
   }
   if (G.state === 'replay' && G.rp && G.rp.angle.mode7) {
-    render3D();
+    render3D(g);
     return;
   }
-  view.ctx.setTransform(1, 0, 0, 1, 0, 0);
-  view.ctx.fillStyle = '#0a0f1e';
-  view.ctx.fillRect(0, 0, view.CW, view.CH);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillStyle = '#0a0f1e';
+  g.fillRect(0, 0, view.CW, view.CH);
   let ox = -Math.round(cam.x * K * view.camZ),
     oy = -Math.round(cam.y * K * view.camZ),
     shx = 0,
@@ -124,7 +125,7 @@ export function render() {
     ox += shx;
     oy += shy;
   }
-  view.ctx.setTransform(view.camZ, 0, 0, view.camZ, ox, oy);
+  g.setTransform(view.camZ, 0, 0, view.camZ, ox, oy);
   // Sprites sit on the world's pixel grid (toS), which the zoom scales up, while the camera moves by single screen
   // pixels; the two roundings beat against each other, so a sprite moving along with the camera would flick back
   // and forth by up to a zoom step (very visible in slow-motion replays). Each one is nudged, by whole screen
@@ -136,34 +137,34 @@ export function render() {
       const dx = Math.round(z * K * e.x + exX) - (z * toS(e.x) + ox),
         dy = Math.round(z * K * e.y + exY) - (z * toS(e.y) + oy);
       if (!dx && !dy) return fn();
-      view.ctx.translate(dx / z, dy / z);
+      g.translate(dx / z, dy / z);
       fn();
-      view.ctx.translate(-dx / z, -dy / z);
+      g.translate(-dx / z, -dy / z);
     };
-  drawStands();
-  drawPyro();
+  drawStands(g);
+  drawPyro(g);
   if (G.state === 'replay' && G.rp.angle.flip) {
-    view.ctx.save();
-    view.ctx.translate(IW, IH);
-    view.ctx.scale(-1, -1);
-    view.ctx.drawImage(ice, 0, 0);
-    view.ctx.restore();
-  } else view.ctx.drawImage(ice, 0, 0);
+    g.save();
+    g.translate(IW, IH);
+    g.scale(-1, -1);
+    g.drawImage(ice, 0, 0);
+    g.restore();
+  } else g.drawImage(ice, 0, 0);
   if (!(G.state === 'replay' && G.rp.angle.flip)) {
-    view.ctx.drawImage(frostC, 0, 0);
+    g.drawImage(frostC, 0, 0);
     if (G.state === 'zamboni') {
-      view.ctx.globalAlpha = 0.55 + 0.15 * Math.sin(clock.now * 3);
-      view.ctx.drawImage(wetC, 0, 0);
-      view.ctx.globalAlpha = 1;
+      g.globalAlpha = 0.55 + 0.15 * Math.sin(clock.now * 3);
+      g.drawImage(wetC, 0, 0);
+      g.globalAlpha = 1;
     }
   }
   const cine = G.state === 'replay';
   if (cine) {
-    skateGrooves();
-    iceSheen();
-    reflections();
+    skateGrooves(g);
+    iceSheen(g);
+    reflections(g);
   }
-  for (const n of NETS) drawNet(n);
+  for (const n of NETS) drawNet(g, n);
   const showCtl = !G.ai0 && (G.state === 'play' || G.state === 'faceoff');
   const c = showCtl ? G.controlled : null;
   if (c !== view.lastCtl) {
@@ -171,9 +172,9 @@ export function render() {
     view.lastCtl = c;
   }
   view.ctlFlash = Math.max(0, view.ctlFlash - 1 / 60);
-  if (c) at(c, () => drawCtlBase(c));
-  drawLitter();
-  if (G.state !== 'zamboni') at(puck.owner || puck, puckGround); // the puck is put away while the ice is resurfaced
+  if (c) at(c, () => drawCtlBase(g, c));
+  drawLitter(g);
+  if (G.state !== 'zamboni') at(puck.owner || puck, () => puckGround(g)); // the puck is put away while the ice is resurfaced
   const items = G.state === 'zamboni' ? [] : players.filter(live).map(p => ({ y: p.y, p }));
   if (G.state !== 'zamboni') items.push({ y: ref.y, ref: true });
   items.sort((a, b) => a.y - b.y);
@@ -181,17 +182,17 @@ export function render() {
   let drawn = puck.z > 0;
   for (const it of items) {
     if (free && !drawn && puck.y < it.y - 2) {
-      at(puck, () => drawPuck());
+      at(puck, () => drawPuck(g));
       drawn = true;
     }
-    if (it.ref) at(ref, drawRef);
+    if (it.ref) at(ref, () => drawRef(g));
     else {
       const p = it.p;
       // the player, its boost glow and a carried puck move together
       at(p, () => {
-        if (p.role === 'G') drawGoalie(p);
-        else if (p === c) drawOutlined(p);
-        else drawSkater(p);
+        if (p.role === 'G') drawGoalie(g, p);
+        else if (p === c) drawOutlined(g, p);
+        else drawSkater(g, p);
         // (not in replays: they show play from before the boost)
         if (
           G.state !== 'replay' &&
@@ -201,9 +202,9 @@ export function render() {
           p.role !== 'G' &&
           p.down <= 0
         )
-          drawBuffed(p);
+          drawBuffed(g, p);
         if (puck.owner === p) {
-          drawPuck();
+          drawPuck(g);
           drawn = true;
         }
       });
@@ -211,8 +212,8 @@ export function render() {
   }
   if (G.state === 'zamboni') {
     drawn = true;
-    if (G.zam2) at(G.zam2, () => drawZamboni(G.zam2));
-    if (G.zam) at(G.zam, () => drawZamboni(G.zam));
+    if (G.zam2) at(G.zam2, () => drawZamboni(g, G.zam2));
+    if (G.zam) at(G.zam, () => drawZamboni(g, G.zam));
     if (G.zam && G.zam.phase === 'drive')
       for (const sp of SPARK) {
         if (frostAt(sp.x, sp.y) > 0) continue;
@@ -220,33 +221,33 @@ export function render() {
         if (tw > 0.8) {
           const x = toS(sp.x),
             y = toS(sp.y);
-          R(x, y - 2, 1, 5, '#ffffff');
-          R(x - 2, y, 5, 1, '#ffffff');
+          R(g, x, y - 2, 1, 5, '#ffffff');
+          R(g, x - 2, y, 5, 1, '#ffffff');
         }
       }
-  } else if (!drawn || puck.z > 0) at(puck.owner || puck, () => drawPuck());
-  else if (!(puck.owner && puck.owner.role === 'G')) at(puck.owner || puck, () => drawPuck(0.5));
-  if (c) at(c, () => drawCtlTop(c));
+  } else if (!drawn || puck.z > 0) at(puck.owner || puck, () => drawPuck(g));
+  else if (!(puck.owner && puck.owner.role === 'G')) at(puck.owner || puck, () => drawPuck(g, 0.5));
+  if (c) at(c, () => drawCtlTop(g, c));
   if (puck.owner && puck.owner !== c && G.state !== 'zamboni' && G.state !== 'brawl')
-    at(puck.owner, () => drawPossession(puck.owner));
+    at(puck.owner, () => drawPossession(g, puck.owner));
   for (const p of parts) {
-    view.ctx.globalAlpha = Math.min(1, p.life * 3);
-    R(toS(p.x), toS(p.y), 2, 2, p.c);
+    g.globalAlpha = Math.min(1, p.life * 3);
+    R(g, toS(p.x), toS(p.y), 2, 2, p.c);
   }
-  view.ctx.globalAlpha = 1;
-  drawFx();
-  drawGoalFx();
-  drawBubbles();
-  if (cine) sparkles();
-  view.ctx.setTransform(1, 0, 0, 1, 0, 0);
-  if (cine) cinema();
+  g.globalAlpha = 1;
+  drawFx(g);
+  drawGoalFx(g);
+  drawBubbles(g);
+  if (cine) sparkles(g);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  if (cine) cinema(g);
   if (G.flash > 0) {
-    view.ctx.globalAlpha = Math.min(0.22, G.flash * 1.8);
-    view.ctx.fillStyle = '#ffffff';
-    view.ctx.fillRect(0, 0, view.CW, view.CH);
-    view.ctx.globalAlpha = 1;
+    g.globalAlpha = Math.min(0.22, G.flash * 1.8);
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, view.CW, view.CH);
+    g.globalAlpha = 1;
   }
-  if (G.state === 'play') offscreenPuck(ox, oy);
+  if (G.state === 'play') offscreenPuck(g, ox, oy);
   const aim =
     mouse.on &&
     !touchState.touchUI &&
@@ -265,7 +266,6 @@ export function render() {
         ay = mouse.vy / m,
         kx = cx + mouse.vx * r,
         ky = cy + mouse.vy * r,
-        g = view.ctx,
         tri = s => {
           // tip ahead in the aim direction, the two back corners to either side
           g.beginPath();
@@ -283,9 +283,9 @@ export function render() {
   }
   const cur = aim ? 'none' : '';
   if (cv.style.cursor !== cur) cv.style.cursor = cur;
-  if (G.state === 'replay') replayOverlay();
-  else if (G.state === 'brawl') drawFightHud();
-  else if (G.state === 'zamboni') drawZamHud();
-  else drawMini();
-  if (liveName || camToastOn()) liveLabel(liveName);
+  if (G.state === 'replay') replayOverlay(g);
+  else if (G.state === 'brawl') drawFightHud(g);
+  else if (G.state === 'zamboni') drawZamHud(g);
+  else drawMini(g);
+  if (liveName || camToastOn()) liveLabel(g, liveName);
 }

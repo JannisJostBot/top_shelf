@@ -39,8 +39,7 @@ export function resetDirector() {
   dir.fresh = true;
 }
 /** Small "LIVE" caption with the shot name, bottom left. */
-export function liveLabel(name) {
-  const g = view.ctx;
+export function liveLabel(g, name) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.font = '7px "Press Start 2P", monospace';
   g.textBaseline = 'middle';
