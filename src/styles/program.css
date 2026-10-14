@@ -1144,41 +1144,35 @@ body.wide .prog.insert:not(.result) {
     max-height: 11vh;
   }
 }
-/* each drill card's title carries a little chalk-talk diagram of the drill, printed on a halftone panel in the
-   program's two inks */
-.prog .tcard > b {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+/* each drill card opens with a banner printed like a two-ink riso poster: halftone fields, bold shapes, and the red
+   overprinted on the blue so where they cross the inks darken */
+.prog .tban {
+  display: block;
+  width: calc(100% + 20px);
+  height: 80px;
+  margin: -10px -10px 2px;
+  border-bottom: 2px solid var(--p1);
+  background: var(--paper);
 }
-.prog .tart {
-  flex: 0 1 120px;
-  min-width: 84px;
-  height: 40px;
-  border: 2px solid var(--p1);
-  background: radial-gradient(circle, color-mix(in srgb, var(--p1) 16%, transparent) 0 1.4px, transparent 1.7px) 0 0 / 5px 5px, var(--paper);
-}
-.prog .tart .ln {
+.prog .tban .s1,
+.prog .tban .s2 {
   fill: none;
+}
+.prog .tban .s1 {
   stroke: var(--p1);
-  stroke-width: 2;
 }
-.prog .tart .wide {
-  stroke-width: 4;
-}
-.prog .tart .dash {
-  stroke-dasharray: 4 3;
-}
-.prog .tart .faint {
-  opacity: 0.5;
-}
-.prog .tart .ac {
+.prog .tban .s2 {
   stroke: var(--p2);
 }
-.prog .tart .f {
+.prog .tban .f1 {
   fill: var(--p1);
 }
-.prog .tart .fa {
+.prog .tban .f2 {
   fill: var(--p2);
+}
+.prog .tban .pp {
+  fill: var(--paper);
+}
+.prog .tban .mx {
+  mix-blend-mode: multiply;
 }
