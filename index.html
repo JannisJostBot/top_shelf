@@ -45,37 +45,7 @@
         <canvas id="c" width="224" height="320" aria-label="Hockey rink"></canvas>
         <header id="hud">
           <div class="hudbtns">
-            <button class="ibtn" id="muteBtn" aria-pressed="false" aria-label="Sound on or off">
-              <svg class="spk spk-on" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
-                <rect x="2" y="6" width="3" height="4" />
-                <rect x="5" y="5" width="1" height="6" />
-                <rect x="6" y="4" width="1" height="8" />
-                <rect x="7" y="3" width="1" height="10" />
-                <rect x="9" y="5" width="1" height="1" />
-                <rect x="10" y="6" width="1" height="4" />
-                <rect x="9" y="10" width="1" height="1" />
-                <rect x="11" y="3" width="1" height="1" />
-                <rect x="12" y="4" width="1" height="1" />
-                <rect x="13" y="5" width="1" height="6" />
-                <rect x="12" y="11" width="1" height="1" />
-                <rect x="11" y="12" width="1" height="1" /></svg
-              ><svg class="spk spk-off" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
-                <rect x="2" y="6" width="3" height="4" />
-                <rect x="5" y="5" width="1" height="6" />
-                <rect x="6" y="4" width="1" height="8" />
-                <rect x="7" y="3" width="1" height="10" />
-                <rect x="10" y="5" width="1" height="1" />
-                <rect x="11" y="6" width="1" height="1" />
-                <rect x="12" y="7" width="1" height="1" />
-                <rect x="13" y="8" width="1" height="1" />
-                <rect x="14" y="9" width="1" height="1" />
-                <rect x="14" y="5" width="1" height="1" />
-                <rect x="13" y="6" width="1" height="1" />
-                <rect x="12" y="7" width="1" height="1" />
-                <rect x="11" y="8" width="1" height="1" />
-                <rect x="10" y="9" width="1" height="1" />
-              </svg></button
-            ><button
+            <button
               class="ibtn"
               id="fsBtn"
               aria-pressed="false"
@@ -695,7 +665,8 @@
               </p>
               <p>
                 A match opens with a short fly-through of the arena; any button skips it. Pause any time (P,
-                Esc or the II button); the game also pauses when you switch to another tab.
+                Esc or the II button); the game also pauses when you switch to another tab. The pause menu
+                switches the sound on and off, as does the Sound row under Setup.
               </p>
               <p>
                 On a phone or tablet, add the game to your home screen: it then opens fullscreen like an app,
@@ -876,7 +847,8 @@
                 reports (face-off times, goals, resurfacing) and notes anything that does not add up. Fights are
                 between the two of you, and only when you both vote for one during a replay; replays also let you
                 send emotes (see above). Your own skater moves the moment you steer, on your screen; the rest of
-                the match reaches the guest a moment later. Either player can pause or resume, a rematch needs
+                the match reaches the guest a moment later: 0.07 s behind on a steady connection, up to a quarter of a
+                second on a patchy one (it adjusts by itself). Either player can pause or resume, a rematch needs
                 both of you, and leaving ends the match for both. The invite code works for one guest, once.
               </p>
               <h3>Arenas and looks</h3>
@@ -915,6 +887,7 @@
             <p class="small" id="pauseBy"></p>
             <div class="plist">
               <button class="btn go" id="resumeBtn">Resume ›</button>
+              <button class="btn ghost" id="pSndBtn" aria-pressed="false">Sound: on</button>
               <button class="btn ghost" id="quitBtn">Quit to the program</button>
             </div>
             <div class="keymap" id="pauseKeys"></div>

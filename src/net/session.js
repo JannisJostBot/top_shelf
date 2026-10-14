@@ -11,6 +11,10 @@
 //  - Only one company's STUN server (needed to get through home routers, it sees your address like any website you
 //    visit), no TURN: the match never runs through someone else's server. A few relays (not all of them) are used.
 //  - Every message is size-limited, rate-limited and checked before the game uses it (net/proto.js).
+// Two channels run over the one connection: Trystero's, reliable and in order, for everything that must arrive,
+// and a second one of our own that neither resends nor waits (send fast()) for what is stale by the time a lost
+// packet could be sent again: the host's snapshots and the guest's stick. A lost packet there costs that packet
+// only, instead of holding up everything behind it until it is sent again.
 // What it cannot hide: the relays see that your address uses the game, and the other player necessarily learns
 // your address, as with any direct connection.
 import { PROTO, bucket, cleanName, isSecret, newCode, newSecret, sameName } from './proto';
@@ -25,7 +29,10 @@ const BASE = {
 const HANDSHAKE_MS = 8000,
   FIND_MS = 45000, // a guest gives up looking for the host after this
   MOVE_MS = 40000, // moving to the private room
-  MAX_MSG = 16 * 1024; // bytes
+  MAX_MSG = 16 * 1024, // bytes
+  FAST_ID = 42, // the fast channel's number, agreed in advance on both sides (so it needs no extra signalling)
+  FAST_MAX = 4 * 1024, // bytes: a snapshot is about 600
+  FAST_TYPES = new Set(['f', 'i', 'h', 'H']); // all the fast channel carries (h: hello and H: its answer, see sendFast())
 
 let lib = null;
 const load = async () => (lib ??= await import('trystero'));
@@ -41,6 +48,9 @@ let invite = null, // the invite room (host: until the guest is in; guest: until
   room = null, // the private room the match runs in
   peerId = null,
   sendRaw = null,
+  fastCh = null,
+  fastHeard = false, // something came in over the fast channel: the other side has it open too
+  helloAt = 0,
   ev = {},
   pingTimer = 0,
   timer = 0,
@@ -59,6 +69,7 @@ export function leave() {
       r && r.leave();
     } catch (e) {}
   invite = room = null;
+  closeFast();
   peerId = sendRaw = pending = secret = null;
   link.role = null;
   link.peer = '';
@@ -78,6 +89,66 @@ export function send(msg) {
   try {
     sendRaw(msg, { target: peerId }).catch(() => {});
   } catch (e) {}
+}
+/** Sends a message that is worthless once late (a snapshot, the stick): over the fast channel, which drops it if
+ * it gets lost, or over the reliable one until the fast one is open. */
+export function sendFast(msg) {
+  const ch = fastCh;
+  if (!ch || ch.readyState !== 'open') return send(msg);
+  // until the other side is heard on it, the reliable channel carries the message and the fast one a hello
+  // (so a side that could not open the fast channel never misses anything)
+  if (!fastHeard) {
+    send(msg);
+    const now = performance.now();
+    if (now - helloAt < 300) return;
+    helloAt = now;
+    msg = { t: 'h' };
+  }
+  // (a channel this far behind is congested: a newer message will follow soon enough)
+  if (ch.bufferedAmount > 8 * FAST_MAX) return;
+  try {
+    ch.send(JSON.stringify(msg));
+  } catch (e) {}
+}
+// (a connection Trystero reuses keeps its fast channel: the same number cannot be opened twice on it)
+const fastOf = new WeakMap();
+function closeFast() {
+  if (fastCh) fastCh.onmessage = null;
+  fastCh = null;
+  fastHeard = false;
+  helloAt = 0;
+}
+/** The fast channel on the connection to the other player: unordered, never resent. Both sides open it with the
+ * same number, so it is there as soon as the connection is (no offer and answer of its own). */
+function openFast(g, id, accept) {
+  closeFast();
+  const pc = room && room.getPeers()[id];
+  if (!pc || typeof pc.createDataChannel !== 'function') return;
+  let ch = fastOf.get(pc);
+  if (!ch || ch.readyState === 'closing' || ch.readyState === 'closed')
+    try {
+      ch = pc.createDataChannel('fast', { negotiated: true, id: FAST_ID, ordered: false, maxRetransmits: 0 });
+      fastOf.set(pc, ch);
+    } catch (e) {
+      return;
+    }
+  fastCh = ch;
+  ch.onmessage = e => {
+    if (g !== gen || ch !== fastCh || typeof e.data !== 'string' || e.data.length > FAST_MAX) return;
+    let data;
+    try {
+      data = JSON.parse(e.data);
+    } catch (err) {
+      return;
+    }
+    if (!data || typeof data !== 'object' || !FAST_TYPES.has(data.t)) return;
+    fastHeard = true;
+    if (data.t === 'h')
+      try {
+        ch.send('{"t":"H"}');
+      } catch (err) {}
+    accept(data, true);
+  };
 }
 const fail = msg => {
   const f = ev.error;
@@ -235,17 +306,23 @@ async function openRoom(g) {
   })();
   sendRaw = sendMsg;
   // more than this many messages a second from the other side is not the game talking: they are dropped
+  // (both channels together)
   const flood = bucket(240, 120);
-  getMsg((data, ctx) => {
-    if (g !== gen || !ctx || ctx.peerId !== peerId || !flood.take()) return;
+  const accept = (data, fast) => {
+    if (!flood.take()) return;
     if (!data || typeof data !== 'object' || Array.isArray(data) || typeof data.t !== 'string') return;
-    if (ev.message) ev.message(data);
+    if (ev.message) ev.message(data, fast);
+  };
+  getMsg((data, ctx) => {
+    if (g !== gen || !ctx || ctx.peerId !== peerId) return;
+    accept(data, false);
   });
   room.onPeerJoin = id => {
     if (g !== gen) return;
     const again = link.connected === false && peerId !== null;
     peerId = id;
     link.connected = true;
+    openFast(g, id, accept);
     clearTimeout(timer);
     if (again) {
       if (ev.back) ev.back();
@@ -254,6 +331,7 @@ async function openRoom(g) {
   room.onPeerLeave = id => {
     if (g !== gen || id !== peerId) return;
     link.connected = false;
+    closeFast();
     if (ev.lost) ev.lost();
   };
   timer = setTimeout(() => {

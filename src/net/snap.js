@@ -1,5 +1,6 @@
 // Snapshots: what the host's match looks like right now, 30 times a second, as a flat list of numbers. The guest
 // draws its screen from them, blended between the two around its playback time and mirrored into its own view.
+// When the next one is late, the last one is carried on along its speeds for a moment instead of stopping.
 import { H, W } from '../config';
 import { clock } from '../core/time';
 import { players } from '../game/players';
@@ -136,14 +137,15 @@ const lerp = (a, b, k) => a + (b - a) * k;
 // a jump between two snapshots (a face-off reset, the puck into the net) is not blended
 const near = (a, b, d) => Math.abs(a - b) < d;
 /**
- * Guest: puts the host's match into this view, blended a fraction k from snapshot a to snapshot b (b may be null).
- * Returns what changed that the screen needs to know: { score, period }.
+ * Guest: puts the host's match into this view, blended a fraction k from snapshot a to snapshot b (b may be null:
+ * then a, carried on ahead seconds along its speeds). Returns what changed that the screen needs to know:
+ * { score, period }.
  */
-export function applySnap(a, b, k) {
+export function applySnap(a, b, k, ahead = 0) {
   if (!b) {
     b = a;
     k = 0;
-  }
+  } else ahead = 0;
   const L = (i, d = 20) => (near(a[i], b[i], d) ? lerp(a[i], b[i], k) : b[i]);
   for (let i = 0; i < 8; i++) {
     const o = i * NP,
@@ -189,6 +191,19 @@ export function applySnap(a, b, k) {
   ref.anim = L(r + 4, 5);
   ref.vx = -L(r + 5, 400);
   ref.vy = -L(r + 6, 400);
+  if (ahead > 0) {
+    // (a fallen skater lies still, a puck on a stick goes with its carrier)
+    for (const p of players)
+      if (!(p.down > 0)) {
+        p.x += p.vx * ahead;
+        p.y += p.vy * ahead;
+      }
+    const o = puck.owner;
+    puck.x += (o ? (o.down > 0 ? 0 : o.vx) : puck.vx) * ahead;
+    puck.y += (o ? (o.down > 0 ? 0 : o.vy) : puck.vy) * ahead;
+    ref.x += ref.vx * ahead;
+    ref.y += ref.vy * ahead;
+  }
   const g = r + NR,
     score = [c[g + 1], c[g]],
     changed = { score: score[0] !== G.score[0] || score[1] !== G.score[1], period: c[g + 2] !== G.period };

@@ -1,7 +1,10 @@
 // Online matches over the link in net/session.js.
 // Host: runs the match (game/), takes the guest's stick and buttons, and 30 times a second sends a frame: a
 // snapshot of the rink, the events of those steps (sounds, banners, the play-by-play…) and any change of state.
-// Guest: runs no simulation. It plays the frames back a tenth of a second behind, blended between snapshots and
+// Frames with events or a state go over the reliable channel, plain snapshots over the fast one (net/session.js);
+// the guest's stick goes over the fast one too, each packet repeating the three before it, so one lost packet
+// loses no button press.
+// Guest: runs no simulation. It plays the frames back a little behind (net/buffer.js), blended between snapshots and
 // mirrored into its own view, times its own face-offs, drives its own resurfacer, and checks what it can: each
 // goal against where it saw the puck, each face-off call against both times, the resurfacing call against the
 // host's path. What does not add up is noted on the play-by-play and the results card.
@@ -72,6 +75,7 @@ import { PERIOD_LENGTHS, setPeriodLen } from '../ui/menu';
 import {
   bucket,
   decodeEvent,
+  IN_KEEP,
   encodeArg,
   fin,
   isColor,
@@ -79,17 +83,17 @@ import {
   otherTeam,
   packInput,
   readConfig,
-  readInput,
+  readInputs,
   readReport,
   readZamPos,
   relayed,
 } from './proto';
+import { addFrame, advance, frameBuffer, nextFrame } from './buffer';
 import { predict, resetPrediction } from './predict';
 import { SCORE_AT, applySnap, packSnap, snapOk } from './snap';
 import * as session from './session';
 
-const LAG = net.playLag, // the guest plays the host's match this far behind the newest frame (smooths the network out)
-  LOST_MS = 30000; // a dropped connection gets this long to come back
+const LOST_MS = 30000; // a dropped connection gets this long to come back
 const STATES = [
   'intro',
   'faceoff',
@@ -125,6 +129,8 @@ const mp = {
   saved: null,
   lostTimer: 0,
   leaving: false,
+  /** the match's number (bumped by the host for each one), so a late packet from the last one is not taken in */
+  g: 0,
 };
 
 /* ---------- starting and leaving ---------- */
@@ -234,7 +240,7 @@ const inputBurst = bucket(130, 40),
   zamBurst = bucket(60, 30),
   voteBurst = bucket(4, 6),
   emoBurst = bucket(1.5, 3);
-function onMessage(m) {
+function onMessage(m, fast) {
   const host = session.link.role === 'host';
   switch (m.t) {
     case 'me':
@@ -255,10 +261,10 @@ function onMessage(m) {
       if (!host) guestStart(m);
       return;
     case 'f':
-      if (!host && mp.inMatch) guestFrame(m);
+      if (!host && mp.inMatch) guestFrame(m, fast);
       return;
     case 'i':
-      if (host && mp.inMatch && inputBurst.take()) hostInput(m.a, m.n);
+      if (host && mp.inMatch && inputBurst.take()) hostInput(m);
       return;
     case 'rt': {
       const r = host && mp.inMatch && readReport(m);
@@ -305,7 +311,7 @@ function onMessage(m) {
 }
 function peerLeft() {
   const name = session.link.peer || 'The other player';
-  queue = []; // (the guest's screen stops where it is)
+  buf.q.length = 0; // (the guest's screen stops where it is)
   // on the results card: it stays up (no rematch now); back to the program is this player's own click
   if (mp.inMatch && G.state === 'over') {
     session.leave();
@@ -408,6 +414,8 @@ let hostT = 0,
   tick = 0,
   lastSt = '',
   ack = -1, // the guest's newest input step the match has taken (sent back for its prediction, net/predict.js)
+  lastIn = 0, // the guest's newest input step that came in
+  relN = 0, // frames sent over the reliable channel
   outEvents = [],
   outParts = [];
 const inq = [];
@@ -429,6 +437,9 @@ export function hostStart() {
   hostT = tick = 0;
   lastSt = '';
   ack = -1;
+  lastIn = 0;
+  relN = 0;
+  mp.g = (mp.g + 1) % 1e6;
   outEvents = [];
   outParts = [];
   inq.length = 0;
@@ -439,6 +450,7 @@ export function hostStart() {
   const keyOf = c => Object.keys(COLORS).find(k => COLORS[k] === c);
   session.send({
     t: 'cfg',
+    g: mp.g,
     names: net.names,
     colors: [keyOf(kit.TEAMS[0]), keyOf(kit.TEAMS[1])],
     sticks: settings.sticks.slice(),
@@ -460,11 +472,14 @@ function relay(name, args) {
 onZamResult(res => {
   if (G.net === 'host') outEvents.push(['zamRes', [encodeArg(res, refs)]]);
 });
-function hostInput(a, n) {
-  const pk = readInput(a);
-  if (!pk) return;
-  pk.n = Number.isInteger(n) && n > 0 ? n : -1;
-  inq.push(pk);
+function hostInput(m) {
+  if (m.g !== mp.g) return;
+  const pks = readInputs(m.a, m.n, lastIn);
+  if (!pks) return;
+  for (const pk of pks) inq.push(pk);
+  if (pks.length) lastIn = pks[pks.length - 1].n;
+  // how far behind the guest plays the match back (the fight's grace for a block, states/brawl.js)
+  if (Number.isInteger(m.l) && m.l >= 0 && m.l <= 300) net.playLag = m.l / 1000;
   // never more than a few behind: older packets are folded together (their button presses kept)
   while (inq.length > 4) {
     const o = inq.shift();
@@ -524,22 +539,26 @@ function hostPost(dt, force) {
         outParts.push([r2(p.x), r2(p.y), r2(p.vx), r2(p.vy), r2(p.life), p.c]);
     }
   if (++tick % 2 && !st && !force) return;
-  const f = { t: 'f', ts: Math.round(hostT * 1000) / 1000, s: packSnap() };
-  if (st) f.st = st;
+  const f = { t: 'f', g: mp.g, ts: Math.round(hostT * 1000) / 1000, s: packSnap(), r: relN };
   if (ack > 0) f.n = ack;
-  if (outEvents.length) f.ev = outEvents;
   if (outParts.length) f.pt = outParts;
-  outEvents = [];
   outParts = [];
-  session.send(f);
+  // events and states must arrive (numbered, so the snapshots after them wait for them); a snapshot alone is
+  // replaced by the next one 33 ms later, so a lost one is not sent again
+  if (st || outEvents.length) {
+    if (st) f.st = st;
+    if (outEvents.length) f.ev = outEvents;
+    outEvents = [];
+    f.r = ++relN;
+    session.send(f);
+  } else session.sendFast(f);
 }
 
 /* ---------- guest ---------- */
-let queue = [],
-  prevF = null,
+let buf = frameBuffer(),
   playT = null,
-  lastTs = -1,
   inSeq = 0, // this screen's input steps, numbered (see net/predict.js)
+  sentIn = [], // the last few input packets sent, newest first (each packet repeats them)
   fo = null,
   goalRec = 0,
   skipAsked = '';
@@ -547,6 +566,7 @@ function guestStart(m) {
   const c = readConfig(m, known);
   if (!c) return;
   saveSettings();
+  mp.g = Number.isInteger(m.g) ? m.g : 0;
   net.names = c.names;
   // this screen is the host's match from the other end: the guest's team is team 0 here
   settings.colorKey = c.colors[1];
@@ -591,13 +611,13 @@ function guestStart(m) {
   net.send = session.send;
   net.guestStep = guestStep;
   resetVote();
-  queue = [];
-  prevF = null;
+  buf = frameBuffer();
+  net.playLag = buf.lag;
   playT = null;
-  lastTs = -1;
   frameScore = -1;
   goalSince = false;
   inSeq = 0;
+  sentIn = [];
   resetPrediction();
   fo = null;
   REC.length = 0;
@@ -614,18 +634,23 @@ function guestStart(m) {
 function guestResync() {
   playT = null;
 }
-function guestFrame(m) {
-  if (!fin(m.ts) || m.ts < lastTs || !snapOk(m.s)) return;
+function guestFrame(m, fast) {
+  if (m.g !== mp.g || !fin(m.ts) || m.ts < 0 || !Number.isInteger(m.r) || m.r < 0 || !snapOk(m.s)) return;
+  const essential = m.st !== undefined || m.ev !== undefined;
+  // (events and states only count from the reliable channel)
+  if (essential && fast) return;
   if (m.ev !== undefined && (!Array.isArray(m.ev) || m.ev.length > 128)) return;
   if (m.pt !== undefined && (!Array.isArray(m.pt) || m.pt.length > 64)) return;
   if (m.st !== undefined && (!m.st || !STATES.includes(m.st.s))) return;
   if (m.n !== undefined && !(Number.isInteger(m.n) && m.n > 0)) return;
-  lastTs = m.ts;
-  queue.push(m);
+  const got = addFrame(buf, m, essential, performance.now() / 1000);
+  net.playLag = buf.lag;
+  // (it waited too long: the screen has moved on, but what happened in it still counts)
+  if (got === 'late') playFrame(m, true, true);
   // far behind (this tab was in the background): the old frames are applied at once, silently
-  while (queue.length > 600) {
-    prevF = queue.shift();
-    playFrame(prevF, true);
+  while (buf.q.length > 600) {
+    const n = nextFrame(buf, Infinity);
+    if (n) playFrame(n.f, true, false, n.early);
   }
 }
 // events that only make sense live (a sound from twenty seconds ago is noise)
@@ -643,18 +668,23 @@ const LIVE_ONLY = new Set([
 ]);
 // Each frame's score against the one before, in order (so a guest catching up after a stall, which skips through
 // many frames at once, still sees the goal state that came with each change of score).
+// (late: a reliable frame that came after newer snapshots were shown; early: a snapshot shown without a reliable
+// frame before it, which may still come. Neither is checked, and after an early one the check starts afresh.)
 let frameScore = -1,
   goalSince = false;
-function playFrame(f, stale) {
+function playFrame(f, stale, late = false, early = false) {
   if (f.st) guestState(f.st);
-  if (f.st && f.st.s === 'goal') goalSince = true;
-  const sc = f.s[SCORE_AT] + f.s[SCORE_AT + 1];
-  if (frameScore >= 0 && sc > frameScore) {
-    // a goal counted without a goal being scored
-    if (!goalSince) dispute('a change to the score');
-    goalSince = false;
+  if (early) frameScore = -1;
+  else if (!late) {
+    if (f.st && f.st.s === 'goal') goalSince = true;
+    const sc = f.s[SCORE_AT] + f.s[SCORE_AT + 1];
+    if (frameScore >= 0 && sc > frameScore) {
+      // a goal counted without a goal being scored
+      if (!goalSince) dispute('a change to the score');
+      goalSince = false;
+    }
+    frameScore = sc;
   }
-  frameScore = sc;
   if (f.ev)
     for (const e of f.ev) {
       const d = decodeEvent(e, refs);
@@ -934,16 +964,11 @@ function guestStep(dt) {
     G.bannerT -= dt;
     if (G.bannerT <= 0) hideBanner();
   }
-  // the playback clock runs a little behind the newest frame, a touch faster or slower to stay there
-  const newest = queue.length ? queue[queue.length - 1].ts : prevF ? prevF.ts : null;
-  if (newest !== null) {
-    if (playT === null || newest - playT > 0.6) playT = newest - LAG;
-    else playT = Math.min(newest, playT + dt * clamp(1 + (newest - playT - LAG) * 1.5, 0.9, 1.1));
-    while (queue.length && queue[0].ts <= playT) {
-      prevF = queue.shift();
-      playFrame(prevF, playT - prevF.ts > 0.5);
-    }
-  }
+  // the playback clock runs a little behind the newest frame (net/buffer.js)
+  playT = advance(buf, playT, dt);
+  let n;
+  while (playT !== null && (n = nextFrame(buf, playT))) playFrame(n.f, playT - n.f.ts > 0.5, false, n.early);
+  const prevF = buf.last;
   const st = G.state;
   if (st === 'paused') return;
   if (st === 'intro') {
@@ -965,9 +990,10 @@ function guestStep(dt) {
   if (!prevF) return;
   const sends = st === 'play' || st === 'faceoff' || st === 'goal' || st === 'inter' || st === 'brawl';
   if (sends) inSeq++;
-  const next = queue[0],
+  // blended toward the next snapshot; with none here yet, carried on along the last speeds for a moment
+  const next = buf.q[0],
     k = next ? clamp((playT - prevF.ts) / Math.max(0.001, next.ts - prevF.ts), 0, 1) : 0,
-    ch = applySnap(prevF.s, next ? next.s : null, k);
+    ch = applySnap(prevF.s, next ? next.s : null, k, next ? 0 : clamp(playT - prevF.ts, 0, 0.05));
   // the skater this player steers: moved here at once, pulled toward the host's (net/predict.js); in a fight
   // ('snap') the host's places are shown as they are and the prediction starts again afterwards
   predict(dt, inSeq, ackAt(prevF, next, k), st === 'play' ? 'steer' : st === 'goal' ? 'ease' : 'snap');
@@ -1008,6 +1034,8 @@ function askSkip() {
 function sendInput() {
   readStick();
   const mouseAim = mouse.on && !input.touch;
-  session.send({ t: 'i', a: packInput(input, mouseAim), n: inSeq });
+  sentIn.unshift(packInput(input, mouseAim));
+  if (sentIn.length > IN_KEEP) sentIn.length = IN_KEEP;
+  session.sendFast({ t: 'i', g: mp.g, a: sentIn, n: inSeq, l: Math.round(buf.lag * 1000) });
   input.sp = input.sr = input.pp = input.swp = false;
 }

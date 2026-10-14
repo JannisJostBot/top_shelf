@@ -21,7 +21,8 @@ export const net = {
   guestStep: null,
   /** worst recent round trip to the other player, in seconds */
   rtt: 0.1,
-  /** how far behind the newest frame the guest plays the host's match back, in seconds */
+  /** how far behind the newest frame the guest plays the host's match back, in seconds (it follows the
+   * connection, net/buffer.js; the guest tells the host with its stick) */
   playLag: 0.1,
   /** results this side checked and could not confirm (shown on the play-by-play and the results card) */
   disputes: 0,

@@ -7,7 +7,7 @@
 import { H, W } from '../config';
 
 /** Bumped whenever the messages change, so old and new versions of the game do not try to play each other. */
-export const PROTO = 1;
+export const PROTO = 2;
 
 /* ---------- invite codes and secrets ---------- */
 // Crockford's base32: no I, L, O or U, so a code read out loud or typed from a screenshot is hard to get wrong.
@@ -111,6 +111,25 @@ export function readInput(a) {
     mouseAim: !!(f & 64),
     touch: !!(f & 128),
   };
+}
+/** Input packets per message: the newest and the ones before it, so a lost message loses no press. */
+export const IN_KEEP = 4;
+/**
+ * A received input message: a, up to IN_KEEP packets, newest first, the newest being step n. Returns the packets
+ * newer than step last, oldest first, each with its step number n, in the receiver's view; null if malformed.
+ */
+export function readInputs(a, n, last) {
+  if (!Array.isArray(a) || a.length < 1 || a.length > IN_KEEP || !isInt(n, 1, 2 ** 31)) return null;
+  const out = [];
+  for (let i = a.length - 1; i >= 0; i--) {
+    const k = n - i;
+    if (k <= last) continue;
+    const pk = readInput(a[i]);
+    if (!pk) return null;
+    pk.n = k;
+    out.push(pk);
+  }
+  return out;
 }
 
 /* ---------- the host's events, relayed to the guest ---------- */

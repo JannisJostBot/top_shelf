@@ -232,8 +232,7 @@ function applyLayout() {
     $('nm0').after(sc0);
     $('nm1').before(sc1);
     home.after(mid);
-    const btns = hud.querySelector('.hudbtns');
-    for (const id of ['muteBtn', 'fsBtn']) btns.append($(id));
+    hud.querySelector('.hudbtns').append($('fsBtn'));
     hud.append($('pauseBtn'));
   }
   fit();
