@@ -25,10 +25,41 @@ function randomB32(n) {
 export const newCode = () => randomB32(CODE_LEN);
 /** A fresh secret for the private room the two players move to once they found each other (160 bits). */
 export const newSecret = () => randomB32(32);
+/* The invite link carries the code scrambled (#j=…), so it cannot be read off a link or a QR code shown on a stream
+ * and typed in before the friend it was meant for. Not encryption: the link itself still lets one person in, and the
+ * game unscrambles it. The 120 bits are XORed with a fixed pad and written as 20 characters of base64url. */
+const PAD = [0x5b, 0xc2, 0x17, 0x9e, 0x34, 0xa8, 0x61, 0xf0, 0x0d, 0x87, 0xe9, 0x2c, 0x73, 0xb5, 0x48];
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+/** The token for an invite link: 20 characters that do not show the code. */
+export function linkToken(code) {
+  let bits = '';
+  for (const ch of code) bits += B32.indexOf(ch).toString(2).padStart(5, '0');
+  let mixed = '';
+  for (let i = 0; i < 15; i++)
+    mixed += (parseInt(bits.slice(i * 8, i * 8 + 8), 2) ^ PAD[i]).toString(2).padStart(8, '0');
+  let t = '';
+  for (let i = 0; i < 120; i += 6) t += B64[parseInt(mixed.slice(i, i + 6), 2)];
+  return t;
+}
+/** The code in a link token, or null if it is not one. */
+export function tokenCode(t) {
+  if (!/^[A-Za-z0-9_-]{20}$/.test(t)) return null;
+  let mixed = '';
+  for (const ch of t) mixed += B64.indexOf(ch).toString(2).padStart(6, '0');
+  let bits = '';
+  for (let i = 0; i < 15; i++)
+    bits += (parseInt(mixed.slice(i * 8, i * 8 + 8), 2) ^ PAD[i]).toString(2).padStart(8, '0');
+  let c = '';
+  for (let i = 0; i < 120; i += 5) c += B32[parseInt(bits.slice(i, i + 5), 2)];
+  return c;
+}
 /** A typed or pasted code as the canonical 24 characters, or null if it is not one. Forgiving: any case, spaces
- * and dashes, O for 0 and I or L for 1. Also accepts an invite link (the code after #join=). */
+ * and dashes, O for 0 and I or L for 1. Also accepts an invite link (the token after #j=, or a readable code after
+ * #join= as older links had it). */
 export function normCode(s) {
   if (typeof s !== 'string' || s.length > 300) return null;
+  const t = s.match(/#j=([^&\s]+)/);
+  if (t) return tokenCode(t[1]);
   const m = s.match(/#join=([^&\s]+)/);
   if (m) s = m[1];
   const c = s.toUpperCase().replace(/[\s-]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');

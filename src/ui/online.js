@@ -1,8 +1,9 @@
 // The Online page of the program: your name, host a room (and share its code) or join one, then the lobby. The
 // networking (net/) is only loaded when you host or join, so the rest of the game never touches the network.
 import { $ } from '../core/dom';
-import { cleanName, fmtCode, normCode } from '../net/proto';
+import { cleanName, fmtCode, linkToken, normCode } from '../net/proto';
 import { showTab } from './menu';
+import { drawQR } from './qr';
 
 const NAME_KEY = 'blb-name';
 let mod = null;
@@ -55,8 +56,12 @@ const callbacks = {
   code(c) {
     code = c;
     $('olCodeTxt').textContent = fmtCode(c);
+    $('olLinkTxt').textContent = inviteLink();
+    $('olQr').hidden = !drawQR($('olQrImg'), inviteLink());
     $('olCodeBox').hidden = false;
-    status('Waiting for your friend. Send them the code or the link; it lets one person in.');
+    status(
+      'Waiting for your friend. Send them the code or the link, or let them scan the QR code; it lets one person in.',
+    );
     ticket('Waiting for your friend');
   },
   status,
@@ -143,6 +148,9 @@ async function joinRoom() {
     callbacks.error((e && e.message) || 'Could not join.');
   }
 }
+// the code rides in the link's #fragment, which browsers never send to the web server, and scrambled, so it cannot
+// be read off a link or QR code shown on a stream
+const inviteLink = () => location.origin + location.pathname + '#j=' + linkToken(code);
 async function copy(text, btn) {
   const was = btn.textContent;
   try {
@@ -165,15 +173,13 @@ export function initOnline() {
   });
   $('olStart').addEventListener('click', () => mod && mod.hostStart());
   $('olCopy').addEventListener('click', e => copy(fmtCode(code), e.currentTarget));
-  // the code rides in the link's #fragment, which browsers never send to the web server
-  $('olLink').addEventListener('click', e =>
-    copy(location.origin + location.pathname + '#join=' + fmtCode(code), e.currentTarget),
-  );
+  $('olLink').addEventListener('click', e => copy(inviteLink(), e.currentTarget));
   stage('setup');
   // opened from an invite link: straight to the Online page with the code filled in (and the code taken back out
   // of the address bar and the history entry)
-  const c = location.hash.startsWith('#join=') ? normCode(location.hash) : null;
-  if (location.hash.startsWith('#join=')) history.replaceState(null, '', location.pathname + location.search);
+  const invited = /^#j(oin)?=/.test(location.hash);
+  const c = invited ? normCode(location.hash) : null;
+  if (invited) history.replaceState(null, '', location.pathname + location.search);
   if (c) {
     $('olCode').value = fmtCode(c);
     setTimeout(() => {

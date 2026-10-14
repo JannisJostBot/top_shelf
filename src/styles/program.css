@@ -1211,6 +1211,22 @@ button.lutok:focus-visible i {
   overflow-wrap: anywhere; /* (lines break after a dash, between the groups) */
   user-select: all;
 }
+.olcode output.ollink {
+  font-family: ui-monospace, monospace; /* (the pixel fonts have no lower case, and a URL's path is case-sensitive) */
+  font-size: 11px;
+  line-height: 1.4;
+}
+.olqr {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin: 0;
+}
+.olqr canvas {
+  width: 164px; /* (a whole number of pixels per module would be crisper, but the version changes with the URL) */
+  height: auto;
+  image-rendering: pixelated;
+}
 .olroom .btn {
   text-transform: uppercase;
 }
