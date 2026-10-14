@@ -47,7 +47,7 @@ import {
   odLights,
   odNets,
   odPost,
-  odRim,
+  odReflections,
   odStands,
   odTop,
 } from './overdrive';
@@ -189,7 +189,8 @@ function drawFrame(g) {
   if (cine) skateGrooves(g);
   if (shine) {
     iceSheen(g);
-    reflections(g);
+    if (od) odReflections(g);
+    else reflections(g);
   }
   for (const n of NETS) drawNet(g, n);
   odNets(g);
@@ -258,7 +259,7 @@ function drawFrame(g) {
       }
   } else if (!drawn || puck.z > 0) at(puck.owner || puck, () => drawPuck(g));
   else if (!(puck.owner && puck.owner.role === 'G')) at(puck.owner || puck, () => drawPuck(g, 0.5));
-  if (c) at(c, () => drawCtlTop(g, c));
+  if (c && !od) at(c, () => drawCtlTop(g, c)); // (overdrive: above the lighting, below)
   if (puck.owner && puck.owner !== c && G.state !== 'zamboni' && G.state !== 'brawl')
     at(puck.owner, () => drawPossession(g, puck.owner));
   for (const p of parts) {
@@ -274,7 +275,7 @@ function drawFrame(g) {
   g.globalAlpha = 1;
   drawSpray(g);
   odLights(g, ox, oy);
-  odRim(g);
+  if (c && od) at(c, () => drawCtlTop(g, c)); // the marker stays bright over the arena lighting
   drawFx(g);
   drawGoalFx(g);
   odTop(g);

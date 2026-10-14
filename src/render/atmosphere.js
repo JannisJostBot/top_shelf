@@ -18,9 +18,10 @@ export const SPARK = [...Array(160)].map((_, i) => ({
 export function viewRect() {
   return { x: cam.x, y: cam.y, w: view.CW / (K * view.camZ), h: view.CH / (K * view.camZ) };
 }
-export function reflections(g) {
+/** Everyone mirrored in the ice below their feet, at opacity `a`. */
+export function reflections(g, a = 0.2) {
   g.save();
-  g.globalAlpha = 0.2;
+  g.globalAlpha = a;
   for (const p of players) {
     if (p.benched) continue;
     const fy = toS(p.y) + 1;

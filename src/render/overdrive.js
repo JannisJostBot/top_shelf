@@ -8,10 +8,11 @@
 //   odFrozen()          a hit freeze holds the last frame for a few frames (screen only, the game runs on)
 //   odFrame()           once per drawn frame: ages the effects, notices goals, stops and dropped gloves
 //   odIce(g)            on the ice, under everyone: lasting skate marks and snow, the puck's shadow and trail
+//   odReflections(g)    the players mirrored in the ice, broken up by its scratches and grooves
 //   odNets(g)           the goal light washing the ice and its spinning beams
 //   odBehind / odFront  around each skater: soft shadow, afterimages and speed lines; breath
 //   odLights(g, ox, oy) the arena lighting: the frame darkened, then lit by the roof lamps, a follow spot,
-//                       the goal light, flares and every glow; odRim(g) then catches the lit side of each player
+//                       the goal light, flares and every glow; players are lit and shaded like the ice
 //   odTop(g)            over everyone: net snow, sparks, confetti, flying gear, shockwaves, then the glow layer
 //   odStands(g)         over the stands: team banners and camera flashes
 //   odLens(g)           goal replays: the frame's edges soft and pixelated, as if out of focus
@@ -22,10 +23,10 @@ import { clamp, rnd, toS } from '../core/math';
 import { clock } from '../core/time';
 import { STADIUMS } from '../data/stadiums';
 import { kit } from '../game/kit';
-import { SKATERS } from '../game/players';
-import { G, puck } from '../game/world';
+import { SKATERS, players } from '../game/players';
+import { G, puck, ref } from '../game/world';
 import { reduceMotion, settings } from '../settings';
-import { viewRect } from './atmosphere';
+import { reflections, viewRect } from './atmosphere';
 import { view } from './canvas';
 import { AMB, SH } from './colors';
 import { FAN2D, M } from './stands';
@@ -77,7 +78,8 @@ const add = e => {
 };
 /** Glows for this frame, in world pixels: drawn last, added together, so bright things bloom. */
 const glows = [];
-const glow = (x, y, r, c, a) => glows.push({ x, y, r, c, a });
+// (`only`: it lights the scene around it, see odLights, but is not drawn as a glow itself)
+const glow = (x, y, r, c, a, only = false) => glows.push({ x, y, r, c, a, only });
 
 /* ---------- the lasting marks: skate scratches and snow, until the resurfacer comes ---------- */
 const markC = document.createElement('canvas');
@@ -534,8 +536,11 @@ export function odFront(g, p) {
   if (!on()) return;
   const sx = toS(p.x),
     sy = toS(p.y);
-  // lit from the nearest lamp after the lighting pass (odRim)
-  if (p.down <= 0) rims.push(p);
+  // the marker of your own skater glows, very faintly
+  if (p === G.controlled && !G.ai0 && (G.state === 'play' || G.state === 'faceoff')) {
+    glow(sx, sy + 1, 14, AMB, 0.08);
+    glow(sx, sy - 30, 9, AMB, 0.1);
+  }
   if (BREATH_STATES.has(G.state) && p.down <= 0) {
     const ph = (clock.now * 0.6 + (p.num || 0) * 0.37 + p.team * 0.5) % 1;
     if (ph < 0.4) {
@@ -549,7 +554,7 @@ export function odFront(g, p) {
       g.globalAlpha = 1;
     }
   }
-  if (boosted(p)) glow(sx, sy - 8, 20, '#ffc845', 0.22);
+  if (boosted(p)) glow(sx, sy - 8, 20, '#ffc845', 0.22, true); // lights the ice around them
 }
 
 /* ---------- over everyone ---------- */
@@ -652,6 +657,7 @@ export function odTop(g) {
     g.save();
     g.globalCompositeOperation = 'lighter';
     for (const l of glows) {
+      if (l.only) continue;
       const gr = g.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r);
       gr.addColorStop(0, l.c);
       gr.addColorStop(1, 'rgba(0,0,0,0)');
@@ -817,15 +823,10 @@ const lampCol = (S, i) =>
   S.roof.light || (S.roof.kind === 'neon' ? (i & 1 ? '#ffb3e6' : '#b3ecff') : '#fff4d6');
 const LMC = document.createElement('canvas'),
   lmx = LMC.getContext('2d');
-const rims = [];
-let rig = RIGS.grid,
-  rigCol = [];
+let rig = RIGS.grid;
 /** The lighting pass, drawn after the players and particles: `ox`, `oy` are the frame's camera offset. */
 export function odLights(g, ox, oy) {
-  if (!on()) {
-    rims.length = 0;
-    return;
-  }
+  if (!on()) return;
   const z = view.camZ,
     w = Math.ceil(view.CW / LS),
     h = Math.ceil(view.CH / LS);
@@ -857,10 +858,8 @@ export function odLights(g, ox, oy) {
   const party = (G.state === 'goal' || G.state === 'celebrate') && !G.practice,
     team = kit.TEAMS[G.lastTeam === 1 ? 1 : 0].main,
     chase = Math.floor(clock.now * 6);
-  rigCol.length = rig.length;
   rig.forEach((l, i) => {
     const col = party && (chase + i) & 1 ? team : lampCol(S, i);
-    rigCol[i] = col;
     // broad, overlapping pools: an evenly lit sheet that dims between the lamps and toward the boards
     light(X(l.x), Y(l.y), (l.r * 1.25 * K * z) / LS, col, 0.5, 0.3);
   });
@@ -868,9 +867,6 @@ export function odLights(g, ox, oy) {
   const br = G.state === 'brawl' && G.br,
     spot = br ? br.m : party && G.lastShooter ? G.lastShooter : puck.owner || puck;
   if (spot) light(X(spot.x), Y(spot.y), ((br ? 40 : 30) * K * z) / LS, '#ffffff', br ? 0.35 : 0.2, 0);
-  // your own skater carries a little light, so you never lose them in a shadow
-  const me = !G.ai0 && G.controlled;
-  if (me) light(X(me.x), Y(me.y), (13 * K * z) / LS, '#ffffff', 0.25, 0);
   if (pyroActive())
     FLARES.forEach((f, i) =>
       light(
@@ -892,38 +888,99 @@ export function odLights(g, ox, oy) {
   g.drawImage(LMC, 0, 0, w, h, 0, 0, w * LS, h * LS);
   g.restore();
 }
-/** After the lighting: each player's side facing the nearest lamp catches its light. */
-export function odRim(g) {
-  if (!on()) return;
-  for (const p of rims) {
-    let best = -1,
-      bd = Infinity;
-    rig.forEach((l, i) => {
-      const d = Math.hypot(l.x - p.x, l.y - p.y) / l.r;
-      if (d < bd) {
-        bd = d;
-        best = i;
-      }
-    });
-    if (best < 0 || bd > 1.3) continue;
-    const l = rig[best],
-      d = Math.hypot(l.x - p.x, l.y - p.y) || 1,
-      lx = (l.x - p.x) / d,
-      ly = (l.y - p.y) / d;
-    stamp(p, rigCol[best] || '#ffffff');
-    // lit from the lamp's side and from above
-    const gr = stx.createLinearGradient(32 + lx * 8, 38 + ly * 6 - 8, 32 - lx * 8, 46 - ly * 6);
-    gr.addColorStop(0, 'rgba(255,255,255,1)');
-    gr.addColorStop(0.5, 'rgba(255,255,255,0)');
-    stx.globalCompositeOperation = 'destination-in';
-    stx.fillStyle = gr;
-    stx.fillRect(0, 0, 64, 72);
-    stx.globalCompositeOperation = 'source-over';
-    g.globalAlpha = 0.4 * (1 - Math.max(0, bd - 0.5) / 0.8);
-    g.globalCompositeOperation = 'lighter';
-    g.drawImage(STC, toS(p.x) - 32, toS(p.y) - 52);
-    g.globalCompositeOperation = 'source-over';
-    g.globalAlpha = 1;
+
+/* ---------- reflections in real ice ---------- */
+// The ice only mirrors where it is smooth. A fixed web of fine scratches (made once, in world pixels) and the
+// marks skated into it this period break the reflections up; rows of the mirrored picture slip sideways by a
+// whole world pixel here and there, as uneven ice bends the image; and each reflection fades out below the feet.
+// Everything stays on the world's pixel grid, so it reads as pixel art.
+const scratchC = document.createElement('canvas');
+scratchC.width = IW;
+scratchC.height = IH;
+{
+  const s = scratchC.getContext('2d');
+  s.fillStyle = '#000000';
+  for (let i = 0; i < 1800; i++) {
+    // a short skate cut: a gently curving line of single pixels
+    let x = rnd(0, IW),
+      y = rnd(0, IH),
+      a = rnd(0, Math.PI * 2);
+    const len = rnd(4, 22),
+      bend = rnd(-0.12, 0.12);
+    s.globalAlpha = rnd(0.4, 1);
+    for (let k = 0; k < len; k++) {
+      s.fillRect(Math.round(x), Math.round(y), 1, 1);
+      a += bend;
+      x += Math.cos(a);
+      y += Math.sin(a) * 0.6; // seen at a slant: cuts run more across than along
+    }
   }
-  rims.length = 0;
+}
+// per world pixel row: how far the reflection slips there (-1, 0 or 1 world pixels), in runs of a few rows
+const slip = new Int8Array(IH);
+for (let y = 0; y < IH;) {
+  const run = 1 + Math.floor(rnd(0, 4)),
+    r = Math.random(),
+    o = r < 0.14 ? -1 : r < 0.28 ? 1 : 0;
+  for (let k = 0; k < run && y < IH; k++) slip[y++] = o;
+}
+const RC = document.createElement('canvas'),
+  rcx = RC.getContext('2d'),
+  RC2 = document.createElement('canvas'),
+  rc2x = RC2.getContext('2d');
+export function odReflections(g) {
+  const w = view.CW,
+    h = view.CH,
+    m = g.getTransform(),
+    z = m.a;
+  for (const c of [RC, RC2])
+    if (c.width !== w || c.height !== h) {
+      c.width = w;
+      c.height = h;
+    }
+  rcx.setTransform(1, 0, 0, 1, 0, 0);
+  rcx.globalCompositeOperation = 'source-over';
+  rcx.clearRect(0, 0, w, h);
+  rcx.setTransform(m);
+  reflections(rcx, 1);
+  // fading out below the feet
+  rcx.globalCompositeOperation = 'destination-out';
+  const fade = (x, y) => {
+    const gr = rcx.createLinearGradient(0, y + 4, 0, y + 26);
+    gr.addColorStop(0, 'rgba(0,0,0,0)');
+    gr.addColorStop(1, 'rgba(0,0,0,1)');
+    rcx.fillStyle = gr;
+    rcx.fillRect(x - 16, y, 32, 30);
+  };
+  for (const p of players) if (!p.benched) fade(toS(p.x), toS(p.y) + 1);
+  fade(toS(ref.x), toS(ref.y) + 1);
+  // broken up by the scratches and this period's skate marks
+  rcx.globalAlpha = 0.7;
+  rcx.drawImage(scratchC, 0, 0);
+  rcx.globalAlpha = 1;
+  rcx.drawImage(markC, 0, 0);
+  rcx.drawImage(markC, 0, 0);
+  rcx.globalCompositeOperation = 'source-over';
+  // rows slipping sideways, a world pixel at a time
+  rc2x.clearRect(0, 0, w, h);
+  let y0 = 0,
+    o0 = null;
+  const flush = y1 => {
+    if (y1 > y0) rc2x.drawImage(RC, 0, y0, w, y1 - y0, o0 * z, y0, w, y1 - y0);
+  };
+  for (let y = 0; y < h; y++) {
+    const row = clamp(Math.floor((y - m.f) / z), 0, IH - 1),
+      o = slip[row];
+    if (o !== o0) {
+      if (o0 !== null) flush(y);
+      y0 = y;
+      o0 = o;
+    }
+  }
+  flush(h);
+  g.save();
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalAlpha = 0.42;
+  g.drawImage(RC2, 0, 0);
+  g.restore();
 }
