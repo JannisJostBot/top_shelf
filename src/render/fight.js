@@ -104,13 +104,17 @@ export function drawFightHud() {
   R(view.CW - 7 - fb, y + 1, fb, h, kit.TEAMS[1].ui);
   R(7, y + h + 3, w, 2, '#0b0f1a');
   R(7, y + h + 3, Math.round((w * B.stam) / 100), 2, AMB);
-  view.ctx.fillStyle = '#ffffff';
-  view.ctx.textAlign = 'left';
-  view.ctx.fillText(B.a.name.slice(0, 9), 6, y + h + 8);
-  view.ctx.textAlign = 'right';
-  view.ctx.fillText(B.b.name.slice(0, 9), view.CW - 6, y + h + 8);
-  view.ctx.textAlign = 'center';
-  view.ctx.fillStyle = AMB;
-  view.ctx.fillText('VS', view.CW / 2, y);
+  // the names and VS sit on dark plates, so they read over the white ice and the referee
+  const label = (text, x, yy, align, c) => {
+    const tw = Math.ceil(view.ctx.measureText(text).width),
+      lx = align === 'left' ? x : align === 'right' ? x - tw : Math.round(x - tw / 2);
+    R(lx - 2, yy - 2, tw + 4, 10, '#0b0f1a');
+    view.ctx.textAlign = align;
+    view.ctx.fillStyle = c;
+    view.ctx.fillText(text, x, yy);
+  };
+  label(B.a.name.slice(0, 9), 7, y + h + 8, 'left', '#ffffff');
+  label(B.b.name.slice(0, 9), view.CW - 7, y + h + 8, 'right', '#ffffff');
+  label('VS', view.CW / 2, y, 'center', AMB);
   view.ctx.textAlign = 'left';
 }

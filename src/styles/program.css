@@ -333,6 +333,8 @@
   color: var(--p1);
   font-family: var(--display);
   font-size: 8px;
+  /* a six-letter label (ONLINE) fits inside the ring: smaller circles print it a size or two smaller */
+  font-size: clamp(6px, round(down, (var(--d) - 10px) / 6, 1px), 8px);
   text-transform: uppercase;
   line-height: 1.5;
   cursor: pointer;
@@ -901,8 +903,32 @@ body.wide .prog {
     0 0 0 1px rgba(0, 0, 0, 0.25),
     14px 16px 0 rgba(0, 0, 0, 0.45);
 }
-body.wide .prog.insert:not(.result) {
+body.wide .prog.insert {
   height: auto;
+}
+/* the arena already plays around the sheet, so there is no die-cut window: the home page prints the title on a
+   solid plate (its size fixed, the rink takes the room) and the result leaves the window out */
+body.wide .ppage.home > .pwin {
+  flex: none;
+  height: clamp(96px, 15vh, 132px);
+  min-height: 0;
+  background: var(--p1) !important;
+}
+body.wide .ppage.home > .pwin::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0 2px, transparent 2px 7px);
+}
+body.wide .ppage.home .onair {
+  background: var(--paper);
+  color: var(--p1);
+}
+body.wide .prog.result {
+  background: var(--paper);
+}
+body.wide .prog.result > .pwin {
+  display: none;
 }
 /* on the home page only the window and the rink stretch; the rest keeps its size */
 .ppage.home > .pmast,
@@ -983,6 +1009,7 @@ body.wide .prog.insert:not(.result) {
 .rinkmenu .fo.nz {
   --d: clamp(46px, min(9vh, 13vw), 62px);
   font-size: 7px;
+  font-size: clamp(6px, round(down, (var(--d) - 10px) / 6, 1px), 7px);
 }
 .prog .olin {
   width: 100%;

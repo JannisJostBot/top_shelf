@@ -23,10 +23,14 @@ const KEYMAP = [
   [['H', '?'], 'Show the key map'],
   [['F'], 'Fullscreen'],
 ];
+// the pixel fonts have ↑ and ↓ but no ← or →: those are drawn as a turned ↑
+const SIDE_ARROW = { '←': ['l', 'Left'], '→': ['r', 'Right'] };
+const kbd = k =>
+  SIDE_ARROW[k]
+    ? '<kbd aria-label="' + SIDE_ARROW[k][1] + '"><i class="arw ' + SIDE_ARROW[k][0] + '">↑</i></kbd>'
+    : '<kbd>' + k + '</kbd>';
 export const keymapHTML = () =>
-  KEYMAP.map(
-    ([ks, t]) => '<span>' + ks.map(k => '<kbd>' + k + '</kbd>').join('') + '</span><span>' + t + '</span>',
-  ).join('');
+  KEYMAP.map(([ks, t]) => '<span>' + ks.map(kbd).join('') + '</span><span>' + t + '</span>').join('');
 const HINTS = {
   off: [
     ['Space', 'Shoot'],

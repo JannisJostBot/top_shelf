@@ -106,16 +106,19 @@ export function drawZamHud() {
     y = 10 + view.topInset; // below the floating scoreboard
   R(x0 - 2, y - 2, w + 4, 9, '#0b0f1a');
   R(x0, y, Math.round(w * pct), 5, '#7fe3ff');
-  view.ctx.font = '6px "Press Start 2P", monospace';
-  view.ctx.textBaseline = 'top';
-  view.ctx.textAlign = 'center';
-  view.ctx.fillStyle = '#ffffff';
-  view.ctx.fillText(
-    Math.round(pct * 100) + '% POLISHED · ' + Math.max(0, Math.ceil(z.t)) + 's',
-    view.CW / 2,
-    y + 10,
-  );
-  view.ctx.textAlign = 'left';
+  hudLine(Math.round(pct * 100) + '% POLISHED · ' + Math.max(0, Math.ceil(z.t)) + 's', y + 10);
+}
+/** A line of white text centred under the bars, on a dark plate so it reads over the white ice. */
+function hudLine(text, y) {
+  const g = view.ctx;
+  g.font = '6px "Press Start 2P", monospace';
+  const w = Math.ceil(g.measureText(text).width);
+  R(Math.round((view.CW - w) / 2) - 3, y - 3, w + 6, 11, '#0b0f1a');
+  g.textBaseline = 'top';
+  g.textAlign = 'center';
+  g.fillStyle = '#ffffff';
+  g.fillText(text, view.CW / 2, y);
+  g.textAlign = 'left';
 }
 
 /** Online: both players' shares of their halves, yours on top in your colour, and your seconds left. */
@@ -131,11 +134,7 @@ function drawDuelHud(z, r) {
     theirs = r.count / Math.max(1, r.total);
   bar(y, mine, '#7fe3ff');
   bar(y + 8, theirs, '#9aa6c4');
-  view.ctx.font = '6px "Press Start 2P", monospace';
-  view.ctx.textBaseline = 'top';
-  view.ctx.textAlign = 'center';
-  view.ctx.fillStyle = '#ffffff';
-  view.ctx.fillText(
+  hudLine(
     'YOU ' +
       Math.round(mine * 100) +
       '% · ' +
@@ -145,10 +144,8 @@ function drawDuelHud(z, r) {
       '% · ' +
       Math.max(0, Math.ceil(z.t)) +
       's',
-    view.CW / 2,
     y + 18,
   );
-  view.ctx.textAlign = 'left';
 }
 /** Big 3, 2, 1, GO! in the middle of the screen: each number pops in large and settles. */
 function drawCountdown(count, goAge) {
