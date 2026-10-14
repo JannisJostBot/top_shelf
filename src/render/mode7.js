@@ -361,13 +361,17 @@ function drawGlares(proj, lamps) {
   }
   g.restore();
 }
+// a figure is about this many sprite pixels tall; in the menu one taller than this share of the frame fades out
+const SPR_H = 24,
+  NEAR_FADE = 0.45;
 /** Draws the 3D view from G.cam3. `overlay` adds the REPLAY label and letterbox bars. */
 export function render3D(overlay = true) {
   const C3 = G.cam3 || { x: 80, y: 128, yaw: 0, h: 8.5 },
     f = view.CW * 0.65 * (C3.guest ? GUEST_ZOOM : 1),
-    cxs = view.CW / 2,
+    fr = view.frame,
+    cxs = fr && fr.cx != null ? fr.cx : view.CW / 2,
     // the horizon sits two fifths down the canvas, or down the window the 3D view is framed in
-    hor = view.frame ? Math.round(view.frame.y0 + (view.frame.y1 - view.frame.y0) * 0.45) : Math.round(view.CH * 0.4),
+    hor = fr && fr.y0 != null ? Math.round(fr.y0 + (fr.y1 - fr.y0) * 0.45) : Math.round(view.CH * 0.4),
     h = C3.h;
   const Fx = Math.cos(C3.yaw),
     Fy = Math.sin(C3.yaw),
@@ -649,9 +653,13 @@ export function render3D(overlay = true) {
       e.vy = ovy;
     }
   };
+  // behind the menu nobody fills the frame: a skater coming that close to the lens fades out before they get there
+  const nearFade = fr ? (fr.y0 != null ? fr.y1 - fr.y0 : view.CH) * NEAR_FADE : 0;
   const billboard = (draw, q) => {
     const sc = q.s / K;
     if (sc > 14) return;
+    const fade = nearFade ? Math.min(1, (nearFade * 1.3 - SPR_H * sc) / (nearFade * 0.3)) : 1;
+    if (fade <= 0) return;
     spx.setTransform(1, 0, 0, 1, 0, 0);
     spx.clearRect(0, 0, 48, 56);
     const save = view.ctx;
@@ -664,6 +672,7 @@ export function render3D(overlay = true) {
       view.ctx = save;
     }
     view.ctx.imageSmoothingEnabled = false;
+    if (fade < 1) view.ctx.globalAlpha = fade;
     view.ctx.drawImage(
       SPC,
       Math.round(q.x - 24 * sc),
@@ -671,6 +680,7 @@ export function render3D(overlay = true) {
       Math.round(48 * sc),
       Math.round(56 * sc),
     );
+    view.ctx.globalAlpha = 1;
   };
   if (buf3 && fanTab.length) {
     drawGlares(proj, roofLamps(STADIUMS[settings.stadiumKey]));

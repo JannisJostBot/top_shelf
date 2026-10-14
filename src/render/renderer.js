@@ -39,21 +39,35 @@ import { drawPuck, puckGround } from './puck';
 import { drawStands } from './stands';
 import { drawZamHud, drawZamboni } from './zamboni';
 
-// On phones the menu (and the result) show the 3D arena through a window in the program: the view is framed to it
-// (measured every half second, not every frame, as it only moves when the layout does).
+// On phones the menu (and the result) show the 3D arena through a window in the program: the view is framed to it.
+// On desktop the program stands in front of the arena: the shot is centred in the open space beside it.
+// (Measured every half second, not every frame, as it only moves when the layout does.)
 let frameAt = -Infinity;
 function frameMenuWindow() {
   if (clock.now - frameAt < 0.5) return;
   frameAt = clock.now;
+  const c = cv.getBoundingClientRect();
+  if (document.body.classList.contains('wide')) {
+    const sheet = document.querySelector('#menu:not([hidden]) .prog, #overOv:not([hidden]) .prog');
+    view.frame = null;
+    if (!sheet || !c.width) return;
+    const s = sheet.getBoundingClientRect(),
+      left = s.left - c.left,
+      right = c.right - s.right,
+      k = view.CW / c.width;
+    // (when neither side has a useful amount of room, the shot keeps the middle)
+    if (Math.max(left, right) > c.width * 0.3)
+      view.frame = { cx: (left >= right ? left / 2 : c.width - right / 2) * k };
+    return;
+  }
   const win = document.querySelector(
     '#menu:not([hidden]) .ppage.home:not([hidden]) .pwin, #overOv:not([hidden]) .pwin',
   );
-  if (!win || document.body.classList.contains('wide')) {
+  if (!win) {
     view.frame = null;
     return;
   }
-  const c = cv.getBoundingClientRect(),
-    w = win.getBoundingClientRect(),
+  const w = win.getBoundingClientRect(),
     k = view.CH / (c.height || 1);
   view.frame = { y0: (w.top - c.top) * k, y1: (w.bottom - c.top) * k };
 }

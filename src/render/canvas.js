@@ -12,7 +12,8 @@ export const view = {
   lastCtl: null,
   ctlFlash: 0,
   lamp: null,
-  /** canvas rows to frame the 3D view in (the menu's window on phones), or null for the whole canvas */
+  /** where the menu's 3D view is framed: rows y0..y1 (the window on phones) and/or the column cx to centre it
+   * on (beside the program sheet on desktop); null for the whole canvas */
   frame: /** @type {any} */ (null),
 };
 view.ctx.imageSmoothingEnabled = false;

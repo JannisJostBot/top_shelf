@@ -23,14 +23,43 @@ const KEYMAP = [
   [['H', '?'], 'Show the key map'],
   [['F'], 'Fullscreen'],
 ];
-// the pixel fonts have ↑ and ↓ but no ← or →: those are drawn as a turned ↑
+// The pixel fonts have ↑ and ↓ but no ←, →, ☰ or ✚ (those fell back to whatever font the system has): the side
+// arrows are a turned ↑, the controller's menu button and d-pad are drawn in pixels.
+const ICON = {
+  '☰': [
+    'Menu',
+    '<rect x="1" y="2" width="8" height="2"/><rect x="1" y="5" width="8" height="2"/><rect x="1" y="8" width="8" height="2"/>',
+  ],
+  '✚': ['D-pad', '<rect x="4" y="1" width="3" height="9"/><rect x="1" y="4" width="9" height="3"/>'],
+};
 const SIDE_ARROW = { '←': ['l', 'Left'], '→': ['r', 'Right'] };
-const kbd = k =>
-  SIDE_ARROW[k]
-    ? '<kbd aria-label="' + SIDE_ARROW[k][1] + '"><i class="arw ' + SIDE_ARROW[k][0] + '">↑</i></kbd>'
-    : '<kbd>' + k + '</kbd>';
+/** One key cap; `cls` is its extra class (the controller button colours). */
+function cap(k, cls = '') {
+  const c = cls ? ' class="' + cls + '"' : '';
+  if (SIDE_ARROW[k])
+    return (
+      '<kbd' +
+      c +
+      ' aria-label="' +
+      SIDE_ARROW[k][1] +
+      '"><i class="arw ' +
+      SIDE_ARROW[k][0] +
+      '">↑</i></kbd>'
+    );
+  if (ICON[k])
+    return (
+      '<kbd' +
+      c +
+      ' aria-label="' +
+      ICON[k][0] +
+      '"><svg class="kico" viewBox="0 0 11 11" shape-rendering="crispEdges" aria-hidden="true">' +
+      ICON[k][1] +
+      '</svg></kbd>'
+    );
+  return '<kbd' + c + '>' + k + '</kbd>';
+}
 export const keymapHTML = () =>
-  KEYMAP.map(([ks, t]) => '<span>' + ks.map(kbd).join('') + '</span><span>' + t + '</span>').join('');
+  KEYMAP.map(([ks, t]) => '<span>' + ks.map(k => cap(k)).join('') + '</span><span>' + t + '</span>').join('');
 const HINTS = {
   off: [
     ['Space', 'Shoot'],
@@ -78,15 +107,10 @@ const PADMAP = [
 export const padmapHTML = () =>
   PADMAP.map(
     ([ks, t]) =>
-      '<span>' +
-      ks.map(k => '<kbd class="pb pb-' + k.toLowerCase() + '">' + k + '</kbd>').join('') +
-      '</span><span>' +
-      t +
-      '</span>',
+      '<span>' + ks.map(k => cap(k, 'pb pb-' + k.toLowerCase())).join('') + '</span><span>' + t + '</span>',
   ).join('');
 /** One key cap: an Xbox button glyph when `padOn`, else a keyboard key. */
-export const kbdHTML = (k, padOn) =>
-  padOn ? '<kbd class="pb pb-' + k.toLowerCase() + '">' + k + '</kbd>' : '<kbd>' + k + '</kbd>';
+export const kbdHTML = (k, padOn) => cap(k, padOn ? 'pb pb-' + k.toLowerCase() : '');
 /** The context hints of the current moment, also shown in the desktop side panel. */
 export const hintNow = { list: [], pad: false, mode: 'idle' };
 export function setHint(m) {
