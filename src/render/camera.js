@@ -70,8 +70,6 @@ export function fit() {
     view.ctx = cv.getContext('2d');
     view.ctx.imageSmoothingEnabled = false;
   }
-  cv.style.width = r.width + 'px';
-  cv.style.height = r.height + 'px';
   G.padWorld = pad.hidden ? 0 : (pad.offsetHeight * (view.CW / r.width)) / K;
   const hud = $('hud');
   // canvas overlays (minimap, resurfacer and fight meters) start below the scoreboard and the buttons hanging off it
@@ -84,7 +82,19 @@ export function fit() {
   view.topInset = Math.round(bottom * (view.CW / r.width));
   updCam(0, true);
 }
+// A new canvas size clears the canvas, and ResizeObserver reports after the frame has been drawn: refitting right
+// there would show a blank canvas for a frame, every frame while the stage slides between menu and match. A
+// resize only marks the view; the main loop refits right before it draws (fitIfDue).
+let fitDue = false;
+const due = () => {
+  fitDue = true;
+};
+export function fitIfDue() {
+  if (!fitDue) return;
+  fitDue = false;
+  fit();
+}
 export function initCamera() {
-  addEventListener('resize', fit);
-  new ResizeObserver(fit).observe(stage);
+  addEventListener('resize', due);
+  new ResizeObserver(due).observe(stage);
 }

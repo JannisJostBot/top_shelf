@@ -6,6 +6,7 @@ import { clock } from './time';
 import { settings } from '../settings';
 import { update } from '../game/update';
 import { pollGamepad } from '../input/gamepad';
+import { fitIfDue } from '../render/camera';
 import { render } from '../render/renderer';
 import { beforeStep, blendIn, blendOut } from '../render/interp';
 import { updEmotes } from '../ui/emotes';
@@ -50,6 +51,7 @@ export function frame(now) {
   }
   if (n === 8) acc = 0;
   // drawn between the last two steps (see render/interp.js); the simulation's values are back right after
+  fitIfDue();
   blendIn(Math.min(1, acc / STEP));
   try {
     render();

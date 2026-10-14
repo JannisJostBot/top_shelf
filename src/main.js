@@ -120,6 +120,11 @@ hud();
 faceoff();
 fit();
 requestAnimationFrame(frame);
+// show the page (hidden by html.boot, see index.html) once the pixel fonts are in, or after a second without them,
+// and the first frames of the arena have been drawn
+Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1000))]).then(() =>
+  requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove('boot'))),
+);
 if (window.__BLB_TEST__)
   window.__BLB_TEST__({
     G,
