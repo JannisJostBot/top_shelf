@@ -275,7 +275,7 @@ function drawFrame(g) {
   if (shine) sparkles(g);
   g.setTransform(1, 0, 0, 1, 0, 0);
   if (cine) cinema(g);
-  else if (od) spotlights(g);
+  else if (od) spotlights(g, 0.07); // (fainter in live play than in replays)
   if (G.flash > 0) {
     g.globalAlpha = Math.min(0.22, G.flash * 1.8);
     g.fillStyle = '#ffffff';

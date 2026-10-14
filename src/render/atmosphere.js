@@ -84,8 +84,8 @@ export function cinema(g) {
   spotlights(g);
   vignette(g);
 }
-/** Two arena spotlights drifting over the ice (screen space). */
-export function spotlights(g) {
+/** Two arena spotlights drifting over the ice (screen space); `a` is how bright they are at the centre. */
+export function spotlights(g, a = 0.16) {
   g.save();
   g.globalCompositeOperation = 'lighter';
   for (let i = 0; i < 2; i++) {
@@ -94,7 +94,7 @@ export function spotlights(g) {
       r = view.CW * 0.5;
     const gr = g.createRadialGradient(cx, cy, 0, cx, cy, r);
     if (gr) {
-      gr.addColorStop(0, 'rgba(255,244,214,.16)');
+      gr.addColorStop(0, `rgba(255,244,214,${a})`);
       gr.addColorStop(1, 'rgba(255,244,214,0)');
       g.fillStyle = gr;
       g.fillRect(0, 0, view.CW, view.CH);

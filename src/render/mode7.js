@@ -969,7 +969,7 @@ function hazeAndBeams(g, proj, hor, lamps) {
   const H = view.CH,
     hz = g.createLinearGradient(0, hor - H * 0.3, 0, hor + H * 0.12);
   hz.addColorStop(0, 'rgba(200,212,232,0)');
-  hz.addColorStop(0.7, 'rgba(200,212,232,.09)');
+  hz.addColorStop(0.7, 'rgba(200,212,232,.05)');
   hz.addColorStop(1, 'rgba(200,212,232,0)');
   g.fillStyle = hz;
   g.fillRect(0, hor - H * 0.3, view.CW, H * 0.42);
@@ -990,7 +990,7 @@ function hazeAndBeams(g, proj, hor, lamps) {
       wb = bot.s * 7,
       col = l.col && l.col[0] === '#' ? l.col : '#fff4d6',
       gr = g.createLinearGradient(top.x, top.y, bot.x, bot.y);
-    gr.addColorStop(0, rgba(col, 0.16));
+    gr.addColorStop(0, rgba(col, 0.09));
     gr.addColorStop(1, rgba(col, 0));
     g.fillStyle = gr;
     g.beginPath();

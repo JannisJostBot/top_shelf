@@ -432,7 +432,7 @@ export function odIce(g) {
     g.translate(x, y);
     g.scale(1.3, 0.55);
     const gr = g.createRadialGradient(0, 0, 0, 0, 0, r);
-    gr.addColorStop(0, 'rgba(255,248,230,.11)');
+    gr.addColorStop(0, 'rgba(255,248,230,.06)');
     gr.addColorStop(1, 'rgba(255,248,230,0)');
     g.fillStyle = gr;
     g.fillRect(-r, -r, r * 2, r * 2);
@@ -473,7 +473,7 @@ export function odIce(g) {
       toS(puck.y) - puck.z * K,
       10 + sp / 25,
       trailCol(sp, 0),
-      clamp((sp - 110) / 200, 0.15, 0.4),
+      clamp((sp - 110) / 250, 0.1, 0.28),
     );
 }
 
@@ -486,7 +486,7 @@ export function odNets(g) {
     const cx = ((n.x0 + n.x1) / 2) * K,
       ly = n.top ? n.y0 * K - 7 : n.y1 * K + 7,
       pulse = 0.75 + 0.25 * Math.sin(clock.now * 12);
-    glow(cx, ly, 70, '#ff3b3b', 0.3 * pulse);
+    glow(cx, ly, 70, '#ff3b3b', 0.2 * pulse);
     // the light spinning behind the net throws two beams around
     g.save();
     g.globalCompositeOperation = 'lighter';
@@ -589,7 +589,7 @@ export function odFront(g, p) {
     stx.fillStyle = gr;
     stx.fillRect(0, 0, 64, 72);
     stx.globalCompositeOperation = 'source-over';
-    g.globalAlpha = 0.22;
+    g.globalAlpha = 0.14;
     g.drawImage(STC, sx - 32, sy - 52);
     g.globalAlpha = 1;
   }
@@ -663,7 +663,7 @@ export function odTop(g) {
         break;
       }
       case 'flash':
-        glow(x, y, e.r, e.c, 0.6 * (1 - k));
+        glow(x, y, e.r, e.c, 0.45 * (1 - k));
         break;
       case 'wave': {
         g.globalAlpha = 1 - k;
@@ -770,7 +770,7 @@ export function odStands(g) {
     g.globalAlpha = 1 - k;
     R(g, x - 2, y, 5, 1, '#ffffff');
     R(g, x, y - 2, 1, 5, '#ffffff');
-    glow(x, y, 9, '#ffffff', 0.5 * (1 - k));
+    glow(x, y, 9, '#ffffff', 0.35 * (1 - k));
   }
   g.globalAlpha = 1;
 }
