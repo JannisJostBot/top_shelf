@@ -1176,13 +1176,6 @@ body.wide .prog.insert:not(.result) {
 .prog .tban .mx {
   mix-blend-mode: multiply;
 }
-/* the Train page's own banner under its title: a slalom drill through a row of cones */
-.prog .tban.thead {
-  width: 100%;
-  height: 80px;
-  margin: 0 0 10px;
-  border: 2px solid var(--p1);
-}
 .prog .tban .dash {
   stroke-dasharray: 6 4;
 }
