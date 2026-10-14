@@ -65,7 +65,8 @@ export function fit() {
   if (G.demo) nw = Math.max(nw, Math.round(r.width / (settings.overdrive && gl3dReady() ? 4 : 6)) * 2);
   const nh = clamp(Math.round((nw * r.height) / r.width), 64, 1200);
   // overdrive: the screen canvas at about the screen's resolution (whole multiples of the canvas, up to 4)
-  const ss = settings.overdrive ? clamp(Math.round(r.width / nw), 1, 4) : 1;
+  // (at least twice: the ice's flaws and reflections need the finer screen; device pixels count on sharp screens)
+  const ss = settings.overdrive ? clamp(Math.round((r.width * (devicePixelRatio || 1)) / nw), 2, 4) : 1;
   if (nw !== view.CW || nh !== view.CH || ss !== view.ss) {
     view.CW = nw;
     view.CH = nh;

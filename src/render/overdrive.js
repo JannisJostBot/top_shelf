@@ -159,8 +159,8 @@ function scratch(s, x, y, a, len, w, alpha) {
     s.closePath();
     s.fill();
   };
-  fill(0, 0, '#71879f', alpha);
-  fill(-w * 0.6, -w * 0.6, '#ffffff', alpha * 0.7);
+  fill(0, 0, '#4f6782', alpha);
+  fill(-w * 0.7, -w * 0.7, '#ffffff', alpha * 0.8);
 }
 /** A soft round spot of `r` world units: a fleck of frost, a tiny chip, a cloudy patch in the ice. */
 function spot(s, x, y, r, col, alpha) {
@@ -181,11 +181,11 @@ function growGrooves() {
     grooveC.width = IW * GF;
     grooveC.height = IH * GF;
   }
-  // over a period: about 120 scratches, 500 specks and 14 cloudy patches
+  // over a period: about 220 scratches, 700 specks and 18 cloudy patches
   const per = Math.max(30, settings.periodLen || 60);
-  scratchDue += (120 / per) * dt;
-  speckDue += (500 / per) * dt;
-  cloudDue += (14 / per) * dt;
+  scratchDue += (220 / per) * dt;
+  speckDue += (700 / per) * dt;
+  cloudDue += (18 / per) * dt;
   const s = grooveC.getContext('2d');
   s.setTransform(K * GF, 0, 0, K * GF, 0, 0);
   for (; scratchDue >= 1; scratchDue--)
@@ -194,19 +194,19 @@ function growGrooves() {
       rnd(RX0 + 3, RX1 - 3),
       rnd(RY0 + 3, RY1 - 3),
       rnd(0, Math.PI * 2),
-      rnd(0.8, 4),
-      rnd(0.05, 0.14),
-      rnd(0.25, 0.6),
+      rnd(1.5, 6),
+      rnd(0.1, 0.24),
+      rnd(0.5, 0.9),
     );
   for (; speckDue >= 1; speckDue--) {
-    const white = Math.random() < 0.6;
+    const white = Math.random() < 0.3;
     spot(
       s,
       rnd(RX0 + 2, RX1 - 2),
       rnd(RY0 + 2, RY1 - 2),
-      rnd(0.12, 0.4),
+      rnd(0.2, 0.6),
       white ? '#ffffff' : '#6f859c',
-      rnd(0.2, 0.5),
+      rnd(0.4, 0.8),
     );
   }
   for (; cloudDue >= 1; cloudDue--)
@@ -216,7 +216,7 @@ function growGrooves() {
       rnd(RY0 + 8, RY1 - 8),
       rnd(3, 10),
       Math.random() < 0.5 ? '#ffffff' : '#9fb2c8',
-      rnd(0.06, 0.14),
+      rnd(0.12, 0.22),
     );
   s.globalAlpha = 1;
 }
@@ -1011,7 +1011,7 @@ export function odPresent() {
     if (flawsShown()) {
       x.setTransform(grooveMatrix(layered.m));
       x.imageSmoothingEnabled = true;
-      x.globalAlpha = 0.8;
+      x.globalAlpha = 1;
       x.drawImage(grooveC, 0, 0);
       x.globalAlpha = 1;
       x.imageSmoothingEnabled = false;
