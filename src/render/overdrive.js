@@ -118,71 +118,106 @@ export function odIcePolish(pts) {
   gx.fill();
   gx.restore();
 }
-// The grooves: fine cuts the skates leave in the ice, drawn smooth at four times the world's pixel size and only
-// on a full-resolution screen (see odPresent). They build up at random over each period, as play goes on, until
-// the resurfacer wipes them: long carved arcs, often a few side by side, and short nicks everywhere.
+// the ice's flaws (see growGrooves), at GF times the world's pixel size
 const GF = 4;
-let grooveC = null,
-  arcsDue = 0,
-  nicksDue = 0;
-/** From the groove canvas to the screen canvas, for a frame whose world transform is `m` (turned round with the
- * ice in the reverse-angle replay). */
+let grooveC = null;
+/** From the flaws' canvas to the screen canvas, for a frame whose world transform is `m`. */
 function grooveMatrix(m) {
   const s = view.ss;
-  let t = new DOMMatrix([m.a * s, 0, 0, m.d * s, m.e * s, m.f * s]);
-  if (G.state === 'replay' && G.rp && G.rp.angle.flip) t = t.translate(IW, IH).scale(-1, -1);
-  return t.scale(1 / GF, 1 / GF);
+  return new DOMMatrix([(m.a * s) / GF, 0, 0, (m.d * s) / GF, m.e * s, m.f * s]);
 }
-const GROOVE_STATES = new Set(['play', 'faceoff', 'goal', 'celebrate', 'brawl']);
+/** Whether the flaws show in this frame: in live play, not in replays (which show the ice as it always was). */
+const flawsShown = () => grooveC && G.state !== 'replay';
+const FLAW_STATES = new Set(['play', 'faceoff', 'goal', 'celebrate', 'brawl']);
+let scratchDue = 0,
+  speckDue = 0,
+  cloudDue = 0;
+/** A hairline scratch along a gentle curve from (x, y): tapered at both ends, a darker cut with a faint bright
+ * lip on one side, as light catches it. Lengths and widths in world units. */
+function scratch(s, x, y, a, len, w, alpha) {
+  const bend = (rnd(-0.06, 0.06) / Math.max(1, len)) * 6,
+    n = 10,
+    left = [],
+    right = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n,
+      ang = a + bend * (t - 0.5) * len,
+      px = x + Math.cos(a) * len * t + Math.cos(a + Math.PI / 2) * bend * len * len * t * (1 - t),
+      py = y + Math.sin(a) * len * t + Math.sin(a + Math.PI / 2) * bend * len * len * t * (1 - t),
+      hw = (w / 2) * Math.pow(Math.sin(Math.PI * t), 0.6),
+      nx = -Math.sin(ang),
+      ny = Math.cos(ang);
+    left.push([px + nx * hw, py + ny * hw]);
+    right.push([px - nx * hw, py - ny * hw]);
+  }
+  const fill = (dx, dy, col, al) => {
+    s.globalAlpha = al;
+    s.fillStyle = col;
+    s.beginPath();
+    left.forEach(([px, py], i) => (i ? s.lineTo(px + dx, py + dy) : s.moveTo(px + dx, py + dy)));
+    for (let i = right.length - 1; i >= 0; i--) s.lineTo(right[i][0] + dx, right[i][1] + dy);
+    s.closePath();
+    s.fill();
+  };
+  fill(0, 0, '#71879f', alpha);
+  fill(-w * 0.6, -w * 0.6, '#ffffff', alpha * 0.7);
+}
+/** A soft round spot of `r` world units: a fleck of frost, a tiny chip, a cloudy patch in the ice. */
+function spot(s, x, y, r, col, alpha) {
+  const gr = s.createRadialGradient(x, y, 0, x, y, r);
+  gr.addColorStop(0, col);
+  gr.addColorStop(1, 'rgba(0,0,0,0)');
+  s.globalAlpha = alpha;
+  s.fillStyle = gr;
+  s.fillRect(x - r, y - r, r * 2, r * 2);
+}
+// The ice's flaws: fine imperfections that build up in the surface at random as play goes on, drawn smooth at
+// four times the world's pixel size on the full-resolution screen (see odPresent): hairline scratches, tiny
+// specks and chips, and now and then a faint cloudy patch. The resurfacer wipes them.
 function growGrooves() {
-  if (G.demo || view.ss === 1 || !GROOVE_STATES.has(G.state)) return;
+  if (G.demo || view.ss === 1 || !FLAW_STATES.has(G.state)) return;
   if (!grooveC) {
     grooveC = document.createElement('canvas');
     grooveC.width = IW * GF;
     grooveC.height = IH * GF;
   }
-  // about 60 short curved cuts and 1600 tiny nicks over a period: imperfections, not gouges
+  // over a period: about 120 scratches, 500 specks and 14 cloudy patches
   const per = Math.max(30, settings.periodLen || 60);
-  arcsDue += (60 / per) * dt;
-  nicksDue += (1600 / per) * dt;
+  scratchDue += (120 / per) * dt;
+  speckDue += (500 / per) * dt;
+  cloudDue += (14 / per) * dt;
   const s = grooveC.getContext('2d');
   s.setTransform(K * GF, 0, 0, K * GF, 0, 0);
-  s.lineCap = 'round';
-  s.strokeStyle = '#8fa3b9';
-  for (; arcsDue >= 1; arcsDue--) {
-    // a short curved cut, now and then two side by side
-    const x = rnd(RX0 + 4, RX1 - 4),
-      y = rnd(RY0 + 4, RY1 - 4),
-      r = rnd(8, 30),
-      a0 = rnd(0, Math.PI * 2),
-      len = rnd(2, 7) / r, // 2 to 7 world units along the curve
-      cx = x - Math.cos(a0) * r,
-      cy = y - Math.sin(a0) * r;
-    for (let k = 0, n = 1 + Math.floor(rnd(0, 2)); k < n; k++) {
-      s.globalAlpha = rnd(0.15, 0.4);
-      s.lineWidth = rnd(0.06, 0.15);
-      s.beginPath();
-      s.arc(cx, cy, r + k * rnd(0.4, 1.1), a0 + rnd(-0.02, 0.02), a0 + len + rnd(-0.02, 0.02));
-      s.stroke();
-    }
-  }
-  for (; nicksDue >= 1; nicksDue--) {
-    const x = rnd(RX0 + 2, RX1 - 2),
-      y = rnd(RY0 + 2, RY1 - 2),
-      a = rnd(0, Math.PI * 2),
-      l = rnd(0.4, 1.8);
-    s.globalAlpha = rnd(0.1, 0.35);
-    s.lineWidth = rnd(0.05, 0.12);
-    s.beginPath();
-    s.moveTo(x, y);
-    s.quadraticCurveTo(
-      x + Math.cos(a + 0.3) * l * 0.5,
-      y + Math.sin(a + 0.3) * l * 0.5,
-      x + Math.cos(a) * l,
-      y + Math.sin(a) * l,
+  for (; scratchDue >= 1; scratchDue--)
+    scratch(
+      s,
+      rnd(RX0 + 3, RX1 - 3),
+      rnd(RY0 + 3, RY1 - 3),
+      rnd(0, Math.PI * 2),
+      rnd(0.8, 4),
+      rnd(0.05, 0.14),
+      rnd(0.25, 0.6),
     );
-    s.stroke();
+  for (; speckDue >= 1; speckDue--) {
+    const white = Math.random() < 0.6;
+    spot(
+      s,
+      rnd(RX0 + 2, RX1 - 2),
+      rnd(RY0 + 2, RY1 - 2),
+      rnd(0.12, 0.4),
+      white ? '#ffffff' : '#6f859c',
+      rnd(0.2, 0.5),
+    );
   }
+  for (; cloudDue >= 1; cloudDue--)
+    spot(
+      s,
+      rnd(RX0 + 8, RX1 - 8),
+      rnd(RY0 + 8, RY1 - 8),
+      rnd(3, 10),
+      Math.random() < 0.5 ? '#ffffff' : '#9fb2c8',
+      rnd(0.06, 0.14),
+    );
   s.globalAlpha = 1;
 }
 const inRink = (x, y, m = 0) => x > RX0 + m && x < RX1 - m && y > RY0 + m && y < RY1 - m;
@@ -972,11 +1007,11 @@ export function odPresent() {
   x.imageSmoothingEnabled = false;
   x.drawImage(low, 0, 0, w, h);
   if (layered.on) {
-    // the grooves in the ice, smooth at full resolution
-    if (grooveC) {
+    // the flaws in the ice, smooth at full resolution
+    if (flawsShown()) {
       x.setTransform(grooveMatrix(layered.m));
       x.imageSmoothingEnabled = true;
-      x.globalAlpha = 0.4;
+      x.globalAlpha = 0.8;
       x.drawImage(grooveC, 0, 0);
       x.globalAlpha = 1;
       x.imageSmoothingEnabled = false;
@@ -1013,7 +1048,7 @@ export function odPresent() {
 
 /* ---------- reflections in real ice ---------- */
 // At full resolution the ice reflections look like the real thing: the mirrored players a little soft, wavering
-// gently where the ice is uneven, fading out below the feet, and broken up where the ice is grooved.
+// gently where the ice is uneven, fading out below the feet, and broken up where the ice is flawed.
 const RA = document.createElement('canvas'),
   rax = RA.getContext('2d'),
   RB = document.createElement('canvas'),
@@ -1069,10 +1104,10 @@ export function odReflections(g) {
   rax.filter = `blur(${(0.35 * zs).toFixed(2)}px)`;
   rax.drawImage(RB, 0, 0);
   rax.filter = 'none';
-  // broken up where the ice is grooved
+  // broken up where the ice is flawed
   rbx.clearRect(0, 0, w, h);
   rbx.drawImage(RA, 0, 0);
-  if (grooveC) {
+  if (flawsShown()) {
     rbx.globalCompositeOperation = 'destination-out';
     rbx.setTransform(grooveMatrix(m));
     rbx.drawImage(grooveC, 0, 0);
