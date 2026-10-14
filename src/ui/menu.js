@@ -36,6 +36,7 @@ export function setMuted(m, live = true) {
 // The menu is a matchday program (see styles/program.css): the home page with the rink, and one page per section.
 // Picking a section slides the puck to its spot on the rink, inks the circle in and grows the page out of it; back,
 // the page shrinks into its circle and the puck returns to centre ice.
+// in the order of the page numbers, which LB / RB step through
 const PAGES = ['play', 'match', 'watch', 'train', 'teams', 'lineup', 'arena', 'options', 'help', 'guide', 'online'];
 let page = 'play';
 const spotFor = name => document.querySelector('.rinkmenu [data-goto="' + name + '"]');
@@ -98,9 +99,13 @@ export function showTab(name) {
     if (anim && spot) setTimeout(open, 200);
     else open();
   } else {
-    // from page to page (keys and guide link to each other)
+    // from page to page (keys and guide link to each other, LB / RB turn the pages)
+    const spot = spotFor(name);
+    if (spot) spot.classList.add('on');
+    puckTo(spot);
     fromEl.hidden = true;
     toEl.hidden = false;
+    if (document.body.classList.contains('padnav')) toEl.querySelector('.pback').focus();
   }
   if (name === 'train') {
     let b = 0;
@@ -113,11 +118,19 @@ export function showTab(name) {
   if (name === 'arena') arenaThumbs();
   if (name === 'lineup') renderLineup();
 }
-/** The best one-minute score for the chosen gap (endless rounds keep no best). */
 /** Back to the rink from a section page; true when there was a page to leave. */
 export function menuBack() {
   if (page === 'play' || $('menu').hidden) return false;
   showTab('play');
+  return true;
+}
+/** Turns the program one page on (`d` 1) or back (-1), in page-number order and round from 10 to 01; from the rink
+ *  it opens the first or the last page. False when the menu is not showing. */
+export function stepTab(d) {
+  if ($('menu').hidden) return false;
+  const order = PAGES.slice(1),
+    i = order.indexOf(page);
+  showTab(order[i < 0 ? (d > 0 ? 0 : order.length - 1) : (i + d + order.length) % order.length]);
   return true;
 }
 /** Drop the puck: the ticket stub tears off and the program turns away, then `go` starts the game. */
@@ -137,6 +150,7 @@ export function updSummary() {
   $('matchSum').textContent = lvl + ' · 3×' + per;
   $('tkSub').textContent = STADIUMS[settings.stadiumKey].short + ' · ' + lvl + ' · 3 × ' + per;
 }
+/** The best one-minute score for the chosen gap (endless rounds keep no best). */
 function showAimBest() {
   const a = aimCfg.endless ? 0 : loadAimBest(aimCfg.moving);
   $('aimBest').textContent = a ? 'Your best' + (aimCfg.moving ? ' (moving gap): ' : ': ') + a + (a === 1 ? ' goal.' : ' goals.') : '';

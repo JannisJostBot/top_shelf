@@ -1,5 +1,5 @@
 import { H, NETS, RX0, RX1, RY0, RY1, W } from '../../config';
-import { clamp, rnd } from '../../core/math';
+import { clamp, rnd, wrapAngle } from '../../core/math';
 import { loadBest, saveBest } from '../../core/storage';
 import {
   S,
@@ -159,6 +159,12 @@ export function startZamboni() {
 export function stopEngine() {
   zamEngine('stop');
 }
+/** The engine goes quiet while the game is paused (on) and comes back on resume, if it is running: from the
+ * 3, 2, 1 until this screen's machine has finished. */
+export function pauseEngine(on) {
+  const z = G.zam;
+  if (!G.demo && z && (z.phase === 'count' || z.phase === 'drive')) zamEngine(on ? 'pause' : 'resume');
+}
 /** Steers machine z by the stick and moves it, guided along the boards (and online the centre line). */
 function drive(z, dt) {
   const sp = spec();
@@ -175,7 +181,7 @@ function drive(z, dt) {
   }
   if (m > 0.2 || input.aim) {
     const at = Math.atan2(jx, -jy);
-    let da = ((at - z.a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+    let da = wrapAngle(at - z.a);
     z.a += clamp(da, -2.6 * dt, 2.6 * dt);
   }
   z.v += clamp(m * sp.speed - z.v, -45 * dt, 30 * dt);
@@ -208,7 +214,7 @@ function drive(z, dt) {
     }
     if (tx || ty) {
       const along = Math.atan2(tx, -ty),
-        da = ((along - z.a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+        da = wrapAngle(along - z.a);
       z.a += clamp(da, -4 * dt, 4 * dt);
     }
     z.v *= 1 - 1.2 * dt;
@@ -312,7 +318,7 @@ function remoteStep(r, dt) {
   const k = 1 - Math.exp(-dt * 14);
   r.x += (r.tx - r.x) * k;
   r.y += (r.ty - r.y) * k;
-  const da = ((r.ta - r.a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+  const da = wrapAngle(r.ta - r.a);
   r.a += da * k;
   if (r.v > 3 && Math.random() < 0.3)
     parts.push({

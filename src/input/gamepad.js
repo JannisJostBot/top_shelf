@@ -4,7 +4,7 @@ import { nextShot } from '../render/director';
 // In game:   left stick / D-pad skate · A or RT shoot (hold to wind up) · B or RB pass · X or LB switch skater
 //            Y next replay angle · View skip replay or celebration · Menu pause
 //            online replays: LT vote to fight · D-pad, L3 and R3 emotes
-// In menus:  D-pad / left stick move between buttons · A press · B back (resume) · LB / RB change tab
+// In menus:  D-pad / left stick move between buttons · A press · B back (resume) · LB / RB previous / next page
 //            Menu start a game
 import { $ } from '../core/dom';
 import { togglePause } from '../game/match';
@@ -12,7 +12,7 @@ import { endReplay, nextAngle } from '../game/replay';
 import { endCelebration } from '../game/states/celebrate';
 import { G } from '../game/world';
 import { input, pad } from './state';
-import { menuBack, toggleWatchCam } from '../ui/menu';
+import { menuBack, stepTab, toggleWatchCam } from '../ui/menu';
 import { sendEmote, toggleVote } from '../ui/emotes';
 
 // standard mapping button indices
@@ -142,6 +142,8 @@ function menuInput(root, gp, down, now) {
   if (down(B) && root.id === 'pauseOv') togglePause();
   // B leaves a page of the program and goes back to the rink
   if (down(B) && root.id === 'menu' && menuBack()) focus(document.querySelector('.rinkmenu .fo.mid'));
+  // LB / RB turn the program's pages
+  if (root.id === 'menu' && (down(LB) || down(RB))) stepTab(down(RB) ? 1 : -1);
   if (down(MENU)) {
     if (root.id === 'pauseOv') togglePause();
     else if (root.id === 'menu') $('startBtn').click();
@@ -195,6 +197,12 @@ export function pollGamepad() {
   if (!gp) {
     pad.x = pad.y = 0;
     prev = [];
+    // unplugged with shoot held down: let go of the shot instead of winding it up forever
+    if (shootHeld) {
+      shootHeld = false;
+      input.shootHeld = false;
+      input.sr = true;
+    }
     return;
   }
   const now = performance.now(),

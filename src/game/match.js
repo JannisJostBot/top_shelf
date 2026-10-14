@@ -39,7 +39,7 @@ import { practiceGoal, resetRosterFlags } from './practice';
 import { faceoff } from './states/faceoff';
 import { endIntro, startIntro } from './states/intro';
 import { startPost } from './states/post';
-import { stopEngine } from './states/zamboni';
+import { pauseEngine, stopEngine } from './states/zamboni';
 import { G, REC, parts, puck } from './world';
 import { input } from '../input/state';
 import { reduceMotion, settings } from '../settings';
@@ -114,10 +114,10 @@ export function goalScored(team, n) {
   S(persp(v => (ours(v) ? SKIP : 'buzzer')));
   vib(persp(v => (G.ai0 ? SKIP : v === team ? [60, 40, 60, 40, 180] : [120])));
   // fights get likelier with every goal that passes without one, so they turn up about once a game (and never twice)
-  // (against the CPU only after your goals, its enforcer's answer; online the players vote for one during the
-  // replay instead, see game/replay.js)
+  // (against the CPU only after your goals, its enforcer's answer, and never after an overtime winner; online the
+  // players vote for one during the replay instead, see game/replay.js)
   G.brawlNext = false;
-  if (!G.ai0 && !G.net && team === 0 && settings.fightsOn && !G.fought) {
+  if (!G.ai0 && !G.net && team === 0 && settings.fightsOn && !G.fought && G.period <= 3) {
     if (Math.random() < G.fightP) {
       G.brawlNext = true;
       G.fightP = 0.1;
@@ -342,11 +342,13 @@ export function togglePause(by) {
     G.state = G.resume;
     screen('pause', false);
     setCrowd(0.05);
+    if (G.state === 'zamboni') pauseEngine(false);
   } else if (G.state !== 'over') {
     G.resume = G.state;
     G.state = 'paused';
     screen('pause', G.net ? { on: true, by: by === 1 ? net.names[1] : by === -1 ? '' : net.names[0] } : true);
     setCrowd(0.012);
+    if (G.resume === 'zamboni') pauseEngine(true);
     input.shootHeld = false;
     G.charging = false;
     G.charge = 0;
