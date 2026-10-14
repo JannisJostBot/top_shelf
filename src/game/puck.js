@@ -20,7 +20,14 @@ export function take(p) {
   p.imm = 0.45;
   p.ai.lane = rnd(-22, 22);
   p.ai.dec = 0.2;
-  if (isHuman(p) && inputOf(p.team).shootHeld) seat(p.team).ignoreRelease = true;
+  if (isHuman(p)) {
+    // a new possession starts with no wind-up, even when the puck was lost and won back within one step
+    // (a check that jars it loose and the carrier picks it straight back up)
+    const s = seat(p.team);
+    s.charging = false;
+    s.charge = 0;
+    if (inputOf(p.team).shootHeld) s.ignoreRelease = true;
+  }
   S('tick');
 }
 function release(p, vx, vy) {
