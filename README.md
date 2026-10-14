@@ -1,5 +1,7 @@
 # Top Shelf
 
+<p align="center"><img src="design/assets/logo.png" alt="Top Shelf: pixel-art title with a skater slapping the puck onto the word TOP" width="504"></p>
+
 3-on-3 pixel-art arcade hockey for the browser: Canvas 2D rendering, synthesized Web Audio, keyboard/mouse/touch and Xbox-controller support, and online play against a friend (browser to browser over WebRTC via [Trystero](https://github.com/dmotz/trystero), no game server). The in-game **?** tab explains the mechanics.
 
 > **This project is vibe coded.** It was built almost entirely by an AI coding assistant, prompted by a person, as an
