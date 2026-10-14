@@ -2,7 +2,7 @@ import { GB, GT, IH, IW, K, ND, NETS, RR, RX0, RX1, RY0, RY1 } from '../config';
 import { insideRinkW } from '../game/physics/rink';
 export { insideRinkW };
 import { drawPyro3D } from './pyro';
-import { clamp, lerp, rnd } from '../core/math';
+import { clamp, lerp, rnd, wrapAngle } from '../core/math';
 import { clock } from '../core/time';
 import { STADIUMS } from '../data/stadiums';
 import { kit } from '../game/kit';
@@ -146,7 +146,7 @@ export function broadcastCam(kind, snap) {
   // the chase cam looks along the rink toward the goal; the others look at the focus point
   const yaw =
     kind === 'chase' ? Math.atan2(gy - C.y, 80 + (fx - 80) * 0.3 - C.x) : Math.atan2(fy - C.y, fx - C.x);
-  const dyaw = ((yaw - C.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+  const dyaw = wrapAngle(yaw - C.yaw);
   C.yaw += snap ? dyaw : Math.max(-TURN_MAX, Math.min(TURN_MAX, dyaw * 0.06));
 }
 
@@ -259,7 +259,7 @@ export function upd3D(snap) {
   C.x += (tx - C.x) * k;
   C.y += (ty - C.y) * k;
   C.h = h;
-  const dyaw = ((yaw - C.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+  const dyaw = wrapAngle(yaw - C.yaw);
   C.yaw += dyaw * (snap ? 1 : 0.08);
 }
 // Ray marching samples, exactly as the march accumulates them (0.5, then +1.2 each step, up to the first one past

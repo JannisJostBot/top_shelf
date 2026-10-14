@@ -59,6 +59,7 @@ import {
 } from '../game/fx';
 import {
   onZamResult,
+  pauseEngine,
   startZamboni,
   stopEngine,
   zamRemote,
@@ -748,13 +749,18 @@ function guestState(st) {
   const s = st.s,
     prev = G.state;
   if (s === 'paused') {
-    if (prev !== 'paused') G.resume = prev;
+    if (prev !== 'paused') {
+      G.resume = prev;
+      // this screen runs its own resurfacer: its engine goes quiet with the host's pause
+      if (prev === 'zamboni') pauseEngine(true);
+    }
     G.state = 'paused';
     return;
   }
   // back from a pause into the same state: nothing to set up again
   if (prev === 'paused' && s === G.resume && s !== 'replay') {
     G.state = s;
+    if (s === 'zamboni') pauseEngine(false);
     return;
   }
   // leaving what this screen ran by itself

@@ -9,6 +9,8 @@ export const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 export const pick = <T>(a: readonly T[]): T => a[Math.floor(Math.random() * a.length)];
 export const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+/** Angle a brought into [-π, π) (any a, however many turns it has wound up). */
+export const wrapAngle = (a: number) => a - Math.PI * 2 * Math.floor((a + Math.PI) / (Math.PI * 2));
 export const dist = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 /** Deterministic pseudo-random value in [0, 1) for a 2D coordinate. */
 export const hash = (a: number, b: number) => {

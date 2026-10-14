@@ -234,6 +234,12 @@ export function endReplay() {
   if (G.state !== 'replay') return;
   zoom(1);
   uiShow('rpBar', false);
+  // a reverse angle left everyone mirrored: put them back where the goal left them (after an overtime winner the
+  // teams celebrate from there, see states/post.js)
+  if (G.rp.angle.flip) {
+    G.rp.angle = ANGLES[0];
+    applyFrame(REC.length - 1);
+  }
   afterGoal();
 }
 /* ---------- the fight vote (online) ----------

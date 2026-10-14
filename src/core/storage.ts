@@ -70,6 +70,7 @@ export function savePrefs() {
         wcam: settings.watchCam,
         fps: settings.fps,
         od: settings.overdrive,
+        muted: settings.muted,
       }),
     );
   } catch (e) {}
