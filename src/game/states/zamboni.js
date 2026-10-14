@@ -159,6 +159,12 @@ export function startZamboni() {
 export function stopEngine() {
   zamEngine('stop');
 }
+/** The engine goes quiet while the game is paused (on) and comes back on resume, if it is running: from the
+ * 3, 2, 1 until this screen's machine has finished. */
+export function pauseEngine(on) {
+  const z = G.zam;
+  if (!G.demo && z && (z.phase === 'count' || z.phase === 'drive')) zamEngine(on ? 'pause' : 'resume');
+}
 /** Steers machine z by the stick and moves it, guided along the boards (and online the centre line). */
 function drive(z, dt) {
   const sp = spec();

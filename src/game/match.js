@@ -39,7 +39,7 @@ import { practiceGoal, resetRosterFlags } from './practice';
 import { faceoff } from './states/faceoff';
 import { endIntro, startIntro } from './states/intro';
 import { startPost } from './states/post';
-import { stopEngine } from './states/zamboni';
+import { pauseEngine, stopEngine } from './states/zamboni';
 import { G, REC, parts, puck } from './world';
 import { input } from '../input/state';
 import { reduceMotion, settings } from '../settings';
@@ -342,11 +342,13 @@ export function togglePause(by) {
     G.state = G.resume;
     screen('pause', false);
     setCrowd(0.05);
+    if (G.state === 'zamboni') pauseEngine(false);
   } else if (G.state !== 'over') {
     G.resume = G.state;
     G.state = 'paused';
     screen('pause', G.net ? { on: true, by: by === 1 ? net.names[1] : by === -1 ? '' : net.names[0] } : true);
     setCrowd(0.012);
+    if (G.resume === 'zamboni') pauseEngine(true);
     input.shootHeld = false;
     G.charging = false;
     G.charge = 0;
