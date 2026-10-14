@@ -1144,3 +1144,18 @@ body.wide .prog.insert:not(.result) {
     max-height: 11vh;
   }
 }
+/* each drill card's title carries a small pixel icon, printed in the program's two inks */
+.prog .tcard > b {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.prog .ticon {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  fill: var(--p1);
+}
+.prog .ticon .a {
+  fill: var(--p2);
+}
