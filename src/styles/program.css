@@ -1144,18 +1144,41 @@ body.wide .prog.insert:not(.result) {
     max-height: 11vh;
   }
 }
-/* each drill card's title carries a small pixel icon, printed in the program's two inks */
+/* each drill card's title carries a little chalk-talk diagram of the drill, printed on a halftone panel in the
+   program's two inks */
 .prog .tcard > b {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 10px;
 }
-.prog .ticon {
-  flex: none;
-  width: 32px;
-  height: 32px;
+.prog .tart {
+  flex: 0 1 120px;
+  min-width: 84px;
+  height: 40px;
+  border: 2px solid var(--p1);
+  background: radial-gradient(circle, color-mix(in srgb, var(--p1) 16%, transparent) 0 1.4px, transparent 1.7px) 0 0 / 5px 5px, var(--paper);
+}
+.prog .tart .ln {
+  fill: none;
+  stroke: var(--p1);
+  stroke-width: 2;
+}
+.prog .tart .wide {
+  stroke-width: 4;
+}
+.prog .tart .dash {
+  stroke-dasharray: 4 3;
+}
+.prog .tart .faint {
+  opacity: 0.5;
+}
+.prog .tart .ac {
+  stroke: var(--p2);
+}
+.prog .tart .f {
   fill: var(--p1);
 }
-.prog .ticon .a {
+.prog .tart .fa {
   fill: var(--p2);
 }
