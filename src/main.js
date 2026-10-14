@@ -59,6 +59,7 @@ import {
   setPeriodLen,
   setVib,
   setFps,
+  setMuted,
   setView,
   setZam,
   showTab,
@@ -94,6 +95,7 @@ if (pr.cpu && (pr.cpu === 'auto' || COLORS[pr.cpu])) settings.cpuKey = pr.cpu;
 setPuck(pr.puck && PUCKS[pr.puck] ? pr.puck : 'classic');
 setVib(pr.vib !== false);
 setFps(pr.fps === true);
+setMuted(pr.muted === true, false);
 setCel(pr.cel !== false);
 setFights(pr.fights !== false);
 setZam(pr.zam !== false);

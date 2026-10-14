@@ -17,8 +17,10 @@ import { STADIUMS } from '../data/stadiums';
 import { clockText, hudClock, showRec } from './hud';
 
 // menu tabs
-// sound on/off lives in two places: the Setup tab's Sound row and the pause menu's Sound button
-function setMuted(m) {
+// sound on/off lives in two places: the Setup tab's Sound row and the pause menu's Sound button.
+// On load (live false) it only sets the flag and the buttons: the AudioContext waits for a user gesture
+// and reads settings.muted for its master gain when it is created.
+export function setMuted(m, live = true) {
   settings.muted = m;
   document
     .querySelectorAll('#sndSeg button')
@@ -26,6 +28,8 @@ function setMuted(m) {
   const pb = $('pSndBtn');
   pb.setAttribute('aria-pressed', String(m));
   pb.textContent = 'Sound: ' + (m ? 'off' : 'on');
+  if (!live) return;
+  savePrefs();
   audio();
   if (master) master.gain.setTargetAtTime(m ? 0 : 0.9, AC.currentTime, 0.02);
 }
