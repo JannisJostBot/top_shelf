@@ -7,9 +7,11 @@
 // The top-down renderer calls in at fixed points of its frame:
 //   odFrozen()          a hit freeze holds the last frame for a few frames (screen only, the game runs on)
 //   odFrame()           once per drawn frame: ages the effects, notices goals, stops and dropped gloves
-//   odIce(g)            on the ice, under everyone: lasting skate marks and snow, light pools, the puck's trail
+//   odIce(g)            on the ice, under everyone: lasting skate marks and snow, the puck's shadow and trail
 //   odNets(g)           the goal light washing the ice and its spinning beams
-//   odBehind / odFront  around each skater: soft shadow, afterimages and speed lines; highlight, breath
+//   odBehind / odFront  around each skater: soft shadow, afterimages and speed lines; breath, stop spray
+//   odLights(g, ox, oy) the arena lighting: the frame darkened, then lit by the roof lamps, a follow spot,
+//                       the goal light, flares and every glow; odRim(g) then catches the lit side of each player
 //   odTop(g)            over everyone: sprays, sparks, confetti, flying gear, shockwaves, then the glow layer
 //   odStands(g)         over the stands: team banners and camera flashes
 //   odLens(g)           goal replays: the frame's edges soft and pixelated, as if out of focus
@@ -18,6 +20,7 @@
 import { H, IH, IW, K, NETS, RX0, RX1, RY0, RY1, W } from '../config';
 import { clamp, rnd, toS } from '../core/math';
 import { clock } from '../core/time';
+import { STADIUMS } from '../data/stadiums';
 import { kit } from '../game/kit';
 import { SKATERS } from '../game/players';
 import { G, puck } from '../game/world';
@@ -28,6 +31,7 @@ import { AMB, SH } from './colors';
 import { FAN2D, M } from './stands';
 import { R, disc, ellipsePx } from './pixels';
 import { drawAgain } from './players';
+import { FLARES, pyroActive } from './pyro';
 
 const on = () => settings.overdrive;
 /** a team colour for confetti and banners (main, trim or white) */
@@ -404,9 +408,6 @@ export function odFrame() {
 }
 
 /* ---------- on the ice ---------- */
-// lamps over the rink, in world units; their reflections slide across the ice as the camera moves
-const POOLS = [];
-for (const x of [36, 80, 124]) for (const y of [44, 100, 156, 212]) POOLS.push({ x, y });
 const puckSpeed = () => (trail.length ? trail[trail.length - 1].sp : 0);
 /** the trail's colour: white-hot through orange for the classic puck, the special pucks' own rim colour */
 function trailCol(sp, i) {
@@ -417,28 +418,6 @@ function trailCol(sp, i) {
 export function odIce(g) {
   if (!on()) return;
   g.drawImage(markC, 0, 0);
-  // light pools
-  const v = viewRect(),
-    cx = v.x + v.w / 2,
-    cy = v.y + v.h / 2;
-  g.save();
-  g.globalCompositeOperation = 'lighter';
-  for (const l of POOLS) {
-    const x = (l.x + (l.x - cx) * 0.25) * K,
-      y = (l.y + (l.y - cy) * 0.18) * K,
-      r = 26;
-    // an oval: the lamp seen in the ice at a slant
-    g.save();
-    g.translate(x, y);
-    g.scale(1.3, 0.55);
-    const gr = g.createRadialGradient(0, 0, 0, 0, 0, r);
-    gr.addColorStop(0, 'rgba(255,248,230,.06)');
-    gr.addColorStop(1, 'rgba(255,248,230,0)');
-    g.fillStyle = gr;
-    g.fillRect(-r, -r, r * 2, r * 2);
-    g.restore();
-  }
-  g.restore();
   // the puck in the air casts a shadow that spreads and fades as it rises
   if (puck.z > 0.3 && !(puck.owner && puck.owner.role === 'G')) {
     const z = puck.z;
@@ -573,26 +552,13 @@ export function odBehind(g, p) {
   }
 }
 const BREATH_STATES = new Set(['faceoff', 'goal', 'celebrate']);
-/** Over the skater: a highlight from the arena lights, breath in the cold, the spray of a hard stop. */
+/** Over the skater: breath in the cold, the spray of a hard stop. */
 export function odFront(g, p) {
   if (!on()) return;
   const sx = toS(p.x),
     sy = toS(p.y);
-  // the side facing the middle of the rink catches the light
-  if (p.down <= 0) {
-    stamp(p, '#ffffff');
-    const lx = clamp((80 - p.x) / 60, -1, 1),
-      gr = stx.createLinearGradient(32 + lx * 8, 30, 32 - lx * 6, 52);
-    gr.addColorStop(0, 'rgba(255,255,255,1)');
-    gr.addColorStop(0.55, 'rgba(255,255,255,0)');
-    stx.globalCompositeOperation = 'destination-in';
-    stx.fillStyle = gr;
-    stx.fillRect(0, 0, 64, 72);
-    stx.globalCompositeOperation = 'source-over';
-    g.globalAlpha = 0.14;
-    g.drawImage(STC, sx - 32, sy - 52);
-    g.globalAlpha = 1;
-  }
+  // lit from the nearest lamp after the lighting pass (odRim)
+  if (p.down <= 0) rims.push(p);
   if (BREATH_STATES.has(G.state) && p.down <= 0) {
     const ph = (clock.now * 0.6 + (p.num || 0) * 0.37 + p.team * 0.5) % 1;
     if (ph < 0.4) {
@@ -855,4 +821,139 @@ export function odPost(g) {
     g.fillRect(0, 0, w, h);
   }
   g.restore();
+}
+
+/* ---------- the arena lighting ---------- */
+// Each arena hangs its own rig of big lamps over the rink (world units): rows of three, a ring under the dome,
+// a staggered pattern under the tent. Between and around the pools the ice falls into shadow, the stands
+// darker still.
+const RIGS = {
+  grid: [28, 80, 132].flatMap(x => [36, 84, 128, 172, 220].map(y => ({ x, y, r: 44 }))),
+  ring: [
+    { x: 80, y: 128, r: 50 },
+    ...[...Array(8)].map((_, i) => {
+      const a = (i / 8) * Math.PI * 2;
+      return { x: 80 + Math.cos(a) * 50, y: 128 + Math.sin(a) * 88, r: 42 };
+    }),
+  ],
+  stagger: [36, 76, 116, 156, 196, 236].flatMap((y, i) =>
+    (i & 1 ? [52, 108] : [24, 80, 136]).map(x => ({ x, y, r: 42 })),
+  ),
+};
+const RIG_OF = { dome: 'ring', tent: 'stagger', neon: 'stagger' };
+const AMBIENT = '#3e4562', // what the shadows keep: about a third of the light
+  LS = 4; // the light map is drawn at a quarter of the canvas size, then smoothed up
+/** the arena's lamp colour (the neon arena's tubes are pink and blue) */
+const lampCol = (S, i) =>
+  S.roof.light || (S.roof.kind === 'neon' ? (i & 1 ? '#ffb3e6' : '#b3ecff') : '#fff4d6');
+const LMC = document.createElement('canvas'),
+  lmx = LMC.getContext('2d');
+const rims = [];
+let rig = RIGS.grid,
+  rigCol = [];
+/** The lighting pass, drawn after the players and particles: `ox`, `oy` are the frame's camera offset. */
+export function odLights(g, ox, oy) {
+  if (!on()) {
+    rims.length = 0;
+    return;
+  }
+  const z = view.camZ,
+    w = Math.ceil(view.CW / LS),
+    h = Math.ceil(view.CH / LS);
+  if (LMC.width !== w || LMC.height !== h) {
+    LMC.width = w;
+    LMC.height = h;
+  }
+  const S = STADIUMS[settings.stadiumKey];
+  rig = RIGS[RIG_OF[S.roof.kind]] || RIGS.grid;
+  lmx.globalCompositeOperation = 'source-over';
+  lmx.globalAlpha = 1;
+  lmx.fillStyle = AMBIENT;
+  lmx.fillRect(0, 0, w, h);
+  lmx.globalCompositeOperation = 'lighter';
+  const X = wx => (wx * K * z + ox) / LS,
+    Y = wy => (wy * K * z + oy) / LS,
+    // a pool of light: flat in the middle, soft at the edge (x, y, r in light-map pixels)
+    light = (x, y, r, col, a, core = 0.4) => {
+      if (x + r < 0 || y + r < 0 || x - r > w || y - r > h || r <= 0) return;
+      const gr = lmx.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, col);
+      gr.addColorStop(core, col);
+      gr.addColorStop(1, 'rgba(0,0,0,0)');
+      lmx.globalAlpha = Math.min(1, a);
+      lmx.fillStyle = gr;
+      lmx.fillRect(x - r, y - r, r * 2, r * 2);
+    };
+  // a goal turns the rig into a light show: the lamps chase in the scorer's colour
+  const party = (G.state === 'goal' || G.state === 'celebrate') && !G.practice,
+    team = kit.TEAMS[G.lastTeam === 1 ? 1 : 0].main,
+    chase = Math.floor(clock.now * 6);
+  rigCol.length = rig.length;
+  rig.forEach((l, i) => {
+    const col = party && (chase + i) & 1 ? team : lampCol(S, i);
+    rigCol[i] = col;
+    light(X(l.x), Y(l.y), (l.r * K * z) / LS, col, 0.6, 0.15);
+  });
+  // the follow spot: on the puck, the scorer after a goal, the two fighters in a fight
+  const br = G.state === 'brawl' && G.br,
+    spot = br ? br.m : party && G.lastShooter ? G.lastShooter : puck.owner || puck;
+  if (spot) light(X(spot.x), Y(spot.y), ((br ? 34 : 22) * K * z) / LS, '#ffffff', br ? 0.75 : 0.5, 0.3);
+  // your own skater carries a little light, so you never lose them in a shadow
+  const me = !G.ai0 && G.controlled;
+  if (me) light(X(me.x), Y(me.y), (13 * K * z) / LS, '#ffffff', 0.35, 0.2);
+  if (pyroActive())
+    FLARES.forEach((f, i) =>
+      light(
+        X(f.x),
+        Y(f.y),
+        (18 * K * z) / LS,
+        '#ff6a3a',
+        0.6 + 0.25 * Math.sin(clock.now * 17 + i * 1.7),
+        0.1,
+      ),
+    );
+  // everything that glows lights its surroundings too
+  for (const l of glows)
+    light((l.x * z + ox) / LS, (l.y * z + oy) / LS, (l.r * 1.6 * z) / LS, l.c, l.a * 1.8, 0.1);
+  g.save();
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalCompositeOperation = 'multiply';
+  g.imageSmoothingEnabled = true;
+  g.drawImage(LMC, 0, 0, w, h, 0, 0, w * LS, h * LS);
+  g.restore();
+}
+/** After the lighting: each player's side facing the nearest lamp catches its light. */
+export function odRim(g) {
+  if (!on()) return;
+  for (const p of rims) {
+    let best = -1,
+      bd = Infinity;
+    rig.forEach((l, i) => {
+      const d = Math.hypot(l.x - p.x, l.y - p.y) / l.r;
+      if (d < bd) {
+        bd = d;
+        best = i;
+      }
+    });
+    if (best < 0 || bd > 1.3) continue;
+    const l = rig[best],
+      d = Math.hypot(l.x - p.x, l.y - p.y) || 1,
+      lx = (l.x - p.x) / d,
+      ly = (l.y - p.y) / d;
+    stamp(p, rigCol[best] || '#ffffff');
+    // lit from the lamp's side and from above
+    const gr = stx.createLinearGradient(32 + lx * 8, 38 + ly * 6 - 8, 32 - lx * 8, 46 - ly * 6);
+    gr.addColorStop(0, 'rgba(255,255,255,1)');
+    gr.addColorStop(0.5, 'rgba(255,255,255,0)');
+    stx.globalCompositeOperation = 'destination-in';
+    stx.fillStyle = gr;
+    stx.fillRect(0, 0, 64, 72);
+    stx.globalCompositeOperation = 'source-over';
+    g.globalAlpha = 0.4 * (1 - Math.max(0, bd - 0.5) / 0.8);
+    g.globalCompositeOperation = 'lighter';
+    g.drawImage(STC, toS(p.x) - 32, toS(p.y) - 52);
+    g.globalCompositeOperation = 'source-over';
+    g.globalAlpha = 1;
+  }
+  rims.length = 0;
 }

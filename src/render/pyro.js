@@ -8,7 +8,7 @@ import { settings } from '../settings';
 import { R } from './pixels';
 
 // flare spots in the stands (world units) with the direction their smoke drifts
-const SPOTS = [
+export const FLARES = [
   ...[40, 88, 136, 184, 226].map((y, i) => ({ x: i % 2 ? -12.5 : -8, y, ox: -1, oy: 0 })),
   ...[62, 110, 158, 206].map((y, i) => ({ x: W + (i % 2 ? 8 : 12.5), y, ox: 1, oy: 0 })),
   { x: 46, y: -8, ox: 0, oy: -1 },
@@ -34,7 +34,7 @@ export function drawPyro(g) {
   g.rect(-40 * K, -40 * K, (W + 80) * K, (H + 80) * K);
   g.rect(0, 0, W * K, H * K);
   g.clip('evenodd');
-  SPOTS.forEach((s, i) => {
+  FLARES.forEach((s, i) => {
     const x = s.x * K,
       y = s.y * K,
       a = flicker(i, 17);
@@ -67,7 +67,7 @@ export function drawPyro(g) {
 /** 3D shots: glow and rising smoke at each flare, using the renderer's projection. */
 export function drawPyro3D(g, proj) {
   if (!pyroActive()) return;
-  SPOTS.forEach((s, i) => {
+  FLARES.forEach((s, i) => {
     const q = proj(s.x, s.y, 7);
     if (!q || q.s < 0.3) return;
     const a = flicker(i, 17),

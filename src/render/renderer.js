@@ -13,7 +13,7 @@ import { live, players } from '../game/players';
 import { G, parts, puck, ref } from '../game/world';
 import { mouse } from '../input/state';
 import { touchState } from '../input/touch';
-import { SPARK, cinema, iceSheen, reflections, sparkles, spotlights } from './atmosphere';
+import { SPARK, cinema, iceSheen, reflections, sparkles } from './atmosphere';
 import { cam, cv, view } from './canvas';
 import { AMB } from './colors';
 import { drawBubbles, drawFx } from './effects';
@@ -43,8 +43,10 @@ import {
   odFrozen,
   odIce,
   odLens,
+  odLights,
   odNets,
   odPost,
+  odRim,
   odStands,
   odTop,
 } from './overdrive';
@@ -268,6 +270,8 @@ function drawFrame(g) {
     }
   }
   g.globalAlpha = 1;
+  odLights(g, ox, oy);
+  odRim(g);
   drawFx(g);
   drawGoalFx(g);
   odTop(g);
@@ -275,7 +279,6 @@ function drawFrame(g) {
   if (shine) sparkles(g);
   g.setTransform(1, 0, 0, 1, 0, 0);
   if (cine) cinema(g);
-  else if (od) spotlights(g, 0.07); // (fainter in live play than in replays)
   if (G.flash > 0) {
     g.globalAlpha = Math.min(0.22, G.flash * 1.8);
     g.fillStyle = '#ffffff';
