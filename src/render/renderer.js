@@ -13,7 +13,7 @@ import { live, players } from '../game/players';
 import { G, parts, puck, ref } from '../game/world';
 import { mouse } from '../input/state';
 import { touchState } from '../input/touch';
-import { SPARK, cinema, iceSheen, reflections, sparkles } from './atmosphere';
+import { SPARK, cinema, iceSheen, reflections, sparkles, spotlights } from './atmosphere';
 import { cam, cv, view } from './canvas';
 import { AMB } from './colors';
 import { drawBubbles, drawFx } from './effects';
@@ -36,6 +36,18 @@ import {
 import { R } from './pixels';
 import { drawGoalie, drawRef, drawSkater } from './players';
 import { drawPuck, puckGround } from './puck';
+import {
+  odBehind,
+  odFrame,
+  odFront,
+  odFrozen,
+  odIce,
+  odLens,
+  odNets,
+  odPost,
+  odStands,
+  odTop,
+} from './overdrive';
 import { drawStands, syncFans } from './stands';
 import { drawZamHud, drawZamboni } from './zamboni';
 
@@ -73,6 +85,13 @@ function frameMenuWindow() {
 }
 export function render() {
   const g = view.ctx; // the main canvas: everything below draws into it
+  // overdrive: a big hit holds the picture for a few frames; the extras need the frame's time and events first
+  if (odFrozen()) return;
+  odFrame();
+  drawFrame(g);
+  odPost(g);
+}
+function drawFrame(g) {
   kit.PS = puckStyle();
   syncFans();
   if (!G.demo && !(G.state === 'over' && G.post)) view.frame = null; // matches use the whole view
@@ -142,6 +161,7 @@ export function render() {
       g.translate(-dx / z, -dy / z);
     };
   drawStands(g);
+  odStands(g);
   drawPyro(g);
   if (G.state === 'replay' && G.rp.angle.flip) {
     g.save();
@@ -158,13 +178,18 @@ export function render() {
       g.globalAlpha = 1;
     }
   }
-  const cine = G.state === 'replay';
-  if (cine) {
-    skateGrooves(g);
+  const cine = G.state === 'replay',
+    // overdrive brings the replay's sheen, reflections and sparkles to live play
+    od = settings.overdrive,
+    shine = cine || (od && G.state !== 'zamboni');
+  odIce(g);
+  if (cine) skateGrooves(g);
+  if (shine) {
     iceSheen(g);
     reflections(g);
   }
   for (const n of NETS) drawNet(g, n);
+  odNets(g);
   const showCtl = !G.ai0 && (G.state === 'play' || G.state === 'faceoff');
   const c = showCtl ? G.controlled : null;
   if (c !== view.lastCtl) {
@@ -190,6 +215,7 @@ export function render() {
       const p = it.p;
       // the player, its boost glow and a carried puck move together
       at(p, () => {
+        odBehind(g, p);
         if (p.role === 'G') drawGoalie(g, p);
         else if (p === c) drawOutlined(g, p);
         else drawSkater(g, p);
@@ -203,6 +229,7 @@ export function render() {
           p.down <= 0
         )
           drawBuffed(g, p);
+        odFront(g, p);
         if (puck.owner === p) {
           drawPuck(g);
           drawn = true;
@@ -231,16 +258,24 @@ export function render() {
   if (puck.owner && puck.owner !== c && G.state !== 'zamboni' && G.state !== 'brawl')
     at(puck.owner, () => drawPossession(g, puck.owner));
   for (const p of parts) {
-    g.globalAlpha = Math.min(1, p.life * 3);
+    const a = Math.min(1, p.life * 3);
+    g.globalAlpha = a;
     R(g, toS(p.x), toS(p.y), 2, 2, p.c);
+    if (od) {
+      // a fading tail behind each particle
+      g.globalAlpha = a * 0.45;
+      R(g, toS(p.x - p.vx * 0.03), toS(p.y - p.vy * 0.03), 1, 1, p.c);
+    }
   }
   g.globalAlpha = 1;
   drawFx(g);
   drawGoalFx(g);
+  odTop(g);
   drawBubbles(g);
-  if (cine) sparkles(g);
+  if (shine) sparkles(g);
   g.setTransform(1, 0, 0, 1, 0, 0);
   if (cine) cinema(g);
+  else if (od) spotlights(g);
   if (G.flash > 0) {
     g.globalAlpha = Math.min(0.22, G.flash * 1.8);
     g.fillStyle = '#ffffff';
@@ -283,8 +318,10 @@ export function render() {
   }
   const cur = aim ? 'none' : '';
   if (cv.style.cursor !== cur) cv.style.cursor = cur;
-  if (G.state === 'replay') replayOverlay(g);
-  else if (G.state === 'brawl') drawFightHud(g);
+  if (G.state === 'replay') {
+    odLens(g);
+    replayOverlay(g);
+  } else if (G.state === 'brawl') drawFightHud(g);
   else if (G.state === 'zamboni') drawZamHud(g);
   else drawMini(g);
   if (liveName || camToastOn()) liveLabel(g, liveName);

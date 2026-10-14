@@ -4,6 +4,7 @@ import { clamp, lerp } from '../core/math';
 import { G, puck } from '../game/world';
 import { pad } from '../input/touch';
 import { cam, cv, view } from './canvas';
+import { gl3dReady } from './gl3d';
 import { M } from './stands';
 import { settings } from '../settings';
 
@@ -60,7 +61,8 @@ export function fit() {
   // close follows the play, wide shows the rink from board to board, arena adds the stands on both sides
   let nw = (settings.viewMode === 'close' ? 112 : settings.viewMode === 'arena' ? W + 2 * M : W) * K;
   // behind the menu the 3D demo can fill a whole desktop window: keep its pixels about 3 screen pixels wide
-  if (G.demo) nw = Math.max(nw, Math.round(r.width / 6) * 2);
+  // (2 in overdrive, when the GPU draws the 3D view)
+  if (G.demo) nw = Math.max(nw, Math.round(r.width / (settings.overdrive && gl3dReady() ? 4 : 6)) * 2);
   const nh = clamp(Math.round((nw * r.height) / r.width), 64, 1200);
   if (nw !== view.CW || nh !== view.CH) {
     view.CW = nw;

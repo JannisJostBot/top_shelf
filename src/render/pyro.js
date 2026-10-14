@@ -4,6 +4,7 @@
 import { H, K, W } from '../config';
 import { clock } from '../core/time';
 import { G } from '../game/world';
+import { settings } from '../settings';
 import { R } from './pixels';
 
 // flare spots in the stands (world units) with the direction their smoke drifts
@@ -17,6 +18,8 @@ const END_SECONDS = 20;
 
 export function pyroActive() {
   if (G.demo || G.practice) return false;
+  // (overdrive: also for every goal)
+  if (settings.overdrive && (G.state === 'goal' || G.state === 'celebrate')) return true;
   return (G.period === 3 && G.clock < END_SECONDS) || G.period > 3 || G.state === 'over';
 }
 const flicker = (i, f) =>

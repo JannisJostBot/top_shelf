@@ -15,6 +15,7 @@ import { clearGoalFx, startGoalFx } from './render/goalFx';
 import { clearIceDrawing, drawChewedIce, drawPolish, drawScuffs } from './render/iceWear';
 import { upd3D } from './render/mode7';
 import { clothStep, netHit, resetCloth } from './render/net';
+import { odIceClear, odIcePolish, odNetHit, odSound } from './render/overdrive';
 import { settings } from './settings';
 import { G } from './game/world';
 import { banner, hideBanner, hud, hudClock, showRec } from './ui/hud';
@@ -25,6 +26,7 @@ import { feed, resetSide } from './ui/side';
 export function bindPresentation() {
   // sound and feel
   on('sound', S);
+  on('sound', odSound);
   on('strides', strideSounds);
   on('audioUnlock', audio);
   on('crowd', setCrowd);
@@ -50,15 +52,18 @@ export function bindPresentation() {
     bubbles.length = 0;
   });
   on('netHit', netHit);
+  on('netHit', odNetHit);
   on('clothStep', clothStep);
   on('resetCloth', resetCloth);
   on('goalFx', startGoalFx);
   on('clearGoalFx', clearGoalFx);
   on('goalLamp', l => (view.lamp = l));
   on('iceClear', clearIceDrawing);
+  on('iceClear', odIceClear);
   on('iceScuff', drawScuffs);
   on('iceChew', drawChewedIce);
   on('icePolish', drawPolish);
+  on('icePolish', odIcePolish);
   // camera
   on('camera', updCam);
   on('camera3d', upd3D);

@@ -11,6 +11,7 @@ export function drawLitter(g) {
   const B = G.br;
   if (!B) return;
   for (const l of B.litter) {
+    if (l._land && clock.now < l._land) continue; // still in the air (overdrive, see render/overdrive.js)
     const x = toS(l.x),
       y = toS(l.y);
     if (l.t === 'g') {

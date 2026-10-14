@@ -5,7 +5,7 @@ import { players } from '../game/players';
 import { puck, ref } from '../game/world';
 import { cam, view } from './canvas';
 import { R } from './pixels';
-import { drawGoalie, drawRef, drawSkater } from './players';
+import { drawAgain, drawRef } from './players';
 import { puckPixels } from './puck';
 
 /* ---------- replay cinematics: reflections, ice sheen, sparkles, spotlights, vignette ---------- */
@@ -27,8 +27,7 @@ export function reflections(g) {
     g.save();
     g.translate(0, 2 * fy);
     g.scale(1, -1);
-    if (p.role === 'G') drawGoalie(g, p);
-    else drawSkater(g, p);
+    drawAgain(g, p);
     g.restore();
   }
   {
@@ -82,7 +81,11 @@ export function sparkles(g) {
   }
 }
 export function cinema(g) {
-  // two arena spotlights drifting over the ice
+  spotlights(g);
+  vignette(g);
+}
+/** Two arena spotlights drifting over the ice (screen space). */
+export function spotlights(g) {
   g.save();
   g.globalCompositeOperation = 'lighter';
   for (let i = 0; i < 2; i++) {
@@ -98,6 +101,9 @@ export function cinema(g) {
     }
   }
   g.restore();
+}
+/** Darkened corners and faint scan lines (screen space). */
+function vignette(g) {
   const vg = g.createRadialGradient(
     view.CW / 2,
     view.CH / 2,

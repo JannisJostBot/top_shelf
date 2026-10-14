@@ -154,8 +154,15 @@ export function startReplay(angle) {
   beginAngle();
 }
 /** One step of the replay. */
+// Overdrive graphics ease the replay into slow motion around the shot, just before the goal frame. Not online,
+// where both screens play the replay in step.
+function slowMo() {
+  if (!settings.overdrive || G.net || !G.lastNet) return 1;
+  const d = (G.rp.i - (G.goalFrame - 14)) / 20;
+  return 1 - 0.6 * Math.exp(-d * d);
+}
 export function replayStep(dt) {
-  G.rp.i += G.rp.angle.spd;
+  G.rp.i += G.rp.angle.spd * slowMo();
   if (G.rp.i >= G.rp.end) {
     // online, the guest holds the last frame until the host says the replay is over
     if (G.net !== 'guest') {

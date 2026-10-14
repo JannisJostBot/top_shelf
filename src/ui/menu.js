@@ -220,6 +220,13 @@ export function setFps(on) {
     .querySelectorAll('#fpsSeg button')
     .forEach(x => x.setAttribute('aria-checked', String((x.dataset.v === 'on') === on)));
 }
+export function setOverdrive(on) {
+  settings.overdrive = on;
+  document
+    .querySelectorAll('#odSeg button')
+    .forEach(x => x.setAttribute('aria-checked', String((x.dataset.v === 'on') === on)));
+  fit(); // the menu's 3D view draws finer pixels in overdrive
+}
 export function setVib(on) {
   settings.vibOn = on;
   document
@@ -296,6 +303,12 @@ export function initMenu() {
   document.querySelectorAll('#fpsSeg button').forEach(b =>
     b.addEventListener('click', () => {
       setFps(b.dataset.v === 'on');
+      savePrefs();
+    }),
+  );
+  document.querySelectorAll('#odSeg button').forEach(b =>
+    b.addEventListener('click', () => {
+      setOverdrive(b.dataset.v === 'on');
       savePrefs();
     }),
   );
