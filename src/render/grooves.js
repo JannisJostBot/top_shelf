@@ -9,13 +9,12 @@
 import { H, K, W } from '../config';
 import { REC, PF, G } from '../game/world';
 import { players } from '../game/players';
-import { view } from './canvas';
 
 const HISTORY = 360, // oldest groove kept, in frames behind the current replay frame (6 s at 60 fps)
   BUCKETS = 6, // age buckets, each stroked at its own opacity
   MIN_SPEED = 12; // below this a blade glides without leaving a visible cut
 
-export function skateGrooves() {
+export function skateGrooves(g) {
   const rp = G.rp;
   if (!rp || REC.length < 2) return;
   const cur = Math.min(REC.length - 1, Math.floor(rp.i)),
@@ -84,7 +83,6 @@ export function skateGrooves() {
       }
     }
   });
-  const g = view.ctx;
   g.save();
   g.lineWidth = 0.9;
   g.lineCap = 'round';

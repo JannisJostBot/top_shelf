@@ -174,15 +174,13 @@ const FRONT_ROWS = [
   // only the people near you along the row show: from this far along it they fade out, gone FADE later
   ROW_NEAR = 18,
   FADE = 5;
-function fanHeads(proj, C3, f, hor) {
-  const g = view.ctx,
-    toward = C3.x < 80 ? 1 : -1, // the rink side of the camera
+function fanHeads(g, proj, C3, f, hor) {
+  const toward = C3.x < 80 ? 1 : -1, // the rink side of the camera
     maxR = Math.min(view.CW, view.CH) * 0.1,
     list = [];
   FRONT_ROWS.forEach(([dx, at], row) => {
     const x = C3.x + toward * dx,
       z = C3.h - (dx * (at * view.CH - hor)) / f, // the height that puts these heads at that screen row
-
       stagger = row ? SEAT_W / 2 : 0;
     for (let k = Math.ceil((C3.y - 120) / SEAT_W); k * SEAT_W <= C3.y + 120; k++) {
       const y = k * SEAT_W + stagger,
@@ -324,9 +322,8 @@ function glassTint(c) {
 }
 /** Small star glares on the roof lamps: a bright core with spikes up, down and sideways (and shorter diagonal
  * ones), sized by distance and twinkling a little. Drawn before the players, so they pass in front. */
-function drawGlares(proj, lamps) {
-  const g = view.ctx,
-    now = clock.now;
+function drawGlares(g, proj, lamps) {
+  const now = clock.now;
   g.save();
   g.globalCompositeOperation = 'lighter';
   for (const l of lamps) {
@@ -365,7 +362,7 @@ function drawGlares(proj, lamps) {
 const SPR_H = 24,
   NEAR_FADE = 0.45;
 /** Draws the 3D view from G.cam3. `overlay` adds the REPLAY label and letterbox bars. */
-export function render3D(overlay = true) {
+export function render3D(g, overlay = true) {
   const C3 = G.cam3 || { x: 80, y: 128, yaw: 0, h: 8.5 },
     f = view.CW * 0.65 * (C3.guest ? GUEST_ZOOM : 1),
     fr = view.frame,
@@ -377,9 +374,9 @@ export function render3D(overlay = true) {
     Fy = Math.sin(C3.yaw),
     Rx = -Fy,
     Ry = Fx;
-  view.ctx.setTransform(1, 0, 0, 1, 0, 0);
+  g.setTransform(1, 0, 0, 1, 0, 0);
   if (!img3 || img3.width !== view.CW || img3.height !== view.CH) {
-    img3 = view.ctx.createImageData(view.CW, view.CH);
+    img3 = g.createImageData(view.CW, view.CH);
     buf3 = img3 && img3.data ? new Uint32Array(img3.data.buffer) : null;
   }
   if (buf3 && fanTab.length) {
@@ -535,8 +532,7 @@ export function render3D(overlay = true) {
               const z = h - ((y - hor) * tW) / f;
               col = z >= 36 && z < 37.6 ? RIBBON : z >= 40 && z < 44 && u % 8 < 6 ? SUITE : WALL;
             }
-          }
-          else {
+          } else {
             const top = rowY[r + 1],
               bh = rowY[r] - top,
               fi = seat * FAN_ROWS + (r % FAN_ROWS),
@@ -608,14 +604,14 @@ export function render3D(overlay = true) {
           },
         })
       : null;
-    if (glc) view.ctx.drawImage(glc, 0, 0);
-    else if (!useGL) view.ctx.putImageData(img3, 0, 0);
-    const fog = view.ctx.createLinearGradient(0, hor, 0, hor + view.CH * 0.25);
+    if (glc) g.drawImage(glc, 0, 0);
+    else if (!useGL) g.putImageData(img3, 0, 0);
+    const fog = g.createLinearGradient(0, hor, 0, hor + view.CH * 0.25);
     if (fog) {
       fog.addColorStop(0, 'rgba(10,15,30,.35)');
       fog.addColorStop(1, 'rgba(10,15,30,0)');
-      view.ctx.fillStyle = fog;
-      view.ctx.fillRect(0, hor, view.CW, view.CH * 0.25);
+      g.fillStyle = fog;
+      g.fillRect(0, hor, view.CW, view.CH * 0.25);
     }
   }
   const proj = (wx, wy, wz) => {
@@ -655,6 +651,7 @@ export function render3D(overlay = true) {
   };
   // behind the menu nobody fills the frame: a skater coming that close to the lens fades out before they get there
   const nearFade = fr ? (fr.y0 != null ? fr.y1 - fr.y0 : view.CH) * NEAR_FADE : 0;
+  // a sprite drawn by `draw(s)` into the small sprite canvas `s` at 1:1, then scaled onto the view at q
   const billboard = (draw, q) => {
     const sc = q.s / K;
     if (sc > 14) return;
@@ -662,31 +659,24 @@ export function render3D(overlay = true) {
     if (fade <= 0) return;
     spx.setTransform(1, 0, 0, 1, 0, 0);
     spx.clearRect(0, 0, 48, 56);
-    const save = view.ctx;
-    view.ctx = spx;
-    view.ctx.setTransform(1, 0, 0, 1, 24, 44);
-    try {
-      draw();
-    } finally {
-      view.ctx.setTransform(1, 0, 0, 1, 0, 0);
-      view.ctx = save;
-    }
-    view.ctx.imageSmoothingEnabled = false;
-    if (fade < 1) view.ctx.globalAlpha = fade;
-    view.ctx.drawImage(
+    spx.setTransform(1, 0, 0, 1, 24, 44);
+    draw(spx);
+    g.imageSmoothingEnabled = false;
+    if (fade < 1) g.globalAlpha = fade;
+    g.drawImage(
       SPC,
       Math.round(q.x - 24 * sc),
       Math.round(q.y - 44 * sc),
       Math.round(48 * sc),
       Math.round(56 * sc),
     );
-    view.ctx.globalAlpha = 1;
+    g.globalAlpha = 1;
   };
   if (buf3 && fanTab.length) {
-    drawGlares(proj, roofLamps(STADIUMS[settings.stadiumKey]));
-    drawScoreboard(view.ctx, proj, C3);
+    drawGlares(g, proj, roofLamps(STADIUMS[settings.stadiumKey]));
+    drawScoreboard(g, proj, C3);
   }
-  drawPyro3D(proj);
+  drawPyro3D(g, proj);
   const items = [];
   for (const p of players) items.push({ e: p, k: p.role, d: (p.x - C3.x) * Fx + (p.y - C3.y) * Fy });
   items.push({ e: ref, k: 'R', d: (ref.x - C3.x) * Fx + (ref.y - C3.y) * Fy });
@@ -694,7 +684,7 @@ export function render3D(overlay = true) {
   // each goal is split into panels and frame pieces, sorted with the players so overlaps come out right
   const cam = makeCam(C3, Fx, Fy, Rx, Ry, cxs, hor, f, h);
   for (const n of NETS)
-    for (const part of goalParts(n, cam)) items.push({ k: 'N', d: part.d, draw: part.draw });
+    for (const part of goalParts(g, n, cam)) items.push({ k: 'N', d: part.d, draw: part.draw });
   items.sort((a, b) => b.d - a.d);
   for (const it of items) {
     const e = it.e;
@@ -706,16 +696,16 @@ export function render3D(overlay = true) {
       if (puck.owner && puck.owner.role === 'G') continue;
       const q = proj(puck.x, puck.y, puck.z);
       if (q && q.d > 4)
-        billboard(() => {
-          R(-2, 2, 5, 1, SH);
-          puckPixels(0, 0);
+        billboard(s => {
+          R(s, -2, 2, 5, 1, SH);
+          puckPixels(s, 0, 0);
         }, q);
       continue;
     }
     const q = proj(e.x, e.y, 0);
     if (!q) continue;
     if (it.k === 'R') rel(e, () => billboard(drawRef, q));
-    else rel(e, () => billboard(() => (e.role === 'G' ? drawGoalie(e) : drawSkater(e)), q));
+    else rel(e, () => billboard(s => (e.role === 'G' ? drawGoalie(s, e) : drawSkater(s, e)), q));
   }
   // the puck carrier's badge, scaled with the distance like the sprites
   const o = puck.owner;
@@ -723,23 +713,23 @@ export function render3D(overlay = true) {
     const q = proj(o.x, o.y, o.down > 0 ? 6 : 13.5);
     if (q && q.d > 3) {
       const sc = clamp(q.s / K, 1, 4);
-      view.ctx.setTransform(sc, 0, 0, sc, Math.round(q.x), Math.round(q.y));
-      puckBadge(0, Math.floor(clock.now * 4.5) & 1);
-      view.ctx.setTransform(1, 0, 0, 1, 0, 0);
+      g.setTransform(sc, 0, 0, sc, Math.round(q.x), Math.round(q.y));
+      puckBadge(g, 0, Math.floor(clock.now * 4.5) & 1);
+      g.setTransform(1, 0, 0, 1, 0, 0);
     }
   }
   for (const p of parts) {
     const q = proj(p.x, p.y, 1);
     if (!q) continue;
-    view.ctx.globalAlpha = Math.min(1, p.life * 3);
-    view.ctx.fillStyle = p.c;
+    g.globalAlpha = Math.min(1, p.life * 3);
+    g.fillStyle = p.c;
     const z = Math.max(1, Math.round(q.s * 0.35));
-    view.ctx.fillRect(Math.round(q.x), Math.round(q.y - z * 2), z, z);
+    g.fillRect(Math.round(q.x), Math.round(q.y - z * 2), z, z);
   }
-  view.ctx.globalAlpha = 1;
-  if (C3.guest) fanHeads(proj, C3, f, hor);
-  cinema();
-  if (overlay) replayOverlay();
+  g.globalAlpha = 1;
+  if (C3.guest) fanHeads(g, proj, C3, f, hor);
+  cinema(g);
+  if (overlay) replayOverlay(g);
 }
 // ---------- goals in 3D ----------
 const NEAR = 0.6; // camera-space depth below which geometry is clipped away
@@ -784,7 +774,7 @@ const GOAL_H = 6.5, // crossbar height: about two thirds of a skater
   ROOF = 0.4; // share of the depth covered by the flat roof before the back net slopes down
 const mixPt = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 /** The goal as separately sorted pieces: four mesh panels, the base frame, the posts and the crossbar. */
-function goalParts(n, cam) {
+function goalParts(g, n, cam) {
   const F = n.top ? n.y1 : n.y0,
     dir = n.top ? -1 : 1,
     B = F + dir * ND,
@@ -798,30 +788,29 @@ function goalParts(n, cam) {
     mR = [n.x1, M, Ht],
     bL = [n.x0, B, 0],
     bR = [n.x1, B, 0];
-  const g = () => view.ctx;
   const fillPoly = (pts, col, a) => {
     const q = cam.poly(pts);
     if (q.length < 3) return;
-    g().globalAlpha = a;
-    g().fillStyle = col;
-    g().beginPath();
-    q.forEach((p, i) => (i ? g().lineTo(p.x, p.y) : g().moveTo(p.x, p.y)));
-    g().closePath();
-    g().fill();
-    g().globalAlpha = 1;
+    g.globalAlpha = a;
+    g.fillStyle = col;
+    g.beginPath();
+    q.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
+    g.closePath();
+    g.fill();
+    g.globalAlpha = 1;
   };
   const line = (p, q, col, w, a = 1) => {
     const s = cam.seg(p, q);
     if (!s) return;
-    g().globalAlpha = a;
-    g().strokeStyle = col;
-    g().lineWidth = Math.max(1, ((s[0].s + s[1].s) / 2) * w);
-    g().lineCap = 'round';
-    g().beginPath();
-    g().moveTo(s[0].x, s[0].y);
-    g().lineTo(s[1].x, s[1].y);
-    g().stroke();
-    g().globalAlpha = 1;
+    g.globalAlpha = a;
+    g.strokeStyle = col;
+    g.lineWidth = Math.max(1, ((s[0].s + s[1].s) / 2) * w);
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(s[0].x, s[0].y);
+    g.lineTo(s[1].x, s[1].y);
+    g.stroke();
+    g.globalAlpha = 1;
   };
   // a mesh panel between edges a0-a1 and b0-b1: translucent fabric plus a grid of strings both ways
   const mesh = (a0, a1, b1, b0, cols, rows) => {
@@ -859,28 +848,28 @@ function goalParts(n, cam) {
     part([tFL, tFR], () => {
       line(tFL, tFR, '#8f1f28', 0.75);
       line(tFL, tFR, '#d8343f', 0.5);
-      lamp3D(n, cam, B, dir);
+      lamp3D(g, n, cam, B, dir);
     }),
   ];
   return parts;
 }
-function lamp3D(n, cam, B, dir) {
+function lamp3D(g, n, cam, B, dir) {
   const s = cam.seg([80, B + dir * 2, GOAL_H + 2.5], [80, B + dir * 2, GOAL_H + 2.5]);
   if (!s) return;
   const L = s[0],
     on = view.lamp && view.lamp.n === n && clock.now < view.lamp.until,
     lit = on && Math.floor(clock.now * 6) & 1,
     z = Math.max(2, L.s * 1.2);
-  view.ctx.fillStyle = '#1b2030';
-  view.ctx.fillRect(L.x - z, L.y - z * 0.6, z * 2, z * 1.2);
-  view.ctx.fillStyle = lit ? '#ff3b3b' : on ? '#b52020' : '#4a1818';
-  view.ctx.fillRect(L.x - z * 0.8, L.y - z * 0.4, z * 1.6, z * 0.8);
+  g.fillStyle = '#1b2030';
+  g.fillRect(L.x - z, L.y - z * 0.6, z * 2, z * 1.2);
+  g.fillStyle = lit ? '#ff3b3b' : on ? '#b52020' : '#4a1818';
+  g.fillRect(L.x - z * 0.8, L.y - z * 0.4, z * 1.6, z * 0.8);
   if (lit) {
-    view.ctx.globalAlpha = 0.3;
-    view.ctx.fillStyle = '#ff3b3b';
-    view.ctx.beginPath();
-    view.ctx.arc(L.x, L.y, z * 3, 0, Math.PI * 2);
-    view.ctx.fill();
-    view.ctx.globalAlpha = 1;
+    g.globalAlpha = 0.3;
+    g.fillStyle = '#ff3b3b';
+    g.beginPath();
+    g.arc(L.x, L.y, z * 3, 0, Math.PI * 2);
+    g.fill();
+    g.globalAlpha = 1;
   }
 }

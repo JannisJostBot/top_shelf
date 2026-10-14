@@ -106,11 +106,11 @@ export function resetCloth() {
       d.y = d.py = d.ry;
     }
 }
-function drawMesh(n, x0, y0, x1, y1) {
+function drawMesh(g, n, x0, y0, x1, y1) {
   const cl = n.cloth,
     N = cl.nodes,
     C = cl.C;
-  R(x0, y0, x1 - x0, y1 - y0, '#f4f7fa');
+  R(g, x0, y0, x1 - x0, y1 - y0, '#f4f7fa');
   // billowed back netting: fill the fabric between the back bar and the displaced back row
   const barY = cl.out < 0 ? y0 : y1,
     back = (cl.RW - 1) * C;
@@ -122,7 +122,7 @@ function drawMesh(n, x0, y0, x1, y1) {
     for (let px = Math.min(ax, bx); px <= Math.max(ax, bx); px++) {
       const py = bx === ax ? ay : Math.round(ay + ((by - ay) * (px - ax)) / (bx - ax)),
         ext = (py - barY) * cl.out;
-      if (ext > 0) R(px, cl.out < 0 ? py : barY, 1, ext, '#e1e8f0');
+      if (ext > 0) R(g, px, cl.out < 0 ? py : barY, 1, ext, '#e1e8f0');
     }
   }
   for (let r = 0; r < cl.RW; r++)
@@ -130,11 +130,11 @@ function drawMesh(n, x0, y0, x1, y1) {
       const a = N[r * C + c];
       if (c < C - 1) {
         const b = N[r * C + c + 1];
-        line(toS(a.x), toS(a.y), toS(b.x), toS(b.y), '#a9b9cb');
+        line(g, toS(a.x), toS(a.y), toS(b.x), toS(b.y), '#a9b9cb');
       }
       if (r < cl.RW - 1) {
         const b = N[(r + 1) * C + c];
-        line(toS(a.x), toS(a.y), toS(b.x), toS(b.y), '#b9c7d6');
+        line(g, toS(a.x), toS(a.y), toS(b.x), toS(b.y), '#b9c7d6');
       }
     }
 }
@@ -162,19 +162,17 @@ function meshImage(n, x0, y0, x1, y1) {
     }
   }
   if (dirty) {
-    const save = view.ctx;
-    view.ctx = cl.img.getContext('2d');
-    view.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    view.ctx.clearRect(0, 0, cl.img.width, cl.img.height);
-    view.ctx.setTransform(1, 0, 0, 1, -x0, -oy);
-    drawMesh(n, x0, y0, x1, y1);
-    view.ctx = save;
+    const g = cl.img.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, cl.img.width, cl.img.height);
+    g.setTransform(1, 0, 0, 1, -x0, -oy);
+    drawMesh(g, n, x0, y0, x1, y1);
   }
   return { img: cl.img, oy };
 }
 /** The aim trainer's board across the goal mouth: white panels standing on the goal line, a gap between them
  * framed in red. */
-function aimBoard(n, x0, x1, y1) {
+function aimBoard(g, n, x0, x1, y1) {
   const g0 = Math.round((G.aim.gap - AIM_GAP / 2) * K),
     g1 = Math.round((G.aim.gap + AIM_GAP / 2) * K),
     top = y1 - 7;
@@ -183,47 +181,47 @@ function aimBoard(n, x0, x1, y1) {
     [g1, x1],
   ]) {
     if (b - a <= 0) continue;
-    R(a, top + 2, b - a, 7, '#3a3f4c'); // outline
-    R(a + 1, top, b - a - 2, 7, '#f1efe8'); // the panel's face
-    R(a + 1, top + 5, b - a - 2, 2, '#c9c5b8'); // its lower edge in shade
+    R(g, a, top + 2, b - a, 7, '#3a3f4c'); // outline
+    R(g, a + 1, top, b - a - 2, 7, '#f1efe8'); // the panel's face
+    R(g, a + 1, top + 5, b - a - 2, 2, '#c9c5b8'); // its lower edge in shade
   }
   // red edges around the gap
-  R(g0 - 2, top - 1, 2, 9, '#d8343f');
-  R(g1, top - 1, 2, 9, '#d8343f');
+  R(g, g0 - 2, top - 1, 2, 9, '#d8343f');
+  R(g, g1, top - 1, 2, 9, '#d8343f');
 }
-export function drawNet(n) {
+export function drawNet(g, n) {
   const x0 = n.x0 * K,
     x1 = n.x1 * K,
     y0 = n.y0 * K,
     y1 = n.y1 * K;
-  if (!n.top) R(x0 + 2, y1 + 2, x1 - x0 - 4, 2, SH);
-  if (view.ctx.globalAlpha === 1 && pixelAligned(view.ctx) && !view.sil) {
+  if (!n.top) R(g, x0 + 2, y1 + 2, x1 - x0 - 4, 2, SH);
+  if (g.globalAlpha === 1 && pixelAligned(g) && !view.sil) {
     const m = meshImage(n, x0, y0, x1, y1);
-    view.ctx.drawImage(m.img, x0, m.oy);
-  } else drawMesh(n, x0, y0, x1, y1);
+    g.drawImage(m.img, x0, m.oy);
+  } else drawMesh(g, n, x0, y0, x1, y1);
   const red = '#d8343f',
     redD = '#8f1f28';
-  R(x0, y0, 2, y1 - y0, red);
-  R(x1 - 2, y0, 2, y1 - y0, red);
-  R(x0, n.top ? y0 : y1 - 2, x1 - x0, 2, red);
+  R(g, x0, y0, 2, y1 - y0, red);
+  R(g, x1 - 2, y0, 2, y1 - y0, red);
+  R(g, x0, n.top ? y0 : y1 - 2, x1 - x0, 2, red);
   if (n.top) {
-    R(x0, y1 - 2, 3, 2, redD);
-    R(x1 - 3, y1 - 2, 3, 2, redD);
+    R(g, x0, y1 - 2, 3, 2, redD);
+    R(g, x1 - 3, y1 - 2, 3, 2, redD);
   } else {
-    R(x0, y0, 3, 2, redD);
-    R(x1 - 3, y0, 3, 2, redD);
+    R(g, x0, y0, 3, 2, redD);
+    R(g, x1 - 3, y0, 3, 2, redD);
   }
-  if (G.aim && n.top) aimBoard(n, x0, x1, y1);
+  if (G.aim && n.top) aimBoard(g, n, x0, x1, y1);
   // goal lamp behind the net
   const cx = (x0 + x1) >> 1,
     ly = n.top ? y0 - 9 : y1 + 5,
     on = view.lamp && view.lamp.n === n && clock.now < view.lamp.until,
     lit = on && Math.floor(clock.now * 6) & 1;
-  R(cx - 5, ly, 10, 5, '#1b2030');
-  R(cx - 4, ly + 1, 8, 3, lit ? '#ff3b3b' : on ? '#b52020' : '#4a1818');
+  R(g, cx - 5, ly, 10, 5, '#1b2030');
+  R(g, cx - 4, ly + 1, 8, 3, lit ? '#ff3b3b' : on ? '#b52020' : '#4a1818');
   if (lit) {
-    view.ctx.globalAlpha = 0.28;
-    disc(cx, ly + 2, 12, 6, '#ff3b3b');
-    view.ctx.globalAlpha = 1;
+    g.globalAlpha = 0.28;
+    disc(g, cx, ly + 2, 12, 6, '#ff3b3b');
+    g.globalAlpha = 1;
   }
 }

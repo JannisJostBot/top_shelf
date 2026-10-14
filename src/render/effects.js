@@ -2,7 +2,6 @@ import { S } from '../audio/sfx';
 import { pick, toS } from '../core/math';
 import { clock } from '../core/time';
 import { G } from '../game/world';
-import { view } from './canvas';
 import { R, ellipsePx } from './pixels';
 
 export const pops = [],
@@ -15,7 +14,7 @@ export function pop(x, y, text, col, big) {
 export function ring(x, y, col, size) {
   rings.push({ x, y, col, size: size || 1, t0: clock.now });
 }
-export function drawFx() {
+export function drawFx(g) {
   for (let i = rings.length - 1; i >= 0; i--) {
     const r = rings[i],
       t = clock.now - r.t0;
@@ -24,8 +23,9 @@ export function drawFx() {
       continue;
     }
     const k = t / 0.35;
-    view.ctx.globalAlpha = 1 - k;
+    g.globalAlpha = 1 - k;
     ellipsePx(
+      g,
       toS(r.x),
       toS(r.y) - 4,
       Math.round((6 + k * 22) * r.size),
@@ -33,9 +33,9 @@ export function drawFx() {
       r.col,
     );
   }
-  view.ctx.globalAlpha = 1;
-  view.ctx.textAlign = 'center';
-  view.ctx.textBaseline = 'middle';
+  g.globalAlpha = 1;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
   for (let i = pops.length - 1; i >= 0; i--) {
     const p = pops[i],
       t = clock.now - p.t0;
@@ -47,9 +47,9 @@ export function drawFx() {
       sx = toS(p.x),
       sy = toS(p.y) - 30 - Math.round(t * 20),
       sz = p.big ? (t < 0.1 ? 14 : 10) : 7;
-    view.ctx.font = sz + 'px "Press Start 2P", monospace';
-    view.ctx.globalAlpha = a;
-    view.ctx.fillStyle = '#0a0f1e';
+    g.font = sz + 'px "Press Start 2P", monospace';
+    g.globalAlpha = a;
+    g.fillStyle = '#0a0f1e';
     for (const [dx, dy] of [
       [-1, 0],
       [1, 0],
@@ -58,12 +58,12 @@ export function drawFx() {
       [1, 1],
       [2, 2],
     ])
-      view.ctx.fillText(p.text, sx + dx, sy + dy);
-    view.ctx.fillStyle = p.col;
-    view.ctx.fillText(p.text, sx, sy);
+      g.fillText(p.text, sx + dx, sy + dy);
+    g.fillStyle = p.col;
+    g.fillText(p.text, sx, sy);
   }
-  view.ctx.globalAlpha = 1;
-  view.ctx.textAlign = 'left';
+  g.globalAlpha = 1;
+  g.textAlign = 'left';
 }
 
 /* ---------- trash talk bubbles ---------- */
@@ -72,10 +72,10 @@ export const bubbles = [],
 export function bubble(p, text, delay) {
   bubbles.push({ p, text: text || pick(CURSES), t0: clock.now + (delay || 0), dur: 1.7, played: false });
 }
-export function drawBubbles() {
-  view.ctx.font = '7px "Press Start 2P", monospace';
-  view.ctx.textAlign = 'center';
-  view.ctx.textBaseline = 'middle';
+export function drawBubbles(g) {
+  g.font = '7px "Press Start 2P", monospace';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i],
       t = clock.now - b.t0;
@@ -92,20 +92,20 @@ export function drawBubbles() {
       shake = Math.round(Math.sin(clock.now * 45)),
       sx = toS(p.x) + shake,
       sy = toS(p.y) - 28 - Math.round(p.jump || 0) - (t < 0.12 ? Math.round((1 - t / 0.12) * 4) : 0);
-    const tw = Math.ceil((view.ctx.measureText(b.text) || { width: 40 }).width),
+    const tw = Math.ceil((g.measureText(b.text) || { width: 40 }).width),
       w = tw + 10,
       h = 13,
       x0 = sx - (w >> 1),
       y0 = sy - h;
-    R(x0 - 1, y0 + 1, w + 2, h - 2, '#0b0f1a');
-    R(x0 + 1, y0 - 1, w - 2, h + 2, '#0b0f1a');
-    R(x0, y0, w, h, '#ffffff');
-    R(sx - 3, y0 + h, 6, 2, '#0b0f1a');
-    R(sx - 2, y0 + h, 4, 1, '#ffffff');
-    R(sx - 1, y0 + h + 2, 3, 2, '#0b0f1a');
-    R(sx, y0 + h + 1, 1, 1, '#ffffff');
-    view.ctx.fillStyle = '#d8343f';
-    view.ctx.fillText(b.text, sx, y0 + h / 2 + 1);
+    R(g, x0 - 1, y0 + 1, w + 2, h - 2, '#0b0f1a');
+    R(g, x0 + 1, y0 - 1, w - 2, h + 2, '#0b0f1a');
+    R(g, x0, y0, w, h, '#ffffff');
+    R(g, sx - 3, y0 + h, 6, 2, '#0b0f1a');
+    R(g, sx - 2, y0 + h, 4, 1, '#ffffff');
+    R(g, sx - 1, y0 + h + 2, 3, 2, '#0b0f1a');
+    R(g, sx, y0 + h + 1, 1, 1, '#ffffff');
+    g.fillStyle = '#d8343f';
+    g.fillText(b.text, sx, y0 + h / 2 + 1);
   }
-  view.ctx.textAlign = 'left';
+  g.textAlign = 'left';
 }

@@ -76,10 +76,10 @@ for (const side of [-1, 1])
         y: side < 0 ? -3.5 - r * 4.5 : H + 3.5 + r * 4.5,
         ph: rnd(0, 6.28),
       });
-export function drawStands() {
+export function drawStands(g) {
   const v = viewRect();
   if (v.x >= 0 && v.x + v.w <= W && v.y >= 0 && v.y + v.h <= H) return;
-  R(-M * K, -M * K, (W + 2 * M) * K, (H + 2 * M) * K, '#141a2c');
+  R(g, -M * K, -M * K, (W + 2 * M) * K, (H + 2 * M) * K, '#141a2c');
   for (let i = 0; i < FAN2D.length; i++) {
     const f = FAN2D[i];
     if (f.x < v.x - 3 || f.x > v.x + v.w + 3 || f.y < v.y - 3 || f.y > v.y + v.h + 3) continue;
@@ -88,11 +88,11 @@ export function drawStands() {
     const bob = Math.round(Math.sin(clock.now * (4 + G.hype * 8) + f.ph) * (0.4 + G.hype * 2)),
       x = toS(f.x),
       y = toS(f.y) - bob;
-    R(x - 3, y - 1, 6, 4, t.bodyHex);
-    R(x - 2, y - 4, 4, 3, t.headHex);
+    R(g, x - 3, y - 1, 6, 4, t.bodyHex);
+    R(g, x - 2, y - 4, 4, 3, t.headHex);
     if (G.hype > 0.4 && Math.sin(clock.now * 6 + f.ph) > 0) {
-      R(x - 4, y - 7, 1, 4, t.headHex);
-      R(x + 3, y - 7, 1, 4, t.headHex);
+      R(g, x - 4, y - 7, 1, 4, t.headHex);
+      R(g, x + 3, y - 7, 1, 4, t.headHex);
     }
   }
 }
