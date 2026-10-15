@@ -1,5 +1,6 @@
 import { H, NETS, W } from '../config';
-import { lerp, pick, rnd } from '../core/math';
+import { lerp } from '../core/math';
+import { pick, random, rnd } from '../core/rng';
 import { clock } from '../core/time';
 import { endGame } from './match';
 import { SKATERS, players } from './players';
@@ -148,7 +149,7 @@ export function startReplay(angle) {
   clearFx();
   hideBanner();
   uiShow('rpBar', true);
-  G.rp.fart = Math.random() < 0.03 ? rnd(0.25, 0.7) : null;
+  G.rp.fart = random() < 0.03 ? rnd(0.25, 0.7) : null;
   uiShow('pcard', false);
   input.sp = input.pp = input.swp = input.sr = false;
   beginAngle();
@@ -190,7 +191,7 @@ export function replayStep(dt) {
   upd3D(false);
   for (const p of SKATERS) {
     const sp = Math.hypot(p.vx, p.vy);
-    if (sp > 46 && p.down <= 0 && Math.random() < 0.3)
+    if (sp > 46 && p.down <= 0 && random() < 0.3)
       parts.push({
         x: p.x + rnd(-2, 2),
         y: p.y + rnd(0, 1),

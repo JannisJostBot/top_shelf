@@ -1,4 +1,5 @@
-import { clamp, pick, rnd } from '../core/math';
+import { clamp } from '../core/math';
+import { pick, random, rnd } from '../core/rng';
 import { NAMES, ROLE_BASE, SKINS, TAPES } from '../data/roster';
 import { kit } from './kit';
 import { FACEV } from '../data/faces';
@@ -91,7 +92,7 @@ export function genRoster() {
       skin: pick(SKINS),
       face: p.role === 'G' ? 'eyes' : pick(['eyes', 'visor', 'visor', 'cage']),
       tape: pick(TAPES),
-      skate: Math.random() < 0.75 ? '#16181f' : '#eef1f5',
+      skate: random() < 0.75 ? '#16181f' : '#eef1f5',
       voice: rnd(92, 150),
     };
   }

@@ -1,5 +1,6 @@
 import { H, NETS, RX0, RX1, RY0, RY1, W } from '../../config';
-import { clamp, rnd, wrapAngle } from '../../core/math';
+import { clamp, wrapAngle } from '../../core/math';
+import { random, rnd } from '../../core/rng';
 import { loadBest, saveBest } from '../../core/storage';
 import {
   S,
@@ -88,7 +89,7 @@ function polish(z, x, y, a) {
     }
   }
   icePolish(polished);
-  if (Math.random() < 0.4)
+  if (random() < 0.4)
     parts.push({
       x: bx + px * rnd(-5, 5),
       y: by + py * rnd(-5, 5),
@@ -320,7 +321,7 @@ function remoteStep(r, dt) {
   r.y += (r.ty - r.y) * k;
   const da = wrapAngle(r.ta - r.a);
   r.a += da * k;
-  if (r.v > 3 && Math.random() < 0.3)
+  if (r.v > 3 && random() < 0.3)
     parts.push({
       x: r.x + rnd(-4, 4),
       y: r.y + rnd(-4, 4),

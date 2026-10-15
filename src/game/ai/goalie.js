@@ -1,5 +1,6 @@
 import { GB, GT } from '../../config';
-import { clamp, rnd } from '../../core/math';
+import { clamp } from '../../core/math';
+import { random, rnd } from '../../core/rng';
 import { GK, SK } from '../players';
 import { grab, openness, passTo } from '../puck';
 import { G, puck } from '../world';
@@ -69,11 +70,11 @@ export function goalieCheck() {
         (Math.abs(dx) < 2.5 ? 0.22 : 0) -
         (Math.abs(dx) > reach - 2 ? 0.2 : 0);
       ch = clamp(ch, 0.08, 0.96);
-      if (Math.random() < ch) {
+      if (random() < ch) {
         const shooter = puck.lastTeam, // noted before the save hands the puck to the goalie's team
-          r = Math.random(),
+          r = random(),
           out = g.team ? 1 : -1,
-          side = Math.abs(dx) > 1 ? Math.sign(dx) : Math.random() < 0.5 ? -1 : 1;
+          side = Math.abs(dx) > 1 ? Math.sign(dx) : random() < 0.5 ? -1 : 1;
         let kind;
         if (r < (sp < 120 ? 0.7 : 0.4)) {
           grab(g);

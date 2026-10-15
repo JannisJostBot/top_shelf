@@ -1,4 +1,4 @@
-import { rnd } from '../../core/math';
+import { random, rnd } from '../../core/rng';
 import { PUCKS } from '../../data/pucks';
 import { goalieCheck } from '../ai/goalie';
 import { frostAt } from '../iceWear';
@@ -97,7 +97,7 @@ export function updatePuck(dt) {
   } else puck.trail.length = 0;
   {
     const ps = PUCKS[settings.puckKey];
-    if (ps.tr && sp > 70 && Math.random() < Math.min(0.8, sp / 260))
+    if (ps.tr && sp > 70 && random() < Math.min(0.8, sp / 260))
       parts.push({
         x: puck.x + rnd(-1, 1),
         y: puck.y + rnd(-1, 1),

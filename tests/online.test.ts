@@ -1,6 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { GB, GT, H, NETS, STEP, W } from '../src/config';
 import { clearEvents, on } from '../src/core/events';
+import { seedRng } from '../src/core/rng';
 import { clock } from '../src/core/time';
 import { COLORS } from '../src/data/teams';
 import { STICKS } from '../src/data/sticks';
@@ -406,10 +407,7 @@ describe('online fight', () => {
   it('starts when both players vote for it during the replay, lets both punch and block, and boosts the winner', () => {
     clearEvents();
     // (the same match every run: damage and the CPU teams roll dice)
-    let seed = 5;
-    const rand = vi
-      .spyOn(Math, 'random')
-      .mockImplementation(() => (seed = (seed * 16807) % 2147483647) / 2147483647);
+    seedRng(5);
     const banners: string[] = [],
       guestBanners: string[] = [];
     on('banner', (t: string) => banners.push(t));
@@ -538,7 +536,6 @@ describe('online fight', () => {
     goalAndReplay();
     expect(G.rp.votes).toBeNull();
     settings.fightsOn = true;
-    rand.mockRestore();
     clearEvents();
   });
 });

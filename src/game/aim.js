@@ -3,8 +3,8 @@
 // you shoot from a new spot. With a moving gap it also slides back and forth along the board all the time.
 // Misses come back to your stick after a moment.
 import { NETS } from '../config';
+import { rnd } from '../core/rng';
 import { loadAimBest, saveAimBest } from '../core/storage';
-import { rnd } from '../core/math';
 import { banner, hudClock } from './fx';
 import { practiceOver, practiceReset } from './practice';
 import { G, puck } from './world';
