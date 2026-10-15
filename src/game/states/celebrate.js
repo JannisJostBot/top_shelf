@@ -1,4 +1,5 @@
-import { clamp, dist, pick, rnd } from '../../core/math';
+import { clamp, dist } from '../../core/math';
+import { pick, random, rnd } from '../../core/rng';
 import { refAI } from '../ai/referee';
 import { confetti } from '../match';
 import { faceTo, steer } from '../physics/motion';
@@ -98,7 +99,7 @@ export function celebrateStep(dt) {
     g.vx = 0;
     g.vy = 0;
   }
-  if (Math.random() < 0.5)
+  if (random() < 0.5)
     parts.push({
       x: m.x + rnd(-14, 14),
       y: m.y - rnd(4, 16),

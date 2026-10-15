@@ -1,5 +1,6 @@
 import { BASE } from '../config';
-import { clamp, rnd } from '../core/math';
+import { clamp } from '../core/math';
+import { random, rnd } from '../core/rng';
 import { blade, burst, faceTo } from './physics/motion';
 import { nearBoards } from './physics/rink';
 import { G, puck } from './world';
@@ -21,7 +22,7 @@ export function startCheck(p, c) {
   c.ai.dodged = false;
   p.checkSpd = BASE * rnd(1.3, 1.62) * p.st.spd;
   const humanVictim = isHuman(c);
-  c.ai.dodge = !humanVictim && Math.random() < (cpuSide(c.team) ? settings.diff.dodge : 0.3) * c.st.hnd;
+  c.ai.dodge = !humanVictim && random() < (cpuSide(c.team) ? settings.diff.dodge : 0.3) * c.st.hnd;
   S('charge', { by: p });
   feel(p, [12]);
 }
@@ -42,7 +43,7 @@ export function checkStep(p, dt) {
   if (c.ai.dodge && d < 15) {
     c.ai.dodge = false;
     c.ai.dodged = true;
-    const sd = Math.random() < 0.5 ? -1 : 1;
+    const sd = random() < 0.5 ? -1 : 1;
     c.vx += (-dy / d) * sd * 85;
     c.vy += (dx / d) * sd * 85;
     c.imm = Math.max(c.imm, 0.25);
@@ -116,7 +117,7 @@ function knockDown(c, nx, ny, by, power) {
 }
 function stumble(c, nx, ny, by) {
   G.stats.hits[by.team]++;
-  if (Math.random() < 0.65) popPuck(c, nx, ny, by);
+  if (random() < 0.65) popPuck(c, nx, ny, by);
   c.stun = rnd(0.35, 0.55);
   const kb = rnd(28, 48);
   c.vx += nx * kb;

@@ -1,5 +1,6 @@
 import { ACC, AIM_CORNER, BASE, GT, H, W } from '../config';
-import { clamp, dist, rnd } from '../core/math';
+import { clamp, dist } from '../core/math';
+import { random, rnd } from '../core/rng';
 import { catchUp, nearest } from './ai/team';
 import { startCheck } from './hits';
 import { accelTo, burst, faceTo, maxSpd, reachFactor } from './physics/motion';
@@ -234,7 +235,7 @@ function poke(p) {
       p.vy += ((c.y - p.y) / l) * 45;
       p.boost = 0.2;
       const reach = reachFactor(p, c);
-      if (d < 14 && c.imm <= 0 && reach > 0 && Math.random() < ((0.62 * reach) / c.st.hnd) * p.st.hnd) {
+      if (d < 14 && c.imm <= 0 && reach > 0 && random() < ((0.62 * reach) / c.st.hnd) * p.st.hnd) {
         steal(p, c);
         pop(c.x, c.y, 'STOLEN!', CY);
         feel(p, [18]);
@@ -311,14 +312,14 @@ export function steals(dt) {
         if (p.pokeCd > 0) continue;
         p.pokeCd = rnd(0.5, 0.9);
         const moving = Math.hypot(c.vx, c.vy) > 35 ? POKE_MOVING : 1;
-        if (Math.random() < Math.min(0.85, rate * POKE * moving)) {
+        if (random() < Math.min(0.85, rate * POKE * moving)) {
           steal(p, c);
           return;
         }
         p.cool = 0.3;
         continue;
       }
-      if (Math.random() < rate * dt) {
+      if (random() < rate * dt) {
         steal(p, c);
         return;
       }

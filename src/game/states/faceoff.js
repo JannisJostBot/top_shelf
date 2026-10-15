@@ -1,5 +1,5 @@
+import { random, rnd } from '../../core/rng';
 import { GB, GT } from '../../config';
-import { rnd } from '../../core/math';
 import { STADIUMS } from '../../data/stadiums';
 import { GK, SK, players } from '../players';
 import { take } from '../puck';
@@ -142,7 +142,7 @@ export function foUpdate(dt) {
   } else {
     puck.z = Math.max(0, 9 - fo.t * 70);
     if (G.ai0) {
-      if (fo.t >= 0.25) foResolve(Math.random() < 0.5 ? 0 : 1, null);
+      if (fo.t >= 0.25) foResolve(random() < 0.5 ? 0 : 1, null);
     } else if (fo.early) {
       if (fo.t >= 0.15) foResolve(1, null);
     } else if (input.sp && fo.t < fo.cpu) foResolve(0, fo.t);
@@ -203,14 +203,14 @@ function foUpdateNet(dt) {
   const [e0, e1] = fo.early,
     [r0, r1] = fo.rt;
   let w = -1;
-  if (e0 && e1) w = fo.t >= 0.15 ? (Math.random() < 0.5 ? 0 : 1) : -1;
+  if (e0 && e1) w = fo.t >= 0.15 ? (random() < 0.5 ? 0 : 1) : -1;
   else if (e0) w = fo.t >= 0.15 ? 1 : -1;
   else if (e1) w = fo.t >= 0.15 ? 0 : -1;
-  else if (r0 !== null && r1 !== null) w = r0 < r1 ? 0 : r1 < r0 ? 1 : Math.random() < 0.5 ? 0 : 1;
+  else if (r0 !== null && r1 !== null) w = r0 < r1 ? 0 : r1 < r0 ? 1 : random() < 0.5 ? 0 : 1;
   else if (r1 !== null)
     w = 1; // the guest's time is in and the host has not pressed yet: the host can only be slower
   else if (r0 !== null && fo.t >= r0 + reportWindow()) w = 0;
-  else if (fo.t >= 2.5) w = Math.random() < 0.5 ? 0 : 1; // nobody drew: a scramble
+  else if (fo.t >= 2.5) w = random() < 0.5 ? 0 : 1; // nobody drew: a scramble
   if (w >= 0) foResolve(w, null);
 }
 /** Host: the guest's report for draw `id`: its reaction time in seconds, or early. */

@@ -1,5 +1,6 @@
 import { ACC, BASE } from '../../config';
-import { dist, lerp, rnd } from '../../core/math';
+import { dist, lerp } from '../../core/math';
+import { rnd } from '../../core/rng';
 import { G, parts, puck } from '../world';
 
 export function accelTo(p, dx, dy, dt, acc) {

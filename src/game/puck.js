@@ -1,6 +1,7 @@
 import { clock } from '../core/time';
 import { HARD_SHOT } from '../config';
-import { clamp, dist, rnd } from '../core/math';
+import { clamp, dist } from '../core/math';
+import { random, rnd } from '../core/rng';
 import { blade, burst } from './physics/motion';
 import { SK, SKATERS } from './players';
 import { G, parts, puck } from './world';
@@ -32,7 +33,7 @@ function release(p, vx, vy) {
   puck.vy = vy;
   puck.age = 0;
   puck.rx = b.x;
-  puck.tip = Math.random();
+  puck.tip = random();
   p.cool = 0.3;
   puck.lastTeam = p.team;
   puck.hard = false;
@@ -80,7 +81,7 @@ export function passTo(p, m) {
     puck.vy = (dy / d) * s;
     puck.age = 0;
     puck.rx = puck.x;
-    puck.tip = Math.random();
+    puck.tip = random();
     puck.lastTeam = p.team;
     puck.miss.clear();
     puck.gchk = null;
@@ -157,7 +158,7 @@ export function pickupCheck() {
   if (!best) return false;
   if (best !== puck.passTo && sp > FUMBLE_SPEED) {
     const ch = (best.team === puck.lastTeam ? 0.5 : 0.3) * best.st.hnd;
-    if (Math.random() > ch) {
+    if (random() > ch) {
       puck.miss.add(best);
       return false;
     }

@@ -11,7 +11,8 @@
 //  - the puck carrier follows a lane, curves around defenders, sometimes dekes, looks up before passing
 //    and winds up visibly before shooting
 import { ACC, AIM_CORNER, BASE, GB, GT } from '../../config';
-import { clamp, dist, lerp, rnd, wrapAngle } from '../../core/math';
+import { clamp, dist, lerp, wrapAngle } from '../../core/math';
+import { random, rnd } from '../../core/rng';
 import { clock } from '../../core/time';
 import { startCheck } from '../hits';
 import { accelTo, faceTo, maxSpd } from '../physics/motion';
@@ -173,7 +174,7 @@ function carrier(o, t, dt) {
 
   if (now < b.next) return;
   b.next = now + reaction(o);
-  if (nd < 12 && ahead && Math.random() < 0.3) {
+  if (nd < 12 && ahead && random() < 0.3) {
     b.deke = now + 0.35;
     b.dekeDir = o.x >= near.x ? 1 : -1;
   }
@@ -183,7 +184,7 @@ function carrier(o, t, dt) {
     const cu = catchUp(t),
       // behind, it shoots from further out too
       ps = dg < 36 ? 0.6 : dg < 60 ? 0.22 + 0.08 * cu : dg < 85 ? 0.08 * cu : 0;
-    if (Math.random() < ps) {
+    if (random() < ps) {
       const gk = GK[1 - t];
       let off = gk.x > 80 ? -AIM_CORNER : AIM_CORNER;
       if (Math.abs(gk.x - 80) < 1.5) off = o.x < 80 ? AIM_CORNER : -AIM_CORNER;
@@ -201,7 +202,7 @@ function carrier(o, t, dt) {
   if (m && !b.pass) {
     const pressured = nd < 12,
       better = dir * (m.y - o.y) > 22;
-    if ((pressured && Math.random() < 0.45) || (better && Math.random() < 0.16)) {
+    if ((pressured && random() < 0.45) || (better && random() < 0.16)) {
       b.pass = m;
       b.passAt = now + rnd(0.08, 0.2); // a look before the pass
     }
@@ -291,7 +292,7 @@ export function teamAIRealistic(t, dt) {
         o.down <= 0 &&
         o.imm <= 0 &&
         dist(chaser, o) < 20 &&
-        Math.random() < rate * (G.holdT > PRESS_AFTER ? 2 : 1) * (1 + 0.25 * catchUp(t)) * dt
+        random() < rate * (G.holdT > PRESS_AFTER ? 2 : 1) * (1 + 0.25 * catchUp(t)) * dt
       )
         startCheck(chaser, o);
     }

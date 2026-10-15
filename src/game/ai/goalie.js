@@ -1,5 +1,6 @@
 import { GB, GT, NETS } from '../../config';
-import { clamp, rnd } from '../../core/math';
+import { clamp } from '../../core/math';
+import { random, rnd } from '../../core/rng';
 import { GK, SK } from '../players';
 import { grab, openness, passTo } from '../puck';
 import { G, puck } from '../world';
@@ -112,9 +113,9 @@ export function goalieCheck() {
       }
       const shooter = puck.lastTeam, // noted before the save hands the puck to the goalie's team
         counts = shooter !== g.team && onNet(g),
-        r = Math.random(),
+        r = random(),
         out = g.team ? 1 : -1,
-        side = Math.abs(dx) > 1 ? Math.sign(dx) : Math.random() < 0.5 ? -1 : 1;
+        side = Math.abs(dx) > 1 ? Math.sign(dx) : random() < 0.5 ? -1 : 1;
       let kind;
       if (!tip && r < (sp < 120 ? 0.7 : 0.4)) {
         grab(g);
@@ -142,7 +143,7 @@ export function goalieCheck() {
         puck.trail.length = 0;
         puck.age = 0;
         puck.rx = puck.x;
-        puck.tip = Math.random();
+        puck.tip = random();
       }
       if (counts) {
         // an opponent's shot on target stopped: a save, and a shot on goal for the shooting team

@@ -1,4 +1,5 @@
-import { clamp, rnd } from '../../core/math';
+import { clamp } from '../../core/math';
+import { random, rnd } from '../../core/rng';
 import { LABEL } from '../../data/difficulty';
 import { nearest } from '../ai/team';
 import { kit } from '../kit';
@@ -144,12 +145,12 @@ function playerPunch() {
   } else if (o.st === 'open' || o.st === 'recover') {
     dmg = Math.round(rnd(11, 16) * pow);
     big = true;
-  } else if (Math.random() < F.guard * (B.stam < 30 ? 1.3 : 1)) {
+  } else if (random() < F.guard * (B.stam < 30 ? 1.3 : 1)) {
     o.blockT = 0.3;
     S('block');
     pop(B.b.x, B.b.y, 'BLOCKED', '#9aa6c4');
     me.stun = 0.35;
-    if (Math.random() < F.counter) {
+    if (random() < F.counter) {
       o.st = 'wind';
       o.t = F.wind * 0.7;
     } else o.t = Math.min(o.t, 0.25);
@@ -250,7 +251,7 @@ export function brawlStep(dt) {
   input.sp = input.pp = input.swp = input.sr = false;
   o.t -= dt;
   if (o.st === 'idle' && o.t <= 0) {
-    if (Math.random() < 0.15) {
+    if (random() < 0.15) {
       o.st = 'feint';
       o.t = 0.22;
     } else {
