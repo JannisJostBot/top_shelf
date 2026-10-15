@@ -13,6 +13,11 @@ export const puck = {
   passTo: /** @type {any} */ (null),
   lastTeam: 0,
   hard: false,
+  /** seconds since the puck last left a stick (or a goalie), and the x it left from: goalies react to it late */
+  age: 99,
+  rx: 80,
+  /** the luck of the shot at a goalie's fingertips (0..1), drawn when it leaves the stick (see ai/goalie.js) */
+  tip: 0,
   gchk: /** @type {any} */ (null),
   miss: new Set(),
   trail: [],
