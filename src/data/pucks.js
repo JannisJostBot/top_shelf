@@ -1,3 +1,4 @@
+import { random } from '../core/rng';
 import { clock } from '../core/time';
 import { settings } from '../settings';
 
@@ -18,7 +19,7 @@ export const PUCKS = {
     b: () => hueC(0, 52),
     h: () => hueC(120, 78),
     r: () => hueC(200, 62),
-    tr: () => hueC(Math.random() * 360, 62),
+    tr: () => hueC(random() * 360, 62),
     bg: 'linear-gradient(90deg,#ff3b3b,#ffb02e,#ffe14d,#3bd16f,#2fa8ff,#8a4dff,#ff3b3b)',
   },
   fire: {
@@ -27,7 +28,7 @@ export const PUCKS = {
     b: () => FIRE[Math.floor(clock.now * 12) % 2],
     h: () => FIRE[3],
     r: () => FIRE[1 + (Math.floor(clock.now * 15) % 3)],
-    tr: () => FIRE[Math.floor(Math.random() * 4)],
+    tr: () => FIRE[Math.floor(random() * 4)],
     bg: 'radial-gradient(circle,#ffde59 0 25%,#ff9b2f 45%,#c4161c 80%)',
   },
   plasma: {
@@ -36,7 +37,7 @@ export const PUCKS = {
     b: '#1a0b2e',
     h: () => (Math.sin(clock.now * 9) > 0 ? '#ff4df0' : '#46f2ff'),
     r: () => `hsl(${Math.floor(240 + 60 * Math.sin(clock.now * 4))},95%,62%)`,
-    tr: () => (Math.random() < 0.5 ? '#ff4df0' : '#46f2ff'),
+    tr: () => (random() < 0.5 ? '#ff4df0' : '#46f2ff'),
     bg: 'radial-gradient(circle,#1a0b2e 0 35%,#ff4df0 55%,#46f2ff 85%)',
   },
   ghost: {
@@ -55,7 +56,7 @@ export const PUCKS = {
     b: () => (Math.sin(clock.now * 7) > 0.6 ? '#3a2a7a' : '#1b1240'),
     h: () => (Math.sin(clock.now * 11) > 0 ? '#ffffff' : '#c7a6ff'),
     r: '#9b5cff',
-    tr: () => (Math.random() < 0.4 ? '#ffffff' : '#c7a6ff'),
+    tr: () => (random() < 0.4 ? '#ffffff' : '#c7a6ff'),
     bg: 'radial-gradient(circle at 35% 35%,#fff 0 6%,#3a2a7a 10%,#1b1240 60%,#9b5cff 90%)',
   },
   disco: {
@@ -64,7 +65,7 @@ export const PUCKS = {
     b: '#b8c0cc',
     h: () => ['#ff3b3b', '#ffe14d', '#3bd16f', '#2fa8ff', '#ff4df0'][Math.floor(clock.now * 8) % 5],
     r: () => ['#2fa8ff', '#ff4df0', '#ffe14d', '#3bd16f'][Math.floor(clock.now * 6) % 4],
-    tr: () => ['#ff3b3b', '#ffe14d', '#3bd16f', '#2fa8ff', '#ff4df0'][Math.floor(Math.random() * 5)],
+    tr: () => ['#ff3b3b', '#ffe14d', '#3bd16f', '#2fa8ff', '#ff4df0'][Math.floor(random() * 5)],
     bg: 'repeating-conic-gradient(#e8ecf2 0 25%,#8e98a8 0 50%)',
   },
 };

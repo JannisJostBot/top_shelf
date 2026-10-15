@@ -1,5 +1,6 @@
 import { GB, GT } from '../../config';
-import { clamp, dist, lerp, rnd } from '../../core/math';
+import { clamp, dist, lerp } from '../../core/math';
+import { random, rnd } from '../../core/rng';
 import { startCheck } from '../hits';
 import { accelTo, faceTo, steer } from '../physics/motion';
 import { GK, SK, live } from '../players';
@@ -102,7 +103,7 @@ export function openLane(p, s, o, t, dt) {
   m.t -= dt;
   if (m.t <= 0) {
     m.t = rnd(0.45, 0.9);
-    if (Math.random() < 0.8) {
+    if (random() < 0.8) {
       m.here = null;
       m.x = m.y = 0;
       if (laneClearance(o.x, o.y, p.x, p.y, t) < LANE_OPEN) {
@@ -184,7 +185,7 @@ function carrierAI(o, t, dt) {
     const cu = catchUp(t),
       // behind, it shoots from further out too
       ps = dg < 38 ? 0.75 : dg < 62 ? 0.32 + 0.08 * cu : dg < 85 && nd < 10 ? 0.25 : dg < 90 ? 0.08 * cu : 0;
-    if (Math.random() < ps) {
+    if (random() < ps) {
       const gk = GK[1 - t];
       let off = gk.x > 80 ? -10.5 : 10.5;
       if (Math.abs(gk.x - 80) < 1.5) off = o.x < 80 ? 10.5 : -10.5;
@@ -200,11 +201,11 @@ function carrierAI(o, t, dt) {
   }
   const m = bestMate(o, t);
   if (m) {
-    if (nd < 11 && Math.random() < 0.45) {
+    if (nd < 11 && random() < 0.45) {
       passTo(o, m);
       return;
     }
-    if (dir * (m.y - o.y) > 25 && Math.random() < 0.12) {
+    if (dir * (m.y - o.y) > 25 && random() < 0.12) {
       passTo(o, m);
       return;
     }
@@ -294,7 +295,7 @@ export function teamAI(t, dt) {
           o.down <= 0 &&
           o.imm <= 0 &&
           dist(ch, o) < 22 &&
-          Math.random() < rate * (G.holdT > PRESS_AFTER ? 2 : 1) * (1 + 0.25 * catchUp(t)) * dt
+          random() < rate * (G.holdT > PRESS_AFTER ? 2 : 1) * (1 + 0.25 * catchUp(t)) * dt
         )
           startCheck(ch, o);
       }

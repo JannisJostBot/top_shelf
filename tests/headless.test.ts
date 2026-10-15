@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { STEP } from '../src/config';
 import { clearEvents, on } from '../src/core/events';
 import { clock } from '../src/core/time';
@@ -45,5 +45,37 @@ describe('headless simulation', () => {
     expect(screens[0]).toBe('match');
     expect(screens.at(-1)).toBe('over');
     clearEvents();
+  });
+
+  it('plays the same match again from the same seed', async () => {
+    // the dice come from core/rng, so a seed and the same inputs reproduce a match tick for tick. Each run loads
+    // the game fresh, like a new page: a match leaves its players' timers and AI notes behind for the next one.
+    const play = async (seed: number) => {
+      vi.resetModules();
+      const { clearEvents, on } = await import('../src/core/events');
+      const { seedRng } = await import('../src/core/rng');
+      const { clock } = await import('../src/core/time');
+      const { startGame } = await import('../src/game/match');
+      const { update } = await import('../src/game/update');
+      const { G } = await import('../src/game/world');
+      const { settings } = await import('../src/settings');
+      const feed: string[] = [];
+      on('feed', (t: string) => feed.push(t));
+      settings.periodLen = 30;
+      settings.zamOn = false;
+      seedRng(seed);
+      startGame(true);
+      const steps = Math.floor(600 / STEP);
+      for (let i = 0; i < steps && G.state !== 'over'; i++) {
+        clock.now += STEP;
+        update(STEP);
+      }
+      clearEvents();
+      return { score: [...G.score], stats: JSON.parse(JSON.stringify(G.stats)), feed };
+    };
+    const a = await play(2024);
+    expect(a.feed.length).toBeGreaterThan(1);
+    expect(await play(2024)).toEqual(a);
+    expect(await play(7)).not.toEqual(a);
   });
 });

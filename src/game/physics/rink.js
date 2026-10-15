@@ -1,5 +1,6 @@
 import { NETS, RR, RX0, RX1, RY0, RY1 } from '../../config';
-import { clamp, rnd } from '../../core/math';
+import { clamp } from '../../core/math';
+import { rnd } from '../../core/rng';
 import { goalScored } from '../match';
 import { GK } from '../players';
 import { grab } from '../puck';

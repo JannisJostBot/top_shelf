@@ -30,7 +30,8 @@ src/
   bindings.js         connects the simulation's events to render/, audio/ and ui/
   config.ts           world size, rink/net geometry, physics constants
   settings.ts         user options (difficulty, jerseys, arena, toggles)
-  core/               loop, event bus, math helpers, clock, DOM helper, localStorage
+  core/               loop, event bus, math helpers, the simulation's seeded RNG (rng.ts), clock, DOM helper,
+                      localStorage
   data/               pure tables: teams/colors, pucks, stadiums, difficulty, roster names, online emotes
   game/               simulation (never imports render/, audio/ or ui/; runs headless)
     fx.js             the simulation's outlet: sounds, effects, camera, HUD and screen changes as events
@@ -71,6 +72,10 @@ tests/                Vitest specs
 - **Drawing functions take the canvas context as their first argument**, `g`: `R(g, x, y, w, h, c)`,
   `drawSkater(g, p)`. Only the entry points pick a canvas: `render()` draws into `view.ctx`, the menu previews and the
   Guide demos into their own canvases, and cached sprites, goal nets and the 3D view's billboards into offscreen ones.
+- **The simulation rolls its dice with `core/rng.ts`** (`random()`, `rnd()`, `pick()`), never `Math.random` or
+  `core/math`'s `rnd`/`pick`. That is one seeded stream: `seedRng(n)`, then the same inputs, plays the same match
+  (`tests/headless.test.ts`). Presentation (`render/`, `audio/`, `ui/`) keeps `Math.random`, because it runs once
+  per frame, so sharing the stream would let the frame rate change the match. `tests/rng.test.ts` checks `game/`.
 - **Modules only declare things at load time.** Event listeners are registered in `init*()` functions that `main.js` calls in order.
 - **TypeScript is adopted gradually.** `allowJs` is on, so convert a module by renaming it to `.ts` and adding types. Start with leaf modules (`data/`, `game/physics/`), then work up.
 
@@ -78,4 +83,4 @@ tests/                Vitest specs
 
 1. ~~Decouple simulation from presentation~~ (done: `game/` emits events through `game/fx.js`, see Conventions).
 2. ~~Pass `ctx` explicitly to draw functions instead of swapping `view.ctx`~~ (done: see Conventions).
-3. Use a seeded RNG so replays and AI tests are deterministic.
+3. ~~Use a seeded RNG so replays and AI tests are deterministic~~ (done: `core/rng.ts`, see Conventions).

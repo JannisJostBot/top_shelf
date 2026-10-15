@@ -1,6 +1,7 @@
 import { rosterForMatch } from './lineup';
 import { catchUp } from './ai/team';
-import { clamp, dist, rnd } from '../core/math';
+import { clamp, dist } from '../core/math';
+import { random, rnd } from '../core/rng';
 import { loadRec, saveRec } from '../core/storage';
 import { clock } from '../core/time';
 import { LABEL, ORD } from '../data/difficulty';
@@ -65,7 +66,7 @@ export function confetti(team) {
   const c = kit.TEAMS[team];
   if (c === COLORS.rainbow) return `hsl(${Math.floor(rnd(0, 360))},90%,60%)`;
   if (c === COLORS.inferno) return FIRE[Math.floor(rnd(0, 4))];
-  return Math.random() < 0.5 ? c.main : c.trim;
+  return random() < 0.5 ? c.main : c.trim;
 }
 export function goalScored(team, n) {
   const ix = clamp(puck.x, n.x0 + 3, n.x1 - 3);
@@ -118,7 +119,7 @@ export function goalScored(team, n) {
   // players vote for one during the replay instead, see game/replay.js)
   G.brawlNext = false;
   if (!G.ai0 && !G.net && team === 0 && settings.fightsOn && !G.fought && G.period <= 3) {
-    if (Math.random() < G.fightP) {
+    if (random() < G.fightP) {
       G.brawlNext = true;
       G.fightP = 0.1;
     } else G.fightP = Math.min(0.5, G.fightP + 0.12);
@@ -128,7 +129,7 @@ export function goalScored(team, n) {
     const sc = G.lastShooter && G.lastShooter.team === team ? G.lastShooter : SK[team][0],
       l = SK[1 - team].slice().sort((p, q) => dist(p, sc) - dist(q, sc));
     bubble(l[0], null, rnd(0.2, 0.6));
-    if (Math.random() < 0.35) bubble(l[1], null, rnd(0.9, 1.4));
+    if (random() < 0.35) bubble(l[1], null, rnd(0.9, 1.4));
   }
   G.hype = team === 0 || G.watch ? 1 : 0.35;
   if (!reduceMotion) G.shake = 0.4;
