@@ -1,3 +1,7 @@
+// the pixel fonts, bundled with the game (vite.config.ts preloads their latin files)
+import '@fontsource/press-start-2p';
+import '@fontsource/silkscreen';
+import '@fontsource/silkscreen/700.css';
 import './styles/base.css';
 import { initSide } from './ui/side';
 import './styles/hud.css';
