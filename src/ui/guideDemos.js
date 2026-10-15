@@ -68,9 +68,9 @@ const SCENES = {
     drawSkater(g, p);
     miniNet(g, 58, 19);
     if (t < 0.9) {
-      // wind-up meter filling
+      // wind-up meter filling, white once full
       R(g, 10 * K, 4 * K, 16, 3, '#0b0f1a');
-      R(g, 10 * K + 1, 4 * K + 1, Math.round(14 * Math.min(1, t / 0.7)), 1, '#ffc845');
+      R(g, 10 * K + 1, 4 * K + 1, Math.round(14 * Math.min(1, t / 0.7)), 1, t >= 0.7 ? '#ffffff' : '#ffc845');
     }
     const b = blade(p);
     if (t < 0.9) puckAt(g, b.x, b.y);

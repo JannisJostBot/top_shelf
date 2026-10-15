@@ -10,7 +10,7 @@
 //    the carrier, on defence one skater keeps a goal-side gap on the carrier and the others mark a man
 //  - the puck carrier follows a lane, curves around defenders, sometimes dekes, looks up before passing
 //    and winds up visibly before shooting
-import { ACC, BASE, GB, GT } from '../../config';
+import { ACC, AIM_CORNER, BASE, GB, GT } from '../../config';
 import { clamp, dist, lerp, rnd, wrapAngle } from '../../core/math';
 import { clock } from '../../core/time';
 import { startCheck } from '../hits';
@@ -185,8 +185,8 @@ function carrier(o, t, dt) {
       ps = dg < 36 ? 0.6 : dg < 60 ? 0.22 + 0.08 * cu : dg < 85 ? 0.08 * cu : 0;
     if (Math.random() < ps) {
       const gk = GK[1 - t];
-      let off = gk.x > 80 ? -10.5 : 10.5;
-      if (Math.abs(gk.x - 80) < 1.5) off = o.x < 80 ? 10.5 : -10.5;
+      let off = gk.x > 80 ? -AIM_CORNER : AIM_CORNER;
+      if (Math.abs(gk.x - 80) < 1.5) off = o.x < 80 ? AIM_CORNER : -AIM_CORNER;
       b.shot = {
         x: 80 + off,
         y: aG + dir * 2,

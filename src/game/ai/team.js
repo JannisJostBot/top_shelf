@@ -1,4 +1,4 @@
-import { GB, GT } from '../../config';
+import { AIM_CORNER, GB, GT } from '../../config';
 import { clamp, dist, lerp, rnd } from '../../core/math';
 import { startCheck } from '../hits';
 import { accelTo, faceTo, steer } from '../physics/motion';
@@ -186,8 +186,8 @@ function carrierAI(o, t, dt) {
       ps = dg < 38 ? 0.75 : dg < 62 ? 0.32 + 0.08 * cu : dg < 85 && nd < 10 ? 0.25 : dg < 90 ? 0.08 * cu : 0;
     if (Math.random() < ps) {
       const gk = GK[1 - t];
-      let off = gk.x > 80 ? -10.5 : 10.5;
-      if (Math.abs(gk.x - 80) < 1.5) off = o.x < 80 ? 10.5 : -10.5;
+      let off = gk.x > 80 ? -AIM_CORNER : AIM_CORNER;
+      if (Math.abs(gk.x - 80) < 1.5) off = o.x < 80 ? AIM_CORNER : -AIM_CORNER;
       shoot(
         o,
         80 + off,

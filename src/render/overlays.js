@@ -4,6 +4,7 @@ import { settings } from '../settings';
 import { clamp, toS } from '../core/math';
 import { clock } from '../core/time';
 import { kit } from '../game/kit';
+import { WIND, wobbleOf } from '../game/human';
 import { players } from '../game/players';
 import { G, puck } from '../game/world';
 import { cam, view } from './canvas';
@@ -44,9 +45,12 @@ export function drawCtlTop(g, c) {
     up = has ? 6 : 0;
   if (has) puckBadge(g, x, ay - 6, false);
   if (G.charging && has) {
-    const k = G.charge / 0.7;
+    // amber while winding up, white when full; red, flickering, once a held shot starts to wobble
+    const k = Math.min(1, G.charge / WIND),
+      wob = wobbleOf(G.charge) > 0,
+      col = wob ? (Math.floor(clock.now * 12) & 1 ? '#ef4b52' : '#8a2228') : k > 0.97 ? '#ffffff' : AMB;
     R(g, x - 12, ay - 8 - up, 25, 5, '#0a0f1e');
-    R(g, x - 11, ay - 7 - up, Math.max(1, Math.round(23 * k)), 3, k > 0.95 ? '#ef4b52' : AMB);
+    R(g, x - 11, ay - 7 - up, Math.max(1, Math.round(23 * k)), 3, col);
   }
   if (c.checkCd > 0 && c.checkT <= 0) {
     const k = clamp(c.checkCd / 1.4, 0, 1);

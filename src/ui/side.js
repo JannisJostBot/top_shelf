@@ -6,6 +6,7 @@ import { clock } from '../core/time';
 import { ORD } from '../data/difficulty';
 import { kit } from '../game/kit';
 import { G } from '../game/world';
+import { WIND, wobbleOf } from '../game/human';
 import { nameOf } from '../game/online';
 import { hintNow, kbdHTML } from './keyhint';
 import { clockText } from './hud';
@@ -209,7 +210,8 @@ function drawBanners() {
 
 /* ---------- layout switch and per-frame update ---------- */
 let lastT = 0,
-  lastShot = -1;
+  lastShot = -1,
+  lastWobble = false;
 function applyLayout() {
   const on = WIDE.matches;
   document.body.classList.toggle('wide', on);
@@ -250,12 +252,15 @@ export function updSide() {
   // the side bars slide in for a game and out for the menu (CSS transitions on this class)
   if (document.body.classList.contains('inmatch') !== match) document.body.classList.toggle('inmatch', match);
   // the shot meter follows the wind-up every frame, but only touches the page when it changed
-  const k = G.charging && !G.ai0 ? Math.min(1, G.charge / 0.7) : 0;
-  if (k !== lastShot) {
+  const k = G.charging && !G.ai0 ? Math.min(1, G.charge / WIND) : 0,
+    wob = k > 0 && wobbleOf(G.charge) > 0;
+  if (k !== lastShot || wob !== lastWobble) {
     lastShot = k;
+    lastWobble = wob;
     const ch = $('sdShot');
     ch.style.setProperty('--k', String(k));
-    ch.classList.toggle('full', k > 0.95);
+    ch.classList.toggle('full', k > 0.97 && !wob);
+    ch.classList.toggle('wobble', wob);
   }
   if (clock.now - lastT < 0.25) return;
   lastT = clock.now;

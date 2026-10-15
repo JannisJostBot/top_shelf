@@ -30,6 +30,9 @@ function release(p, vx, vy) {
   puck.y = b.y;
   puck.vx = vx;
   puck.vy = vy;
+  puck.age = 0;
+  puck.rx = b.x;
+  puck.tip = Math.random();
   p.cool = 0.3;
   puck.lastTeam = p.team;
   puck.hard = false;
@@ -75,6 +78,9 @@ export function passTo(p, m) {
     puck.y = from.y + (p.team ? 5 : -5);
     puck.vx = (dx / d) * s;
     puck.vy = (dy / d) * s;
+    puck.age = 0;
+    puck.rx = puck.x;
+    puck.tip = Math.random();
     puck.lastTeam = p.team;
     puck.miss.clear();
     puck.gchk = null;

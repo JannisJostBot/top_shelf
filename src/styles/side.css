@@ -279,8 +279,18 @@ body.wide #keyhint {
   -webkit-mask: radial-gradient(circle closest-side, #000 0 78%, transparent 84%) 0 0 / 3px 3px;
   mask: radial-gradient(circle closest-side, #000 0 78%, transparent 84%) 0 0 / 3px 3px;
 }
+/* full: ready to fire; held too long, the shot wobbles and the meter flickers red */
 .shotm.full i {
-  background: #ff7a5c;
+  background: #ffffff;
+}
+.shotm.wobble i {
+  background: #ef4b52;
+  animation: shotWobble 0.17s steps(2) infinite;
+}
+@keyframes shotWobble {
+  50% {
+    background: #8a2228;
+  }
 }
 .boost {
   display: grid;

@@ -18,6 +18,8 @@ export const NETS = [
   { x0: 67, x1: 93, y0: GB, y1: GB + ND, top: false, scorer: 1, def: 0 },
 ];
 export const HARD_SHOT = 165;
+/** Where a shot aimed at a corner goes: this far either side of the net's centre, just inside the post. */
+export const AIM_CORNER = 9.5;
 
 /* ---------- rink prerender (2x) ---------- */
 export const IW = W * K,

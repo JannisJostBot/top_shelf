@@ -1,4 +1,4 @@
-import { ACC, BASE, GT, H, W } from '../config';
+import { ACC, AIM_CORNER, BASE, GT, H, W } from '../config';
 import { clamp, dist, rnd } from '../core/math';
 import { catchUp, nearest } from './ai/team';
 import { startCheck } from './hits';
@@ -92,7 +92,7 @@ export function humanUpdate(dt, t = 0) {
   if (puck.owner === p) {
     if (input.shootHeld && !s.ignoreRelease) {
       s.charging = true;
-      s.charge = Math.min(s.charge + dt, 0.7);
+      s.charge = Math.min(s.charge + dt, MAX_HOLD);
     }
     if (input.sr && s.charging) humanShoot(s, input, p);
     else if (input.pp) humanPass(input, p);
@@ -145,6 +145,25 @@ export function skate(p, jx, jy, aim, receiving, dt) {
   else if (aim) faceTo(p, p.x + aim.x, p.y + aim.y, 0.45);
   else if (m > 0.2) faceTo(p, p.x + jx, p.y + jy, 0.45);
 }
+// Shot accuracy: a shot goes where it is aimed unless the shooter spoils it. A full wind-up held too long starts to
+// wobble, a defender right on the shooter hurries it, and the puck carries some of the skater's sideways glide.
+/** seconds to a full wind-up */
+export const WIND = 0.7;
+const HOLD_GRACE = 0.3, // a full wind-up can be held this long before it starts to wobble
+  WOBBLE = 6, // then the shot's spread grows by this many px per second held,
+  WOBBLE_MAX = 3, // up to this
+  MAX_HOLD = WIND + HOLD_GRACE + WOBBLE_MAX / WOBBLE,
+  PRESSURE_R = 12, // a defender closer than this hurries the shot,
+  PRESSURE = 3, // spreading it by up to this many px
+  DRIFT = 0.035; // the shot drifts sideways by the skater's sideways speed (px/s) times this
+/** 0..1: how far a held wind-up has gone past the point where it starts to wobble (for the wind-up meter). */
+export const wobbleOf = charge => clamp((charge - WIND - HOLD_GRACE) / (WOBBLE_MAX / WOBBLE), 0, 1);
+/** How much a defender close to p hurries p's shot: 0 (no one near) to 1 (right on top of them). */
+function pressureOn(p) {
+  let d = PRESSURE_R;
+  for (const q of SK[1 - p.team]) if (!q.benched && q.down <= 0) d = Math.min(d, dist(p, q));
+  return 1 - d / PRESSURE_R;
+}
 // Shots and passes are worked out as if attacking upwards; team 1 attacks downwards, so for it everything is
 // turned half a turn (the rink is the same both ways) on the way in and back on the way out.
 function humanShoot(s, input, p) {
@@ -152,7 +171,8 @@ function humanShoot(s, input, p) {
     G.score[1]++;
     hud();
   }
-  const c = s.charge / 0.7;
+  const c = Math.min(s.charge, WIND) / WIND,
+    spread = (wobbleOf(s.charge) * WOBBLE_MAX + pressureOn(p) * PRESSURE) * p.st.acc;
   s.charging = false;
   s.charge = 0;
   const spd = (150 + c * 135) * p.st.sht,
@@ -170,13 +190,13 @@ function humanShoot(s, input, p) {
       am = mouseAim && aim && aim.y < -0.2 ? aim : null;
     if (am) off = clamp(px + (am.x / -am.y) * (py - GT) - 80, -10.5, 10.5);
     else {
-      if (Math.abs(jx) > 0.3) off = Math.sign(jx) * 10.5;
-      else off = px < 80 ? 10.5 : -10.5;
-      if (Math.abs(jx) <= 0.3 && Math.abs(gx - 80) > 3) off = gx > 80 ? -10.5 : 10.5;
+      if (Math.abs(jx) > 0.3) off = Math.sign(jx) * AIM_CORNER;
+      else off = px < 80 ? AIM_CORNER : -AIM_CORNER;
+      if (Math.abs(jx) <= 0.3 && Math.abs(gx - 80) > 3) off = gx > 80 ? -AIM_CORNER : AIM_CORNER;
     }
-    const tx = 80 + off,
+    const tx = 80 + off + p.vx * m * DRIFT,
       ty = GT - 2;
-    shoot(p, p.team ? W - tx : tx, p.team ? H - ty : ty, spd, (1.5 + c * 2.5) * p.st.acc);
+    shoot(p, p.team ? W - tx : tx, p.team ? H - ty : ty, spd, spread);
   } else shoot(p, p.x + p.fx * 100, p.y + p.fy * 100, spd, 0);
 }
 function humanPass(input, p) {

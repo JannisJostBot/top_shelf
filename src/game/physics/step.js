@@ -87,6 +87,7 @@ export function updatePuck(dt) {
     netPuck(px, py);
     return;
   }
+  puck.age += dt;
   const k = Math.exp(-(0.7 + 0.55 * frostAt(puck.x, puck.y)) * dt);
   puck.vx *= k;
   puck.vy *= k;
