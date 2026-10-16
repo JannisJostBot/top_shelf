@@ -11,6 +11,7 @@ import { view } from './canvas';
 import { AMB, SH } from './colors';
 import { drawFighter } from './fight';
 import { R, blit, line } from './pixels';
+import { puckPixels } from './puck';
 import {
   FACES,
   GPAD,
@@ -393,12 +394,14 @@ export function drawGoalie(g, gk) {
         stickLine(g, gk, sx - 7, sy - 5, sx - 1, sy - 1, 'shaft');
         R(g, sx - 1, sy, 6, 1, bladeTape(gk));
       }
+      heldPuck(g, gk, map, pal, sx - 9, sy - 19 + (20 - map.length), !front);
       return;
     }
     const step = t < 0.3 || t > 0.85 ? 1 : 2,
       map = SPR[v + (kind === 'glove' ? 'Glove' : 'Block') + step];
     blit(g, map, pal, sx - 9 - GPAD, sy - 19, !front);
     if (front) goalieStick(g, gk, sx, sy);
+    heldPuck(g, gk, map, pal, sx - 9 - GPAD, sy - 19, !front);
     return;
   }
   // shuffling across the crease (a T-push): the lead pad turns out, both open while the push leg drives, then
@@ -417,6 +420,41 @@ export function drawGoalie(g, gk) {
   }
   blit(g, map, pal, sx - 9, sy - 19, !front);
   if (front) goalieStick(g, gk, sx, sy);
+  heldPuck(g, gk, map, pal, sx - 9, sy - 19, !front);
+}
+// where the catcher's pocket is in a goalie map: the first run of pocket pixels between two glove pixels (CJC)
+const POCKET = new WeakMap();
+function pocketOf(map) {
+  let pk = POCKET.get(map);
+  if (pk === undefined) {
+    pk = null;
+    for (let r = 0; r < map.length && !pk; r++) {
+      const m = /CJ+C/.exec(map[r]);
+      if (!m) continue;
+      const c0 = m.index + 1,
+        c1 = m.index + m[0].length - 2,
+        a = Math.max(0, c0 - 2),
+        b = Math.min(map[0].length - 1, c1 + 2);
+      // the glove's lower edge below the pocket, drawn again over the puck
+      pk = { r, c0, c1, a, b, lip: map.slice(r + 1, r + 3).map(row => row.slice(a, b + 1)) };
+    }
+    POCKET.set(map, pk);
+  }
+  return pk;
+}
+/** A puck the goalie has caught, seated in the catcher's pocket (wherever the pose has the glove), with the lower
+ * edge of the glove drawn back over it so it sits in the glove rather than in front of the goalie. */
+function heldPuck(g, gk, map, pal, x0, y0, flip) {
+  if (puck.owner !== gk) return;
+  const pk = pocketOf(map);
+  if (!pk) return;
+  const w = map[0].length,
+    c = flip ? pk.c1 : pk.c0,
+    a0 = g.globalAlpha;
+  g.globalAlpha = a0 * Math.min(1, kit.PS.a);
+  puckPixels(g, flip ? x0 + w - 1 - c : x0 + c, y0 + pk.r - 1);
+  g.globalAlpha = a0;
+  blit(g, pk.lip, pal, flip ? x0 + w - 1 - pk.b : x0 + pk.a, y0 + pk.r + 1, flip);
 }
 /** The goalie's stick, in the blocker hand on the left, running down across the pads to the blade on the ice. */
 function goalieStick(g, gk, sx, sy) {

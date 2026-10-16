@@ -242,7 +242,7 @@ function drawFrame(g) {
           drawBuffed(g, p);
         odFront(g, p);
         if (puck.owner === p) {
-          drawPuck(g);
+          if (p.role !== 'G') drawPuck(g); // a goalie draws the puck in his glove (drawGoalie)
           drawn = true;
         }
       });
